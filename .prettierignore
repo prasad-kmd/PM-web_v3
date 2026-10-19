@@ -1,0 +1,24 @@
+# Ignore artifacts:
+build
+coverage
+node_modules
+public/*
+.next
+drizzle/*
+.env*
+pnpm-lock.yaml
+package-lock.json
+yarn.lock
+.github
+_old/*
+tmp/*
+# tempdump/*
+dump/*
+.agents/*
+.agents
+
+# Planning documents are laid out for reading, not for a formatter: they contain
+# illustrative snippets that Prettier reflows to 80 columns, which wrecks their
+# deliberate alignment (e.g. the side-by-side comments in the roadmap's client
+# sketch). Hand-formatted on purpose — see docs/planning/README.md.
+docs/planning/
