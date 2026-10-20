@@ -1,8 +1,8 @@
 {
   "name": "PM-Web_V3",
-  "version": "3.0.0",
+  "version": "3.1.0",
   "private": true,
-  "description": "A personal engineering portfolio presented as a desktop workspace.",
+  "description": "A personal engineering portfolio presented as a Windows 11 desktop workspace.",
   "author": "prasad-kmd",
   "license": "AGPL-3.0",
   "repository": {
@@ -23,6 +23,7 @@
     "@floating-ui/react": "^0.27.20",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "framer-motion": "^14.4.0",
     "lucide-react": "^0.577.0",
     "motion": "^13.4.0",
     "next": "16.3.5",
