@@ -5,6 +5,7 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import { useClock } from "@/hooks/useClock";
 import { useAppearance } from "@/lib/appearance";
 import type { AppId } from "@/lib/registry";
+import { WorkspaceTooltip } from "@/components/ui/tooltip";
 import {
   Menubar,
   MenubarContent,
@@ -134,23 +135,26 @@ export function MenuBar({
       </div>
 
       <div className="menu-bar-status">
-        <button
-          type="button"
-          className="menu-bar-icon-btn"
-          onClick={toggleTheme}
-          title={
+        <WorkspaceTooltip
+          label={
             theme === "dark"
               ? "Switch to light appearance"
               : "Switch to dark appearance"
           }
-          aria-label="Toggle appearance"
         >
-          <HugeiconsIcon
-            icon={theme === "dark" ? SunMediumIcon : Moon02Icon}
-            strokeWidth={2}
-            size={16}
-          />
-        </button>
+          <button
+            type="button"
+            className="menu-bar-icon-btn"
+            onClick={toggleTheme}
+            aria-label="Toggle appearance"
+          >
+            <HugeiconsIcon
+              icon={theme === "dark" ? SunMediumIcon : Moon02Icon}
+              strokeWidth={2}
+              size={16}
+            />
+          </button>
+        </WorkspaceTooltip>
         <time className="menu-bar-clock">{formatted}</time>
       </div>
     </header>

@@ -15,6 +15,7 @@ import {
   type Transition,
 } from "motion/react";
 import { Dialog } from "@animate-ui/react/primitives/base-ui/dialog";
+import { WorkspaceTooltip } from "@/components/ui/tooltip";
 import { APP_REGISTRY } from "@/lib/registry";
 import {
   GEO_TRANSITION,
@@ -284,34 +285,38 @@ export function Window({
                 className="window-title-actions"
                 aria-label="Window controls"
               >
-                <button
-                  type="button"
-                  className="window-control"
-                  onClick={onToggleMaximize}
-                  aria-label={
-                    win.maximized ? "Restore window" : "Maximize window"
-                  }
-                  title={win.maximized ? "Restore" : "Maximize"}
+                <WorkspaceTooltip
+                  label={win.maximized ? "Restore window" : "Maximize window"}
                 >
-                  <HugeiconsIcon
-                    icon={win.maximized ? Copy01Icon : Maximize02Icon}
-                    strokeWidth={2}
-                    size={15}
-                  />
-                </button>
-                <button
-                  type="button"
-                  className="window-control window-control-close"
-                  onClick={onClose}
-                  aria-label="Close window"
-                  title="Close"
-                >
-                  <HugeiconsIcon
-                    icon={Cancel01Icon}
-                    strokeWidth={2}
-                    size={16}
-                  />
-                </button>
+                  <button
+                    type="button"
+                    className="window-control"
+                    onClick={onToggleMaximize}
+                    aria-label={
+                      win.maximized ? "Restore window" : "Maximize window"
+                    }
+                  >
+                    <HugeiconsIcon
+                      icon={win.maximized ? Copy01Icon : Maximize02Icon}
+                      strokeWidth={2}
+                      size={15}
+                    />
+                  </button>
+                </WorkspaceTooltip>
+                <WorkspaceTooltip label="Close window">
+                  <button
+                    type="button"
+                    className="window-control window-control-close"
+                    onClick={onClose}
+                    aria-label="Close window"
+                  >
+                    <HugeiconsIcon
+                      icon={Cancel01Icon}
+                      strokeWidth={2}
+                      size={16}
+                    />
+                  </button>
+                </WorkspaceTooltip>
               </div>
             </header>
 

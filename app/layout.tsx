@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
+import { InterfaceProvider } from "@/components/providers/InterfaceProvider";
 import { AppearanceProvider } from "@/lib/appearance";
 
 export const metadata: Metadata = {
@@ -49,7 +50,9 @@ export default function RootLayout({
         />
       </head>
       <body className="antialiased">
-        <AppearanceProvider>{children}</AppearanceProvider>
+        <AppearanceProvider>
+          <InterfaceProvider>{children}</InterfaceProvider>
+        </AppearanceProvider>
       </body>
     </html>
   );

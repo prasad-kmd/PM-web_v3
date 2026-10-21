@@ -57,7 +57,7 @@ This design system keeps **PM Web v3 as an interactive DesktopOS**. It is not a 
 
 The interface retains a full-screen workspace canvas, persistent menubar, desktop shortcuts, concurrent application windows, drag/resize behavior, edge snap, and browser-persisted window geometry. Animate UI Docs supplies the visual language: neutral semantic surfaces, Outfit typography, compact control geometry, live Base UI primitives, and restrained motion.
 
-The visual atmosphere is precise and quiet. The desktop is a solid semantic canvas with intentional open space. Windows are deliberate work surfaces with minimal, neutral chrome. The result should feel like a purpose-built workspace assembled from Animate UI components.
+The visual atmosphere is precise and quiet. A low-contrast monochrome contour image sits beneath a semantic light or dark scrim, leaving the centre open for work. Windows are deliberate work surfaces with minimal, neutral chrome. The result should feel like a purpose-built workspace assembled from Animate UI components.
 
 ## Colors
 
@@ -97,7 +97,7 @@ Typography uses sentence case, practical weight hierarchy, and normal readable t
 The layout follows a strict desktop-workspace model with a 4px spacing rhythm.
 
 - **Menubar:** Fixed to the top edge; 40px tall; full width; page-background surface with a 1px bottom border.
-- **Workspace:** Starts below the menubar and fills the remaining viewport. It is an intentionally open spatial canvas.
+- **Workspace:** Starts below the menubar and fills the remaining viewport. Its adaptive contour background stays low-contrast in both theme modes, while the centre remains intentionally open for work.
 - **Desktop shortcuts:** Right-aligned grid with 88px columns, 82px-wide shortcut controls, 36px icon tiles, and 12px labels.
 - **Windows:** Open in a cascade, retain their saved geometry, and stay independent of one another. They may be dragged, resized, maximized/restored, closed, focused, and edge-snapped.
 - **Application interiors:** Use compact vertical spacing and bounded reading widths inside the window body. Settings has a small app sidebar; Read Me uses documentation-quality text and code—but both remain applications inside a desktop window.
@@ -107,7 +107,7 @@ Navigation remains local to the menubar, shortcut canvas, window controls, and c
 
 ## Elevation & Depth
 
-Depth is functional, not atmospheric. The desktop canvas remains flat and quiet so that the active window is the only strong elevation cue.
+Depth is functional, not atmospheric. The desktop canvas uses a low-contrast adaptive background image beneath its semantic scrim, while the active window remains the strongest elevation cue.
 
 Top-level windows use a single restrained shadow, a 1px semantic border, and the card surface. Inactive windows reduce title contrast and shadow density. Popup menus retain the exact published Animate UI/Base UI popover treatment, including its component-provided backdrop blur; this remains scoped to transient primitives.
 
@@ -155,7 +155,11 @@ Window chrome uses a card surface, a 1px border, a centered title, and only maxi
 
 ### Settings and Read Me
 
-Settings offers the exact light and dark reference modes. Read Me is a clean technical document inside the app, with a compact toolbar, readable body copy, bounded code presentation, and copy feedback.
+Settings uses Animate UI Tabs: the active highlight glides between the vertical settings triggers while panels slide and the container follows the active panel height. It offers the exact light and dark reference modes. Read Me is a clean technical document inside the app, with a compact toolbar, readable body copy, bounded code presentation, and copy feedback.
+
+### Tooltips
+
+Icon-only actions use the real Animate UI Tooltip primitive under one shared provider. Each tooltip appears at `side="bottom"` and `align="start"`, sharing the primitive’s moving popup and reduced-motion behavior.
 
 ### Motion and accessibility
 

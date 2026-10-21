@@ -102,7 +102,7 @@ body {
 }
 
 html {
-  scrollbar-gutter: stable;
+  overflow: hidden;
 }
 
 body {
@@ -161,11 +161,48 @@ input:focus-visible {
 .desktop-root {
   position: relative;
   isolation: isolate;
-  width: 100vw;
+  width: 100%;
   height: 100vh;
   height: 100dvh;
   overflow: hidden;
   background: var(--background);
+  scrollbar-width: none;
+}
+
+.desktop-root::-webkit-scrollbar {
+  display: none;
+}
+
+.desktop-background,
+.desktop-background-scrim {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.desktop-background {
+  z-index: -2;
+  object-fit: cover;
+  object-position: center;
+  mix-blend-mode: multiply;
+  opacity: 0.34;
+}
+
+.desktop-background-scrim {
+  z-index: -1;
+  background: color-mix(in oklab, var(--background) 54%, transparent);
+}
+
+.dark .desktop-background {
+  filter: brightness(0.76) contrast(1.05) grayscale(1);
+  mix-blend-mode: screen;
+  opacity: 0.2;
+}
+
+.dark .desktop-background-scrim {
+  background: color-mix(in oklab, var(--background) 72%, transparent);
 }
 
 .menu-bar {
@@ -253,7 +290,12 @@ input:focus-visible {
   inset: var(--menubar-h) 0 0;
   z-index: 1;
   overflow: hidden;
-  background: var(--background);
+  background: transparent;
+  scrollbar-width: none;
+}
+
+.work-area::-webkit-scrollbar {
+  display: none;
 }
 
 .desktop-context-trigger {
@@ -550,6 +592,23 @@ input:focus-visible {
   font-weight: 500;
 }
 
+.settings-tabs-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.settings-tab-item {
+  display: block;
+  width: 100%;
+}
+
+.settings-tab-highlight {
+  inset: 0;
+  border-radius: 6px;
+  background: var(--accent);
+}
+
 .settings-nav-item {
   display: flex;
   width: 100%;
@@ -562,20 +621,21 @@ input:focus-visible {
   font-size: 14px;
   padding: 7px 8px;
   text-align: left;
-  transition:
-    background-color 140ms ease,
-    color 140ms ease;
+  transition: color 140ms ease;
 }
 
 .settings-nav-item:hover,
-.settings-nav-item.is-active {
-  background: var(--accent);
+.settings-nav-item[data-state="active"] {
   color: var(--accent-foreground);
 }
 
-.settings-content {
+.settings-tabs-contents {
+  min-width: 0;
   flex: 1;
-  overflow-y: auto;
+  align-self: flex-start;
+}
+
+.settings-tab-content {
   padding: 26px 28px 32px;
 }
 
@@ -918,12 +978,21 @@ input:focus-visible {
     display: none;
   }
 
-  .settings-sidebar nav {
-    display: flex;
+  .settings-tabs-list {
+    flex-direction: row;
     gap: 4px;
   }
 
-  .settings-content {
+  .settings-tab-item {
+    width: auto;
+  }
+
+  .settings-tabs-contents {
+    width: 100%;
+    align-self: stretch;
+  }
+
+  .settings-tab-content {
     padding: 20px;
   }
 

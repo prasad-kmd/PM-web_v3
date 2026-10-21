@@ -7,46 +7,57 @@ import {
   SunMediumIcon,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { useState } from "react";
+import {
+  Tabs,
+  TabsContent,
+  TabsContents,
+  TabsHighlight,
+  TabsHighlightItem,
+  TabsList,
+  TabsTrigger,
+} from "@animate-ui/react/primitives/tabs";
 import { useAppearance } from "@/lib/appearance";
 import type { Theme } from "@/lib/registry";
 
-type Tab = "appearance" | "about";
+const SETTINGS_TABS = [
+  { value: "appearance", label: "Appearance", icon: PaintBoardIcon },
+  { value: "about", label: "About", icon: InformationCircleIcon },
+] as const;
 
 export function SettingsApp() {
-  const [tab, setTab] = useState<Tab>("appearance");
   const { theme, setTheme } = useAppearance();
 
   return (
-    <div className="settings-layout">
+    <Tabs
+      defaultValue="appearance"
+      orientation="vertical"
+      className="settings-layout"
+    >
       <aside className="settings-sidebar">
         <p className="settings-sidebar-label">Workspace settings</p>
-        <nav aria-label="Settings sections">
-          <button
-            type="button"
-            className={`settings-nav-item${tab === "appearance" ? " is-active" : ""}`}
-            onClick={() => setTab("appearance")}
+        <TabsHighlight className="settings-tab-highlight">
+          <TabsList
+            className="settings-tabs-list"
+            aria-label="Settings sections"
           >
-            <HugeiconsIcon icon={PaintBoardIcon} strokeWidth={2} size={16} />
-            <span>Appearance</span>
-          </button>
-          <button
-            type="button"
-            className={`settings-nav-item${tab === "about" ? " is-active" : ""}`}
-            onClick={() => setTab("about")}
-          >
-            <HugeiconsIcon
-              icon={InformationCircleIcon}
-              strokeWidth={2}
-              size={16}
-            />
-            <span>About</span>
-          </button>
-        </nav>
+            {SETTINGS_TABS.map((tab) => (
+              <TabsHighlightItem
+                key={tab.value}
+                value={tab.value}
+                className="settings-tab-item"
+              >
+                <TabsTrigger value={tab.value} className="settings-nav-item">
+                  <HugeiconsIcon icon={tab.icon} strokeWidth={2} size={16} />
+                  <span>{tab.label}</span>
+                </TabsTrigger>
+              </TabsHighlightItem>
+            ))}
+          </TabsList>
+        </TabsHighlight>
       </aside>
 
-      <main className="settings-content">
-        {tab === "appearance" && (
+      <TabsContents className="settings-tabs-contents">
+        <TabsContent value="appearance" className="settings-tab-content">
           <section
             className="settings-section"
             aria-labelledby="appearance-heading"
@@ -105,9 +116,9 @@ export function SettingsApp() {
               </div>
             </div>
           </section>
-        )}
+        </TabsContent>
 
-        {tab === "about" && (
+        <TabsContent value="about" className="settings-tab-content">
           <section className="settings-section" aria-labelledby="about-heading">
             <h2 id="about-heading" className="settings-heading">
               About this workspace
@@ -152,8 +163,8 @@ export function SettingsApp() {
               </div>
             </div>
           </section>
-        )}
-      </main>
-    </div>
+        </TabsContent>
+      </TabsContents>
+    </Tabs>
   );
 }

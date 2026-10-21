@@ -3,6 +3,7 @@
 import { Copy01Icon, TerminalIcon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { toast } from "sonner";
+import { WorkspaceTooltip } from "@/components/ui/tooltip";
 
 export function NotepadApp() {
   const copyLinks = () => {
@@ -40,15 +41,16 @@ export function NotepadApp() {
                 <HugeiconsIcon icon={TerminalIcon} strokeWidth={2} size={15} />
                 Quick telemetry &amp; links
               </span>
-              <button
-                type="button"
-                onClick={copyLinks}
-                className="notes-copy"
-                title="Copy links"
-              >
-                <HugeiconsIcon icon={Copy01Icon} strokeWidth={2} size={14} />
-                Copy
-              </button>
+              <WorkspaceTooltip label="Copy links">
+                <button
+                  type="button"
+                  onClick={copyLinks}
+                  className="notes-copy"
+                >
+                  <HugeiconsIcon icon={Copy01Icon} strokeWidth={2} size={14} />
+                  Copy
+                </button>
+              </WorkspaceTooltip>
             </div>
             <pre>{`const engineer = {
   name:     "Prasad M.",

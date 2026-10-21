@@ -1,6 +1,5 @@
 "use client";
 
-import { AnimateUIProvider } from "@animate-ui/react/provider";
 import { useCallback, useLayoutEffect, useRef, useState } from "react";
 import { Toaster } from "sonner";
 import { ContextMenu, ContextMenuTrigger } from "@/components/ui/context-menu";
@@ -44,26 +43,31 @@ export function Desktop() {
   const openApp = useCallback((appId: AppId) => manager.open(appId), [manager]);
 
   return (
-    <AnimateUIProvider checkAnimation="draw">
-      <div className="desktop-root">
-        <MenuBar onOpenApp={openApp} onCloseAll={manager.closeAll} />
+    <div className="desktop-root">
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        className="desktop-background"
+        src="/images/desktop-bloom-wallpaper.webp"
+        alt=""
+        aria-hidden
+      />
+      <div className="desktop-background-scrim" aria-hidden />
 
-        <ContextMenu>
-          <ContextMenuTrigger className="work-area" ref={workRef}>
-            <DesktopIcons onOpen={openApp} />
-            <WindowsLayer
-              windows={manager.windows}
-              area={area}
-              manager={manager}
-            />
-          </ContextMenuTrigger>
-          <DesktopContextMenuContent
-            onOpenSettings={() => openApp("settings")}
+      <MenuBar onOpenApp={openApp} onCloseAll={manager.closeAll} />
+
+      <ContextMenu>
+        <ContextMenuTrigger className="work-area" ref={workRef}>
+          <DesktopIcons onOpen={openApp} />
+          <WindowsLayer
+            windows={manager.windows}
+            area={area}
+            manager={manager}
           />
-        </ContextMenu>
+        </ContextMenuTrigger>
+        <DesktopContextMenuContent onOpenSettings={() => openApp("settings")} />
+      </ContextMenu>
 
-        <Toaster position="bottom-right" closeButton />
-      </div>
-    </AnimateUIProvider>
+      <Toaster position="bottom-right" closeButton />
+    </div>
   );
 }
