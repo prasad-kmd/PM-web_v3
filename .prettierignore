@@ -16,6 +16,8 @@ tmp/*
 dump/*
 .agents/*
 .agents
+prompts/
+.next/
 
 # Planning documents are laid out for reading, not for a formatter: they contain
 # illustrative snippets that Prettier reflows to 80 columns, which wrecks their
