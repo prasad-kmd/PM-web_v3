@@ -2,7 +2,7 @@
   "name": "PM-Web_V3",
   "version": "3.2.5",
   "private": true,
-  "description": "A personal engineering portfolio presented as a Windows 11 desktop workspace.",
+  "description": "A personal engineering portfolio presented as an interactive desktop workspace.",
   "author": "prasad-kmd",
   "license": "AGPL-3.0",
   "repository": {
@@ -19,8 +19,11 @@
     "format:check": "pnpm exec prettier --check ."
   },
   "dependencies": {
+    "@animate-ui/react": "^2.0.0",
     "@base-ui/react": "^1.8.0",
     "@floating-ui/react": "^0.27.20",
+    "@hugeicons/core-free-icons": "^4.3.5",
+    "@hugeicons/react": "^1.1.10",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "framer-motion": "^14.4.0",
