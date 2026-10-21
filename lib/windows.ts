@@ -14,6 +14,24 @@ export const GEO_TRANSITION: Transition = {
   damping: 40,
 };
 
+export const FLYOUT_IN: Transition = {
+  type: "spring",
+  stiffness: 420,
+  damping: 34,
+};
+export const FLYOUT_OUT: Transition = {
+  duration: 0.14,
+  ease: [0.4, 0, 1, 1],
+};
+export const SPOTLIGHT_IN: Transition = {
+  duration: 0.16,
+  ease: [0.16, 1, 0.3, 1],
+};
+export const SPOTLIGHT_OUT: Transition = {
+  duration: 0.12,
+  ease: [0.4, 0, 1, 1],
+};
+
 export function sameRect(a: Rect, b: Rect) {
   return a.x === b.x && a.y === b.y && a.w === b.w && a.h === b.h;
 }

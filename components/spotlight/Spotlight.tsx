@@ -2,9 +2,7 @@
 
 import { AnimatePresence, motion } from "framer-motion";
 import {
-  ExternalLink,
   FileText,
-  FolderGit2,
   Mail,
   Moon,
   Palette,
@@ -22,7 +20,7 @@ import { SPOTLIGHT_IN, SPOTLIGHT_OUT } from "@/lib/windows";
 type SpotlightAction = {
   id: string;
   title: string;
-  category: "Applications" | "Projects" | "Actions";
+  category: "Applications" | "Actions";
   subtitle: string;
   icon: React.ReactNode;
   onSelect: () => void;
@@ -62,31 +60,12 @@ export function Spotlight({
         onSelect: () => onOpenApp("settings"),
       },
       {
-        id: "app-readme",
+        id: "app-resume",
         category: "Applications",
-        title: "Read Me.txt",
-        subtitle: "Welcome notes, bio, and quick links",
+        title: "Resume",
+        subtitle: "Profile, experience, education, interests, and languages",
         icon: <FileText size={16} />,
-        onSelect: () => onOpenApp("notepad"),
-      },
-      {
-        id: "proj-pmeng",
-        category: "Projects",
-        title: "PMEngineer.lk — Field Platform",
-        subtitle: "Civil site management & quantity surveying software",
-        icon: <FolderGit2 size={16} />,
-        onSelect: () => {
-          window.open("https://github.com/prasad-kmd", "_blank");
-          toast.success("Opening PMEngineer repository");
-        },
-      },
-      {
-        id: "proj-webv3",
-        category: "Projects",
-        title: "PM Web v3 — Spatial Glass OS",
-        subtitle: "Modern macOS / Spatial desktop portfolio built with Next.js 16",
-        icon: <FolderGit2 size={16} />,
-        onSelect: () => onOpenApp("notepad"),
+        onSelect: () => onOpenApp("resume"),
       },
       {
         id: "act-theme",
@@ -106,15 +85,15 @@ export function Spotlight({
         subtitle: "Scenic Central Province landscape",
         icon: <Palette size={16} />,
         onSelect: () => {
-          setWallpaper("hill");
+          setWallpaper("hill-country");
           toast.success("Wallpaper updated to Hill Country");
         },
       },
       {
         id: "act-wall-bloom",
         category: "Actions",
-        title: "Set Wallpaper: Spatial Bloom",
-        subtitle: "Modern abstract glass flower",
+        title: "Set Wallpaper: Bloom",
+        subtitle: "Glossy flowing ribbon sculpture",
         icon: <Palette size={16} />,
         onSelect: () => {
           setWallpaper("bloom");
@@ -133,10 +112,10 @@ export function Spotlight({
         id: "act-email",
         category: "Actions",
         title: "Copy Email Address",
-        subtitle: "prasad.madhuranga@protonmail.com",
+        subtitle: "prasad.madhuranga@pm.me",
         icon: <Mail size={16} />,
         onSelect: () => {
-          navigator.clipboard?.writeText("prasad.madhuranga@protonmail.com");
+          navigator.clipboard?.writeText("prasad.madhuranga@pm.me");
           toast.success("Copied email to clipboard");
         },
       },

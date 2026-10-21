@@ -11,6 +11,8 @@ import { Toaster } from "sonner";
 import { ContextMenu, ContextMenuTrigger } from "@/components/ui/context-menu";
 import { WindowsLayer } from "@/components/window/WindowsLayer";
 import { useWindowManager } from "@/hooks/useWindowManager";
+import { useAppearance } from "@/lib/appearance";
+import { getWallpaper } from "@/lib/wallpapers";
 import type { AppId } from "@/lib/registry";
 import type { Area } from "@/lib/windows";
 import { DesktopContextMenuContent } from "./ContextMenu";
@@ -37,7 +39,23 @@ function useMobileWindowMode() {
 
 export function Desktop() {
   const [area, setArea] = useState<Area>({ w: 1280, h: 720, left: 0, top: 40 });
+  const [contextTarget, setContextTarget] = useState<{
+    link: string | null;
+    image: string | null;
+  }>({ link: null, image: null });
   const workRef = useRef<HTMLDivElement>(null);
+  const { wallpaper } = useAppearance();
+  const currentWallpaper = getWallpaper(wallpaper);
+
+  const captureContextTarget = useCallback((event: React.MouseEvent) => {
+    const target = event.target as HTMLElement;
+    const link = target.closest("a[href]") as HTMLAnchorElement | null;
+    const image = target.closest("img") as HTMLImageElement | null;
+    setContextTarget({
+      link: link?.href ?? null,
+      image: image?.src ?? null,
+    });
+  }, []);
 
   useLayoutEffect(() => {
     const element = workRef.current;
@@ -72,7 +90,7 @@ export function Desktop() {
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         className="desktop-background"
-        src="/images/workspace-background.jpg"
+        src={currentWallpaper.src}
         alt=""
         aria-hidden
       />
@@ -81,7 +99,14 @@ export function Desktop() {
       <MenuBar onOpenApp={openApp} onCloseAll={manager.closeAll} />
 
       <ContextMenu>
-        <ContextMenuTrigger className="work-area" ref={workRef}>
+        <ContextMenuTrigger
+          className="work-area"
+          ref={workRef}
+          onContextMenu={(event) => {
+            event.preventDefault();
+            captureContextTarget(event);
+          }}
+        >
           <ProfileWidget />
           <DesktopIcons onOpen={openApp} />
           <WindowsLayer
@@ -91,7 +116,12 @@ export function Desktop() {
             isMobile={isMobileWindowMode}
           />
         </ContextMenuTrigger>
-        <DesktopContextMenuContent onOpenSettings={() => openApp("settings")} />
+        <DesktopContextMenuContent
+          onOpenSettings={() => openApp("settings")}
+          onOpenResume={() => openApp("resume")}
+          targetLink={contextTarget.link}
+          targetImage={contextTarget.image}
+        />
       </ContextMenu>
 
       <Toaster position="bottom-right" closeButton />

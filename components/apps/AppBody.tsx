@@ -1,17 +1,16 @@
 "use client";
 
 import type { AppId } from "@/lib/registry";
-import { NotepadApp } from "./NotepadApp";
+import { ResumeApp } from "./ResumeApp";
 import { SettingsApp } from "./SettingsApp";
 
-/* One place that maps an app id to its body. Adding an app = add a case + a
-   registry entry + a component file. Nothing else in the shell needs to know. */
+/** Keep desktop windows and direct app routes on the same application body. */
 export function AppBody({ appId }: { appId: AppId }) {
   switch (appId) {
     case "settings":
       return <SettingsApp />;
-    case "notepad":
-      return <NotepadApp />;
+    case "resume":
+      return <ResumeApp />;
     default:
       return null;
   }

@@ -6,7 +6,7 @@ import {
   Cancel01Icon,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   animate,
   motion,
@@ -26,6 +26,9 @@ import {
   type SnapLayout,
 } from "@/lib/windows";
 import type { WindowState } from "@/hooks/useWindowManager";
+import type { AppId } from "@/lib/registry";
+import { ContextMenu, ContextMenuTrigger } from "@/components/ui/context-menu";
+import { DesktopContextMenuContent } from "@/components/desktop/ContextMenu";
 
 type ResizeDirection = "n" | "s" | "e" | "w" | "ne" | "nw" | "se" | "sw";
 
@@ -59,6 +62,7 @@ export function Window({
   onSnap,
   onClose,
   onExitComplete,
+  onOpenApp,
   children,
 }: {
   win: WindowState;
@@ -72,6 +76,7 @@ export function Window({
   onSnap: (layout: SnapLayout) => void;
   onClose: () => void;
   onExitComplete: () => void;
+  onOpenApp: (appId: AppId) => void;
   children: React.ReactNode;
 }) {
   const x = useMotionValue(win.rect.x + area.left);
@@ -79,7 +84,18 @@ export function Window({
   const w = useMotionValue(win.rect.w);
   const h = useMotionValue(win.rect.h);
   const interacting = useRef(false);
+  const [contextTarget, setContextTarget] = useState<{
+    link: string | null;
+    image: string | null;
+  }>({ link: null, image: null });
   const meta = APP_REGISTRY[win.appId];
+
+  const captureContextTarget = useCallback((event: React.MouseEvent) => {
+    const target = event.target as HTMLElement;
+    const link = target.closest("a[href]") as HTMLAnchorElement | null;
+    const image = target.closest("img") as HTMLImageElement | null;
+    setContextTarget({ link: link?.href ?? null, image: image?.src ?? null });
+  }, []);
 
   useEffect(() => {
     if (interacting.current || win.exiting) return;
@@ -357,7 +373,26 @@ export function Window({
               </div>
             </header>
 
-            <div className="window-body">{children}</div>
+            <div className="window-body">
+              <ContextMenu>
+                <ContextMenuTrigger
+                  className="window-body-context-trigger"
+                  onContextMenu={(event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    captureContextTarget(event);
+                  }}
+                >
+                  {children}
+                </ContextMenuTrigger>
+                <DesktopContextMenuContent
+                  onOpenSettings={() => onOpenApp("settings")}
+                  onOpenResume={() => onOpenApp("resume")}
+                  targetLink={contextTarget.link}
+                  targetImage={contextTarget.image}
+                />
+              </ContextMenu>
+            </div>
 
             {!win.maximized &&
               !win.exiting &&

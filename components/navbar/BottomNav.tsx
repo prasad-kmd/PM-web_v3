@@ -21,7 +21,7 @@ export function BottomNav({
   registerAnchor: (appId: AppId, el: HTMLElement | null) => void;
 }) {
   const isSettingsOpen = openIds.has("settings");
-  const isNotepadOpen = openIds.has("notepad");
+  const isResumeOpen = openIds.has("resume");
 
   return (
     <div className="bottom-nav-wrap" role="toolbar" aria-label="Bottom Navigation">
@@ -54,8 +54,8 @@ export function BottomNav({
             )}
           </AnimatePresence>
 
-          {/* Symmetrical placeholder when only Notepad is open */}
-          {!isSettingsOpen && isNotepadOpen && (
+          {/* Symmetrical placeholder when only Resume is open */}
+          {!isSettingsOpen && isResumeOpen && (
             <div className="w-[44px] h-[44px] pointer-events-none opacity-0" aria-hidden />
           )}
         </div>
@@ -74,32 +74,32 @@ export function BottomNav({
           <img src="/icons/fluent-color/account.svg" alt="" aria-hidden />
         </motion.button>
 
-        {/* Right Slot: Read Me.txt (when open) */}
+        {/* Right Slot: Resume (when open) */}
         <div className="flex items-center justify-start min-w-0">
           <AnimatePresence mode="popLayout">
-            {isNotepadOpen && (
+            {isResumeOpen && (
               <motion.button
-                key="nav-notepad"
-                ref={(el) => registerAnchor("notepad", el)}
+                key="nav-resume"
+                ref={(el) => registerAnchor("resume", el)}
                 type="button"
-                className={`bottom-nav-btn${topAppId === "notepad" ? " is-active" : ""}`}
-                onClick={() => onToggleWindow("notepad")}
-                title={APP_REGISTRY.notepad.title}
-                aria-label={APP_REGISTRY.notepad.title}
+                className={`bottom-nav-btn${topAppId === "resume" ? " is-active" : ""}`}
+                onClick={() => onToggleWindow("resume")}
+                title={APP_REGISTRY.resume.title}
+                aria-label={APP_REGISTRY.resume.title}
                 initial={{ opacity: 0, scale: 0.6, x: -10 }}
                 animate={{ opacity: 1, scale: 1, x: 0 }}
                 exit={{ opacity: 0, scale: 0.6, x: -10 }}
                 transition={{ type: "spring", stiffness: 480, damping: 28 }}
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={APP_REGISTRY.notepad.icon} alt="" aria-hidden />
-                {topAppId === "notepad" && <span className="bottom-nav-dot" aria-hidden />}
+                <img src={APP_REGISTRY.resume.icon} alt="" aria-hidden />
+                {topAppId === "resume" && <span className="bottom-nav-dot" aria-hidden />}
               </motion.button>
             )}
           </AnimatePresence>
 
           {/* Symmetrical placeholder when only Settings is open */}
-          {isSettingsOpen && !isNotepadOpen && (
+          {isSettingsOpen && !isResumeOpen && (
             <div className="w-[44px] h-[44px] pointer-events-none opacity-0" aria-hidden />
           )}
         </div>

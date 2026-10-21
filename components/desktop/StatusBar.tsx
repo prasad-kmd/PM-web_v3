@@ -18,7 +18,7 @@ const APP_MENUS = ["File", "Edit", "View", "Help"];
 const SEED: Notification[] = [
   {
     id: "n1",
-    app: "Read Me.txt",
+    app: "Resume",
     title: "Welcome to the workspace",
     body: "Open Settings to switch theme, accent, or wallpaper.",
     time: "now",

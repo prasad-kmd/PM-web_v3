@@ -32,6 +32,7 @@ export function WindowsLayer({
           onSnap={(layout) => manager.snap(windowState.id, layout)}
           onClose={() => manager.close(windowState.id)}
           onExitComplete={() => manager.finishExit(windowState.id)}
+          onOpenApp={(appId) => manager.open(appId)}
         >
           <AppBody appId={windowState.appId} />
         </Window>

@@ -9,12 +9,12 @@ export const metadata: Metadata = {
     template: "%s · Prasad M.",
   },
   description:
-    "Prasad M. — Civil & Frontend Engineer. A personal engineering portfolio presented as an interactive desktop workspace.",
+    "Prasad Madhuranga — Mechanical and Mechatronics Engineer. A professional portfolio presented as an interactive desktop workspace.",
   keywords: [
-    "Prasad M",
+    "Prasad Madhuranga",
     "portfolio",
-    "civil engineer",
-    "frontend developer",
+    "mechanical engineer",
+    "mechatronics engineer",
     "desktop workspace",
     "Next.js 16",
   ],

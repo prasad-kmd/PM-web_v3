@@ -15,13 +15,13 @@ export function ProfileWidget() {
   return (
     <aside
       className="profile-widget"
-      aria-label="Prasad M. profile"
+      aria-label="Prasad Madhuranga profile"
       onPointerDown={(event) => event.stopPropagation()}
       onDoubleClick={(event) => event.stopPropagation()}
     >
       <Card className="profile-card">
         <CardHeader className="profile-card-header">
-          {/* Replace this generated placeholder with Prasad's portrait when available. */}
+          {/* Replace this shared placeholder file when the final portrait is ready. */}
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             className="profile-card-photo"
@@ -29,10 +29,8 @@ export function ProfileWidget() {
             alt="Placeholder profile portrait"
           />
           <div className="profile-card-identity">
-            <CardTitle>Prasad M.</CardTitle>
-            <CardDescription>
-              Civil Engineer &amp; Full-Stack Developer
-            </CardDescription>
+            <CardTitle>Prasad Madhuranga</CardTitle>
+            <CardDescription>Mechanical + Mechatronics Engineer</CardDescription>
           </div>
         </CardHeader>
 
@@ -40,25 +38,17 @@ export function ProfileWidget() {
           <dl className="profile-card-details">
             <div>
               <dt>
-                <HugeiconsIcon
-                  icon={Location01Icon}
-                  strokeWidth={2}
-                  aria-hidden="true"
-                />
+                <HugeiconsIcon icon={Location01Icon} strokeWidth={2} aria-hidden="true" />
                 Location
               </dt>
-              <dd>Kandy, Sri Lanka</dd>
+              <dd>Kandy, Sri Lanka · UTC +05:30</dd>
             </div>
             <div>
               <dt>
-                <HugeiconsIcon
-                  icon={Briefcase01Icon}
-                  strokeWidth={2}
-                  aria-hidden="true"
-                />
+                <HugeiconsIcon icon={Briefcase01Icon} strokeWidth={2} aria-hidden="true" />
                 Focus
               </dt>
-              <dd>Field engineering · digital tools</dd>
+              <dd>Robotics · automation · machine vision</dd>
             </div>
           </dl>
         </CardPanel>
@@ -66,7 +56,7 @@ export function ProfileWidget() {
         <CardFooter className="profile-card-footer">
           <span className="profile-card-availability">
             <span aria-hidden="true" />
-            Available for selected projects
+            Open to collaboration
           </span>
         </CardFooter>
       </Card>

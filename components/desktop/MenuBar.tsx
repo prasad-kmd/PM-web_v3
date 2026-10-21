@@ -14,9 +14,6 @@ import {
   MenubarMenu,
   MenubarSeparator,
   MenubarShortcut,
-  MenubarSub,
-  MenubarSubContent,
-  MenubarSubTrigger,
   MenubarTrigger,
 } from "@/components/ui/menubar";
 
@@ -30,6 +27,17 @@ export function MenuBar({
   const { formatted } = useClock();
   const { theme, toggleTheme } = useAppearance();
 
+  const openResumeSection = (section?: string) => {
+    onOpenApp("resume");
+    if (!section) return;
+    window.setTimeout(() => {
+      document.getElementById(`resume-${section}`)?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    }, 140);
+  };
+
   return (
     <header className="menu-bar" aria-label="Workspace menu bar">
       <div className="menu-bar-leading">
@@ -38,131 +46,87 @@ export function MenuBar({
         <img
           className="workspace-profile-photo"
           src="/images/profile-placeholder.jpg"
-          alt="Prasad M."
+          alt="Prasad Madhuranga"
         />
 
-        <Menubar
-          className="workspace-menubar w-fit"
-          aria-label="Application menus"
-        >
+        <Menubar className="workspace-menubar w-fit" aria-label="Application menus">
           <MenubarMenu>
             <MenubarTrigger>File</MenubarTrigger>
             <MenubarContent>
               <MenubarGroup>
-                <MenubarItem onClick={() => onOpenApp("notepad")}>
-                  Open Read Me <MenubarShortcut>⌘O</MenubarShortcut>
+                <MenubarItem onClick={() => onOpenApp("resume")}>
+                  Open Resume <MenubarShortcut>⌘O</MenubarShortcut>
                 </MenubarItem>
                 <MenubarItem onClick={() => onOpenApp("settings")}>
                   Open Settings <MenubarShortcut>⌘,</MenubarShortcut>
                 </MenubarItem>
               </MenubarGroup>
               <MenubarSeparator />
+              <MenubarItem variant="destructive" onClick={onCloseAll}>
+                Close all windows
+              </MenubarItem>
+            </MenubarContent>
+          </MenubarMenu>
+
+          <MenubarMenu>
+            <MenubarTrigger className="menu-bar-optional-trigger">Explore</MenubarTrigger>
+            <MenubarContent>
               <MenubarGroup>
-                <MenubarSub>
-                  <MenubarSubTrigger>External links</MenubarSubTrigger>
-                  <MenubarSubContent>
-                    <MenubarGroup>
-                      <MenubarItem
-                        onClick={() =>
-                          window.open(
-                            "https://github.com/prasad-kmd",
-                            "_blank",
-                            "noopener,noreferrer",
-                          )
-                        }
-                      >
-                        GitHub profile
-                      </MenubarItem>
-                      <MenubarItem
-                        onClick={() =>
-                          window.open(
-                            "https://www.pmengineer.lk",
-                            "_blank",
-                            "noopener,noreferrer",
-                          )
-                        }
-                      >
-                        PMEngineer.lk
-                      </MenubarItem>
-                    </MenubarGroup>
-                  </MenubarSubContent>
-                </MenubarSub>
+                <MenubarItem onClick={() => openResumeSection()}>Portfolio / Resume</MenubarItem>
+                <MenubarItem onClick={() => openResumeSection("projects")}>Projects</MenubarItem>
+                <MenubarItem onClick={() => openResumeSection("experience")}>Experience</MenubarItem>
+                <MenubarItem onClick={() => openResumeSection("education")}>Education</MenubarItem>
+                <MenubarItem onClick={() => openResumeSection("interests")}>Interests</MenubarItem>
+                <MenubarItem onClick={() => openResumeSection("languages")}>Languages</MenubarItem>
               </MenubarGroup>
             </MenubarContent>
           </MenubarMenu>
 
           <MenubarMenu>
-            <MenubarTrigger className="menu-bar-optional-trigger">
-              View
-            </MenubarTrigger>
+            <MenubarTrigger className="menu-bar-optional-trigger">View</MenubarTrigger>
             <MenubarContent>
               <MenubarGroup>
                 <MenubarItem onClick={toggleTheme}>
                   Use {theme === "dark" ? "light" : "dark"} appearance
                 </MenubarItem>
-                <MenubarItem onClick={() => onOpenApp("settings")}>
-                  Appearance settings
-                </MenubarItem>
+                <MenubarItem onClick={() => onOpenApp("settings")}>Appearance settings</MenubarItem>
               </MenubarGroup>
             </MenubarContent>
           </MenubarMenu>
 
           <MenubarMenu>
-            <MenubarTrigger className="menu-bar-optional-trigger">
-              Window
-            </MenubarTrigger>
+            <MenubarTrigger className="menu-bar-optional-trigger">Window</MenubarTrigger>
             <MenubarContent>
               <MenubarGroup>
-                <MenubarItem onClick={() => onOpenApp("settings")}>
-                  Settings
-                </MenubarItem>
-                <MenubarItem onClick={() => onOpenApp("notepad")}>
-                  Read Me.txt
-                </MenubarItem>
+                <MenubarItem onClick={() => onOpenApp("resume")}>Resume</MenubarItem>
+                <MenubarItem onClick={() => onOpenApp("settings")}>Settings</MenubarItem>
               </MenubarGroup>
               <MenubarSeparator />
-              <MenubarGroup>
-                <MenubarItem variant="destructive" onClick={onCloseAll}>
-                  Close all windows
-                </MenubarItem>
-              </MenubarGroup>
+              <MenubarItem variant="destructive" onClick={onCloseAll}>
+                Close all windows
+              </MenubarItem>
             </MenubarContent>
           </MenubarMenu>
 
           <MenubarMenu>
-            <MenubarTrigger className="menu-bar-optional-trigger">
-              Help
-            </MenubarTrigger>
+            <MenubarTrigger className="menu-bar-optional-trigger">Help</MenubarTrigger>
             <MenubarContent>
-              <MenubarGroup>
-                <MenubarItem onClick={() => onOpenApp("notepad")}>
-                  About this workspace
-                </MenubarItem>
-              </MenubarGroup>
+              <MenubarItem onClick={() => openResumeSection()}>About this workspace</MenubarItem>
+              <MenubarItem onClick={() => openResumeSection("contact")}>Contact</MenubarItem>
             </MenubarContent>
           </MenubarMenu>
         </Menubar>
       </div>
 
       <div className="menu-bar-status">
-        <WorkspaceTooltip
-          label={
-            theme === "dark"
-              ? "Switch to light appearance"
-              : "Switch to dark appearance"
-          }
-        >
+        <WorkspaceTooltip label={theme === "dark" ? "Switch to light appearance" : "Switch to dark appearance"}>
           <button
             type="button"
             className="menu-bar-icon-btn menu-bar-theme-toggle"
             onClick={toggleTheme}
             aria-label="Toggle appearance"
           >
-            <HugeiconsIcon
-              icon={theme === "dark" ? SunMediumIcon : Moon02Icon}
-              strokeWidth={2}
-              size={16}
-            />
+            <HugeiconsIcon icon={theme === "dark" ? SunMediumIcon : Moon02Icon} strokeWidth={2} size={16} />
           </button>
         </WorkspaceTooltip>
         <time className="menu-bar-clock">{formatted}</time>

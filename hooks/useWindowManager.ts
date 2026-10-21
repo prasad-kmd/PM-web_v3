@@ -32,22 +32,15 @@ type StoredWindowLayouts = Partial<Record<AppId, StoredWindowLayout>>;
 
 const STORAGE_KEY = "pm-window-layout-v1";
 
-const OPEN_SIZE: Record<AppId, { w: number; h: number }> = {
-  settings: { w: 780, h: 580 },
-  notepad: { w: 720, h: 540 },
-};
+const DEFAULT_WINDOW_SIZE = { w: 900, h: 640 };
 
-function cascade(
-  area: Area,
-  index: number,
-  size: { w: number; h: number },
-): Rect {
-  const w = Math.min(size.w, Math.max(320, area.w - 48));
-  const h = Math.min(size.h, Math.max(240, area.h - 48));
-  const offset = (index % 5) * 28;
+/** New apps share one centered first-open rectangle; saved layouts still win. */
+function centeredDefault(area: Area): Rect {
+  const w = Math.min(DEFAULT_WINDOW_SIZE.w, area.w);
+  const h = Math.min(DEFAULT_WINDOW_SIZE.h, area.h);
   return {
-    x: Math.max(12, Math.round((area.w - w) / 2 - 80 + offset)),
-    y: Math.max(12, Math.round((area.h - h) / 2 - 16 + offset)),
+    x: Math.round((area.w - w) / 2),
+    y: Math.round((area.h - h) / 2),
     w,
     h,
   };
@@ -112,7 +105,6 @@ function serializeLayout(windowState: WindowState): StoredWindowLayout {
 export function useWindowManager(area: Area, isMobile: boolean) {
   const [windows, setWindows] = useState<WindowState[]>([]);
   const zRef = useRef(10);
-  const indexRef = useRef(0);
   const layoutsRef = useRef<StoredWindowLayouts>(readStoredLayouts());
 
   const persistLayout = useCallback((windowState: WindowState) => {
@@ -166,7 +158,7 @@ export function useWindowManager(area: Area, isMobile: boolean) {
         }
 
         const stored = layoutsRef.current[appId];
-        const freshRect = cascade(area, indexRef.current++, OPEN_SIZE[appId]);
+        const freshRect = centeredDefault(area);
         const restRect = stored ? clampRect(stored.restRect, area) : freshRect;
         const restoreMaximized = stored?.maximized ?? false;
         const maximized = isMobile || restoreMaximized;
