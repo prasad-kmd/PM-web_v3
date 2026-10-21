@@ -51,6 +51,7 @@ export function Window({
   win,
   area,
   isTop,
+  isMobile,
   onFocus,
   onMove,
   onResize,
@@ -63,6 +64,7 @@ export function Window({
   win: WindowState;
   area: Area;
   isTop: boolean;
+  isMobile: boolean;
   onFocus: () => void;
   onMove: (rect: Rect) => void;
   onResize: (rect: Rect) => void;
@@ -113,6 +115,18 @@ export function Window({
       if ((event.target as HTMLElement).closest(".window-control")) return;
 
       event.preventDefault();
+      const dragTarget = event.currentTarget;
+      const pointerId = event.pointerId;
+
+      // Pointer capture keeps a touch drag active even when the finger leaves
+      // the compact titlebar. `touch-action: none` on the titlebar prevents
+      // the browser from cancelling the stream to begin page panning/zooming.
+      try {
+        dragTarget.setPointerCapture(pointerId);
+      } catch {
+        // Pointer capture is an enhancement; the window listeners still cover it.
+      }
+
       onFocus();
       interacting.current = true;
 
@@ -123,7 +137,8 @@ export function Window({
       const currentW = w.get();
       const currentH = h.get();
 
-      const onMoveEvent = (moveEvent: PointerEvent) => {
+      function onMoveEvent(moveEvent: PointerEvent) {
+        if (moveEvent.pointerId !== pointerId) return;
         const nextX = originX + (moveEvent.clientX - startX);
         const nextY = originY + (moveEvent.clientY - startY);
         x.set(
@@ -138,12 +153,30 @@ export function Window({
             Math.max(area.top + area.h - 48, area.top),
           ),
         );
-      };
+      }
 
-      const onUp = (upEvent: PointerEvent) => {
+      function stopDragging() {
         window.removeEventListener("pointermove", onMoveEvent);
         window.removeEventListener("pointerup", onUp);
+        window.removeEventListener("pointercancel", onCancel);
+        if (dragTarget.hasPointerCapture(pointerId)) {
+          dragTarget.releasePointerCapture(pointerId);
+        }
         interacting.current = false;
+      }
+
+      function persistPosition() {
+        onMove({
+          x: x.get() - area.left,
+          y: y.get() - area.top,
+          w: currentW,
+          h: currentH,
+        });
+      }
+
+      function onUp(upEvent: PointerEvent) {
+        if (upEvent.pointerId !== pointerId) return;
+        stopDragging();
 
         const relativeX = upEvent.clientX - area.left;
         if (upEvent.clientY - area.top <= 4) {
@@ -158,16 +191,18 @@ export function Window({
           onSnap("right");
           return;
         }
-        onMove({
-          x: x.get() - area.left,
-          y: y.get() - area.top,
-          w: currentW,
-          h: currentH,
-        });
-      };
+        persistPosition();
+      }
+
+      function onCancel(cancelEvent: PointerEvent) {
+        if (cancelEvent.pointerId !== pointerId) return;
+        stopDragging();
+        persistPosition();
+      }
 
       window.addEventListener("pointermove", onMoveEvent);
       window.addEventListener("pointerup", onUp);
+      window.addEventListener("pointercancel", onCancel);
     },
     [
       area,
@@ -277,7 +312,7 @@ export function Window({
             <header
               className="window-titlebar"
               onPointerDown={startDrag}
-              onDoubleClick={onToggleMaximize}
+              onDoubleClick={isMobile ? undefined : onToggleMaximize}
             >
               <span className="window-title">{win.title}</span>
 
@@ -285,24 +320,26 @@ export function Window({
                 className="window-title-actions"
                 aria-label="Window controls"
               >
-                <WorkspaceTooltip
-                  label={win.maximized ? "Restore window" : "Maximize window"}
-                >
-                  <button
-                    type="button"
-                    className="window-control"
-                    onClick={onToggleMaximize}
-                    aria-label={
-                      win.maximized ? "Restore window" : "Maximize window"
-                    }
+                {!isMobile && (
+                  <WorkspaceTooltip
+                    label={win.maximized ? "Restore window" : "Maximize window"}
                   >
-                    <HugeiconsIcon
-                      icon={win.maximized ? Copy01Icon : Maximize02Icon}
-                      strokeWidth={2}
-                      size={15}
-                    />
-                  </button>
-                </WorkspaceTooltip>
+                    <button
+                      type="button"
+                      className="window-control"
+                      onClick={onToggleMaximize}
+                      aria-label={
+                        win.maximized ? "Restore window" : "Maximize window"
+                      }
+                    >
+                      <HugeiconsIcon
+                        icon={win.maximized ? Copy01Icon : Maximize02Icon}
+                        strokeWidth={2}
+                        size={15}
+                      />
+                    </button>
+                  </WorkspaceTooltip>
+                )}
                 <WorkspaceTooltip label="Close window">
                   <button
                     type="button"

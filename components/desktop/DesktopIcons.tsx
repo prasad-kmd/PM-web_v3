@@ -118,7 +118,7 @@ export function DesktopIcons({ onOpen }: { onOpen: (appId: AppId) => void }) {
                   setSelected(new Set([appId]));
                 }
               }}
-              onDoubleClick={() => onOpen(appId)}
+              onClick={() => onOpen(appId)}
               aria-label={label}
             >
               <span className="shortcut-icon">

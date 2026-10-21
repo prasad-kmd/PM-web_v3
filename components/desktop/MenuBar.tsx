@@ -33,9 +33,13 @@ export function MenuBar({
   return (
     <header className="menu-bar" aria-label="Workspace menu bar">
       <div className="menu-bar-leading">
-        <span className="workspace-mark" aria-label="Prasad M. workspace">
-          PM
-        </span>
+        {/* Replace this shared portrait file when the final photo is ready. */}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          className="workspace-profile-photo"
+          src="/images/profile-placeholder.jpg"
+          alt="Prasad M."
+        />
 
         <Menubar
           className="workspace-menubar w-fit"
@@ -88,7 +92,9 @@ export function MenuBar({
           </MenubarMenu>
 
           <MenubarMenu>
-            <MenubarTrigger>View</MenubarTrigger>
+            <MenubarTrigger className="menu-bar-optional-trigger">
+              View
+            </MenubarTrigger>
             <MenubarContent>
               <MenubarGroup>
                 <MenubarItem onClick={toggleTheme}>
@@ -102,7 +108,9 @@ export function MenuBar({
           </MenubarMenu>
 
           <MenubarMenu>
-            <MenubarTrigger>Window</MenubarTrigger>
+            <MenubarTrigger className="menu-bar-optional-trigger">
+              Window
+            </MenubarTrigger>
             <MenubarContent>
               <MenubarGroup>
                 <MenubarItem onClick={() => onOpenApp("settings")}>
@@ -122,7 +130,9 @@ export function MenuBar({
           </MenubarMenu>
 
           <MenubarMenu>
-            <MenubarTrigger>Help</MenubarTrigger>
+            <MenubarTrigger className="menu-bar-optional-trigger">
+              Help
+            </MenubarTrigger>
             <MenubarContent>
               <MenubarGroup>
                 <MenubarItem onClick={() => onOpenApp("notepad")}>
@@ -144,7 +154,7 @@ export function MenuBar({
         >
           <button
             type="button"
-            className="menu-bar-icon-btn"
+            className="menu-bar-icon-btn menu-bar-theme-toggle"
             onClick={toggleTheme}
             aria-label="Toggle appearance"
           >

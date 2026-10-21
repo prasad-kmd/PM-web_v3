@@ -98,6 +98,7 @@ The layout follows a strict desktop-workspace model with a 4px spacing rhythm.
 
 - **Menubar:** Fixed to the top edge; 40px tall; full width; page-background surface with a 1px bottom border.
 - **Workspace:** Starts below the menubar and fills the remaining viewport. Its adaptive contour background stays low-contrast in both theme modes, while the centre remains intentionally open for work.
+- **Profile widget:** A fixed 318px maximum-width card sits at the upper-left, 18px below and right of the workspace edge. It remains below application windows and stays inside the desktop canvas rather than creating a separate sidebar.
 - **Desktop shortcuts:** Right-aligned grid with 88px columns, 82px-wide shortcut controls, 36px icon tiles, and 12px labels.
 - **Windows:** Open in a cascade, retain their saved geometry, and stay independent of one another. They may be dragged, resized, maximized/restored, closed, focused, and edge-snapped.
 - **Application interiors:** Use compact vertical spacing and bounded reading widths inside the window body. Settings has a small app sidebar; Read Me uses documentation-quality text and code—but both remain applications inside a desktop window.
@@ -140,6 +141,12 @@ Use the published Menubar composition: one animated popup is handed between trig
 Shortcuts remain real buttons with select, multi-select, F2 rename, Enter open, marquee selection, and right-click behavior. They use single-stroke Hugeicons-style icons in neutral icon tiles with clean text treatment.
 
 Empty-canvas and shortcut context menus use the actual Animate UI Base UI Context Menu primitive: `Root → Trigger → Portal → Positioner → Popup`. Collision handling, keyboard behavior, focus management, reduced-motion support, and popup motion belong to the primitive.
+
+### Profile widget
+
+The upper-left identity card uses the installed Coss Card primitive—not a substitute surface—with direct `CardHeader`, `CardPanel`, and `CardFooter` sections. It shows the profile image, name, dual discipline, Kandy location, a concise focus line, and an understated availability status. The card inherits the shared 10px radius, semantic card/border tokens, Outfit type, and the same restrained shadow used by windows.
+
+The temporary portrait lives at `public/images/profile-placeholder.jpg`; replacing that file is the only change needed to use a supplied image. The widget stops canvas-selection pointer events but remains below all application windows.
 
 ### Windows
 

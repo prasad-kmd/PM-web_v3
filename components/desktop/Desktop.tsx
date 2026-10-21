@@ -1,6 +1,12 @@
 "use client";
 
-import { useCallback, useLayoutEffect, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
 import { Toaster } from "sonner";
 import { ContextMenu, ContextMenuTrigger } from "@/components/ui/context-menu";
 import { WindowsLayer } from "@/components/window/WindowsLayer";
@@ -10,6 +16,24 @@ import type { Area } from "@/lib/windows";
 import { DesktopContextMenuContent } from "./ContextMenu";
 import { DesktopIcons } from "./DesktopIcons";
 import { MenuBar } from "./MenuBar";
+import { ProfileWidget } from "./ProfileWidget";
+
+const MOBILE_WINDOW_MEDIA =
+  "(max-width: 768px), (hover: none) and (pointer: coarse)";
+
+function useMobileWindowMode() {
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const media = window.matchMedia(MOBILE_WINDOW_MEDIA);
+    const update = () => setIsMobile(media.matches);
+    update();
+    media.addEventListener("change", update);
+    return () => media.removeEventListener("change", update);
+  }, []);
+
+  return isMobile;
+}
 
 export function Desktop() {
   const [area, setArea] = useState<Area>({ w: 1280, h: 720, left: 0, top: 40 });
@@ -39,7 +63,8 @@ export function Desktop() {
     };
   }, []);
 
-  const manager = useWindowManager(area);
+  const isMobileWindowMode = useMobileWindowMode();
+  const manager = useWindowManager(area, isMobileWindowMode);
   const openApp = useCallback((appId: AppId) => manager.open(appId), [manager]);
 
   return (
@@ -47,7 +72,7 @@ export function Desktop() {
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         className="desktop-background"
-        src="/images/desktop-bloom-wallpaper.webp"
+        src="/images/workspace-background.jpg"
         alt=""
         aria-hidden
       />
@@ -57,11 +82,13 @@ export function Desktop() {
 
       <ContextMenu>
         <ContextMenuTrigger className="work-area" ref={workRef}>
+          <ProfileWidget />
           <DesktopIcons onOpen={openApp} />
           <WindowsLayer
             windows={manager.windows}
             area={area}
             manager={manager}
+            isMobile={isMobileWindowMode}
           />
         </ContextMenuTrigger>
         <DesktopContextMenuContent onOpenSettings={() => openApp("settings")} />

@@ -234,7 +234,16 @@ input:focus-visible {
   gap: 4px;
 }
 
-.workspace-mark,
+.workspace-profile-photo {
+  display: block;
+  width: 28px;
+  height: 28px;
+  flex: 0 0 auto;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  object-fit: cover;
+}
+
 .menu-bar-icon-btn {
   display: grid;
   width: 28px;
@@ -243,17 +252,6 @@ input:focus-visible {
   border-radius: 6px;
   background: transparent;
   color: var(--foreground);
-}
-
-.workspace-mark {
-  background: var(--primary);
-  color: var(--primary-foreground);
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: -0.04em;
-}
-
-.menu-bar-icon-btn {
   cursor: pointer;
   transition:
     background-color 140ms ease,
@@ -300,6 +298,125 @@ input:focus-visible {
 
 .desktop-context-trigger {
   display: contents;
+}
+
+/* Coss Card widget, kept deliberately quiet so it belongs to the desktop. */
+.profile-widget {
+  position: fixed;
+  top: calc(var(--menubar-h) + 18px);
+  left: 18px;
+  z-index: 2;
+  width: min(318px, calc(100vw - 36px));
+  pointer-events: auto;
+}
+
+.profile-card {
+  background: var(--card);
+}
+
+.profile-card-header {
+  display: flex;
+  grid-template-columns: none;
+  align-items: center;
+  gap: 12px;
+  padding: 15px 16px;
+}
+
+.profile-card-photo {
+  display: block;
+  width: 54px;
+  height: 54px;
+  flex: 0 0 auto;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  object-fit: cover;
+}
+
+.profile-card-identity {
+  min-width: 0;
+}
+
+.profile-card-identity [data-slot="card-title"] {
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.profile-card-identity [data-slot="card-description"] {
+  margin-top: 4px;
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.profile-card-panel {
+  padding: 0 16px 14px;
+}
+
+.profile-card-details {
+  display: grid;
+  gap: 9px;
+  margin: 0;
+}
+
+.profile-card-details > div {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.profile-card-details dt,
+.profile-card-details dd {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.profile-card-details dt {
+  display: inline-flex;
+  min-width: 0;
+  align-items: center;
+  gap: 6px;
+  color: var(--muted-foreground);
+}
+
+.profile-card-details dt svg {
+  width: 14px;
+  height: 14px;
+  flex: 0 0 auto;
+}
+
+.profile-card-details dd {
+  overflow: hidden;
+  color: var(--card-foreground);
+  font-weight: 500;
+  text-align: right;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.profile-card-footer {
+  min-height: 40px;
+  padding: 10px 16px;
+}
+
+.profile-card-availability {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--muted-foreground);
+  font-size: 12px;
+  line-height: 1.25;
+}
+
+.profile-card-availability > span {
+  width: 7px;
+  height: 7px;
+  flex: 0 0 auto;
+  border-radius: 999px;
+  background: var(--foreground);
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--foreground) 14%, transparent);
 }
 
 .desktop-grid {
@@ -444,6 +561,7 @@ input:focus-visible {
   background: var(--background);
   cursor: grab;
   user-select: none;
+  touch-action: none;
 }
 
 .window-titlebar:active {
@@ -511,6 +629,7 @@ input:focus-visible {
 .resize-handle {
   position: absolute;
   z-index: 10;
+  touch-action: none;
 }
 
 .resize-handle.n {
@@ -944,10 +1063,6 @@ input:focus-visible {
     padding-inline: 7px;
   }
 
-  .workspace-mark {
-    width: 28px;
-  }
-
   .menu-bar-clock {
     max-width: 132px;
     overflow: hidden;
@@ -1002,6 +1117,29 @@ input:focus-visible {
 
   .standalone {
     padding: 12px;
+  }
+}
+
+@media (max-width: 425px) {
+  .profile-widget {
+    top: calc(var(--menubar-h) + 12px);
+    right: 12px;
+    left: 12px;
+    width: auto;
+  }
+
+  .desktop-grid {
+    top: 204px;
+    right: auto;
+    left: 0;
+    width: 100%;
+  }
+}
+
+@media (max-width: 375px) {
+  .menu-bar-optional-trigger,
+  .menu-bar-theme-toggle {
+    display: none;
   }
 }
 

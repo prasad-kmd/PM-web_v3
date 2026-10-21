@@ -9,3 +9,4 @@
 - Applied Animate UI Dialog-style spring, fade, blur, dismiss, and reduced-motion behavior to non-modal desktop windows.
 - Added browser-persisted application window layouts (`pm-window-layout-v1`).
 - Removed obsolete menu positioning and dock-anchor restore logic.
+- Added a fixed upper-left profile widget built from the Coss Card primitive, with a temporary replaceable portrait asset and Animate UI-aligned card treatment.

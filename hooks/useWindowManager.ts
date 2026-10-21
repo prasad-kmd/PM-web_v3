@@ -19,6 +19,10 @@ export type WindowState = {
   rect: Rect;
   restRect: Rect;
   maximized: boolean;
+  /** A temporary full-screen state for mobile presentation; never persisted. */
+  mobileMaximized: boolean;
+  /** The regular desktop maximize state to restore after mobile presentation. */
+  restoreMaximized: boolean;
   /** The window remains mounted until its Animate UI-style close exit completes. */
   exiting: boolean;
 };
@@ -105,13 +109,16 @@ function serializeLayout(windowState: WindowState): StoredWindowLayout {
   };
 }
 
-export function useWindowManager(area: Area) {
+export function useWindowManager(area: Area, isMobile: boolean) {
   const [windows, setWindows] = useState<WindowState[]>([]);
   const zRef = useRef(10);
   const indexRef = useRef(0);
   const layoutsRef = useRef<StoredWindowLayouts>(readStoredLayouts());
 
   const persistLayout = useCallback((windowState: WindowState) => {
+    // Mobile maximization is a presentation rule, not a saved desktop layout.
+    if (windowState.mobileMaximized) return;
+
     const next = {
       ...layoutsRef.current,
       [windowState.appId]: serializeLayout(windowState),
@@ -161,7 +168,8 @@ export function useWindowManager(area: Area) {
         const stored = layoutsRef.current[appId];
         const freshRect = cascade(area, indexRef.current++, OPEN_SIZE[appId]);
         const restRect = stored ? clampRect(stored.restRect, area) : freshRect;
-        const maximized = stored?.maximized ?? false;
+        const restoreMaximized = stored?.maximized ?? false;
+        const maximized = isMobile || restoreMaximized;
         const rect = maximized
           ? { x: 0, y: 0, w: area.w, h: area.h }
           : stored
@@ -175,13 +183,15 @@ export function useWindowManager(area: Area) {
           rect,
           restRect,
           maximized,
+          mobileMaximized: isMobile,
+          restoreMaximized,
           exiting: false,
         };
 
         return [...current, windowState];
       });
     },
-    [area],
+    [area, isMobile],
   );
 
   const close = useCallback(
@@ -199,9 +209,15 @@ export function useWindowManager(area: Area) {
 
   const toggleMaximize = useCallback(
     (id: string) => {
+      if (isMobile) return;
       setWindows((current) =>
         current.map((windowState) => {
-          if (windowState.id !== id || windowState.exiting) return windowState;
+          if (
+            windowState.id !== id ||
+            windowState.exiting ||
+            windowState.mobileMaximized
+          )
+            return windowState;
           zRef.current += 1;
           const next = windowState.maximized
             ? {
@@ -222,14 +238,20 @@ export function useWindowManager(area: Area) {
         }),
       );
     },
-    [area, persistLayout],
+    [area, isMobile, persistLayout],
   );
 
   const snap = useCallback(
     (id: string, layout: SnapLayout) => {
+      if (isMobile) return;
       setWindows((current) =>
         current.map((windowState) => {
-          if (windowState.id !== id || windowState.exiting) return windowState;
+          if (
+            windowState.id !== id ||
+            windowState.exiting ||
+            windowState.mobileMaximized
+          )
+            return windowState;
           zRef.current += 1;
           const next = {
             ...windowState,
@@ -245,14 +267,16 @@ export function useWindowManager(area: Area) {
         }),
       );
     },
-    [area, persistLayout],
+    [area, isMobile, persistLayout],
   );
 
   const updateRect = useCallback(
     (id: string, rect: Rect) => {
+      if (isMobile) return;
       setWindows((current) =>
         current.map((windowState) => {
-          if (windowState.id !== id) return windowState;
+          if (windowState.id !== id || windowState.mobileMaximized)
+            return windowState;
           const next = {
             ...windowState,
             rect: { ...rect },
@@ -264,7 +288,7 @@ export function useWindowManager(area: Area) {
         }),
       );
     },
-    [persistLayout],
+    [isMobile, persistLayout],
   );
 
   const closeAll = useCallback(() => {
@@ -276,6 +300,53 @@ export function useWindowManager(area: Area) {
       }),
     );
   }, [persistLayout]);
+
+  // Mobile windows are always full-screen, but the desktop layout remains intact
+  // and returns when the presentation mode changes back.
+  useEffect(() => {
+    const fullRect = { x: 0, y: 0, w: area.w, h: area.h };
+
+    setWindows((current) =>
+      current.map((windowState) => {
+        if (isMobile) {
+          const restRect = windowState.mobileMaximized
+            ? windowState.restRect
+            : windowState.maximized
+              ? windowState.restRect
+              : clampRect(windowState.rect, area);
+          const restoreMaximized = windowState.mobileMaximized
+            ? windowState.restoreMaximized
+            : windowState.maximized;
+
+          if (
+            windowState.mobileMaximized &&
+            windowState.maximized &&
+            sameRect(windowState.rect, fullRect) &&
+            sameRect(windowState.restRect, restRect)
+          )
+            return windowState;
+
+          return {
+            ...windowState,
+            rect: fullRect,
+            restRect,
+            maximized: true,
+            mobileMaximized: true,
+            restoreMaximized,
+          };
+        }
+
+        if (!windowState.mobileMaximized) return windowState;
+        const maximized = windowState.restoreMaximized;
+        return {
+          ...windowState,
+          rect: maximized ? fullRect : clampRect(windowState.restRect, area),
+          maximized,
+          mobileMaximized: false,
+        };
+      }),
+    );
+  }, [area, isMobile]);
 
   // A display resize can invalidate stored/open geometry. Clamp and retain the corrected layout.
   useEffect(() => {

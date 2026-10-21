@@ -9,10 +9,12 @@ export function WindowsLayer({
   windows,
   area,
   manager,
+  isMobile,
 }: {
   windows: WindowManager["windows"];
   area: Area;
   manager: WindowManager;
+  isMobile: boolean;
 }) {
   return (
     <>
@@ -22,6 +24,7 @@ export function WindowsLayer({
           win={windowState}
           area={area}
           isTop={windowState.id === manager.topId}
+          isMobile={isMobile}
           onFocus={() => manager.focus(windowState.id)}
           onMove={(rect) => manager.move(windowState.id, rect)}
           onResize={(rect) => manager.resize(windowState.id, rect)}
