@@ -13,10 +13,8 @@ const nextConfig = {
     // that this project actually depends on — anything unknown here would just
     // produce a warning at build time.
     optimizePackageImports: [
-      "lucide-react",
-      "date-fns",
-      "radix-ui",
-      "recharts",
+      "@hugeicons/core-free-icons",
+      "@hugeicons/react",
       "sonner",
     ],
   },
