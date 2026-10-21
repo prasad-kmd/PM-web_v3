@@ -1,64 +1,157 @@
 "use client";
 
-import { Moon, Sun } from "lucide-react";
+import { Moon02Icon, SunMediumIcon } from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import { useClock } from "@/hooks/useClock";
 import { useAppearance } from "@/lib/appearance";
-
-const APP_MENUS = ["File", "Edit", "View", "Window", "Help"];
+import type { AppId } from "@/lib/registry";
+import {
+  Menubar,
+  MenubarContent,
+  MenubarGroup,
+  MenubarItem,
+  MenubarMenu,
+  MenubarSeparator,
+  MenubarShortcut,
+  MenubarSub,
+  MenubarSubContent,
+  MenubarSubTrigger,
+  MenubarTrigger,
+} from "@/components/ui/menubar";
 
 export function MenuBar({
-  focusedTitle,
-  onOpenSettings,
+  onOpenApp,
+  onCloseAll,
 }: {
-  focusedTitle: string | null;
-  onOpenSettings: () => void;
+  onOpenApp: (appId: AppId) => void;
+  onCloseAll: () => void;
 }) {
   const { formatted } = useClock();
   const { theme, toggleTheme } = useAppearance();
 
-  const activeApp = focusedTitle ?? "Prasad M.";
-
   return (
-    <header className="menu-bar" role="menubar" aria-label="Menu bar">
-      <div className="menu-bar-left">
-        {/* Personal Monogram Brand Icon */}
-        <button
-          type="button"
-          className="menu-bar-logo"
-          onClick={onOpenSettings}
-          title="Settings"
-          aria-label="Settings"
+    <header className="menu-bar" aria-label="Workspace menu bar">
+      <div className="menu-bar-leading">
+        <span className="workspace-mark" aria-label="Prasad M. workspace">
+          PM
+        </span>
+
+        <Menubar
+          className="workspace-menubar w-fit"
+          aria-label="Application menus"
         >
-          ⌘
-        </button>
+          <MenubarMenu>
+            <MenubarTrigger>File</MenubarTrigger>
+            <MenubarContent>
+              <MenubarGroup>
+                <MenubarItem onClick={() => onOpenApp("notepad")}>
+                  Open Read Me <MenubarShortcut>⌘O</MenubarShortcut>
+                </MenubarItem>
+                <MenubarItem onClick={() => onOpenApp("settings")}>
+                  Open Settings <MenubarShortcut>⌘,</MenubarShortcut>
+                </MenubarItem>
+              </MenubarGroup>
+              <MenubarSeparator />
+              <MenubarGroup>
+                <MenubarSub>
+                  <MenubarSubTrigger>External links</MenubarSubTrigger>
+                  <MenubarSubContent>
+                    <MenubarGroup>
+                      <MenubarItem
+                        onClick={() =>
+                          window.open(
+                            "https://github.com/prasad-kmd",
+                            "_blank",
+                            "noopener,noreferrer",
+                          )
+                        }
+                      >
+                        GitHub profile
+                      </MenubarItem>
+                      <MenubarItem
+                        onClick={() =>
+                          window.open(
+                            "https://www.pmengineer.lk",
+                            "_blank",
+                            "noopener,noreferrer",
+                          )
+                        }
+                      >
+                        PMEngineer.lk
+                      </MenubarItem>
+                    </MenubarGroup>
+                  </MenubarSubContent>
+                </MenubarSub>
+              </MenubarGroup>
+            </MenubarContent>
+          </MenubarMenu>
 
-        <span className="menu-bar-item menu-bar-app-name">{activeApp}</span>
+          <MenubarMenu>
+            <MenubarTrigger>View</MenubarTrigger>
+            <MenubarContent>
+              <MenubarGroup>
+                <MenubarItem onClick={toggleTheme}>
+                  Use {theme === "dark" ? "light" : "dark"} appearance
+                </MenubarItem>
+                <MenubarItem onClick={() => onOpenApp("settings")}>
+                  Appearance settings
+                </MenubarItem>
+              </MenubarGroup>
+            </MenubarContent>
+          </MenubarMenu>
 
-        <nav className="flex items-center gap-0.5" aria-label="Application menus">
-          {APP_MENUS.map((m) => (
-            <span key={m} className="menu-bar-item hidden sm:inline-flex">
-              {m}
-            </span>
-          ))}
-        </nav>
+          <MenubarMenu>
+            <MenubarTrigger>Window</MenubarTrigger>
+            <MenubarContent>
+              <MenubarGroup>
+                <MenubarItem onClick={() => onOpenApp("settings")}>
+                  Settings
+                </MenubarItem>
+                <MenubarItem onClick={() => onOpenApp("notepad")}>
+                  Read Me.txt
+                </MenubarItem>
+              </MenubarGroup>
+              <MenubarSeparator />
+              <MenubarGroup>
+                <MenubarItem variant="destructive" onClick={onCloseAll}>
+                  Close all windows
+                </MenubarItem>
+              </MenubarGroup>
+            </MenubarContent>
+          </MenubarMenu>
+
+          <MenubarMenu>
+            <MenubarTrigger>Help</MenubarTrigger>
+            <MenubarContent>
+              <MenubarGroup>
+                <MenubarItem onClick={() => onOpenApp("notepad")}>
+                  About this workspace
+                </MenubarItem>
+              </MenubarGroup>
+            </MenubarContent>
+          </MenubarMenu>
+        </Menubar>
       </div>
 
-      <div className="menu-bar-right">
-        {/* Theme Quick Toggle */}
+      <div className="menu-bar-status">
         <button
           type="button"
           className="menu-bar-icon-btn"
           onClick={toggleTheme}
-          title={theme === "dark" ? "Switch to Light Mode" : "Switch to Dark Mode"}
-          aria-label="Toggle Theme"
+          title={
+            theme === "dark"
+              ? "Switch to light appearance"
+              : "Switch to dark appearance"
+          }
+          aria-label="Toggle appearance"
         >
-          {theme === "dark" ? <Sun size={13} /> : <Moon size={13} />}
+          <HugeiconsIcon
+            icon={theme === "dark" ? SunMediumIcon : Moon02Icon}
+            strokeWidth={2}
+            size={16}
+          />
         </button>
-
-        {/* Live Date & Time: YYYY-MM-DD , hh:MM A/PM */}
-        <div className="menu-bar-item menu-bar-clock">
-          <span>{formatted}</span>
-        </div>
+        <time className="menu-bar-clock">{formatted}</time>
       </div>
     </header>
   );

@@ -1,17 +1,25 @@
 "use client";
 
+import { FileTextIcon, Settings02Icon } from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { APP_REGISTRY, DESKTOP_APPS, type AppId } from "@/lib/registry";
+import { ShortcutContextMenu } from "./ContextMenu";
 
 type Marquee = { x1: number; y1: number; x2: number; y2: number };
 
-export function DesktopIcons({
-  onOpen,
-  onContextMenu,
-}: {
-  onOpen: (appId: AppId) => void;
-  onContextMenu: (x: number, y: number, appId: AppId | null) => void;
-}) {
+function ShortcutGlyph({ appId }: { appId: AppId }) {
+  return (
+    <HugeiconsIcon
+      icon={appId === "settings" ? Settings02Icon : FileTextIcon}
+      strokeWidth={2}
+      size={19}
+      aria-hidden
+    />
+  );
+}
+
+export function DesktopIcons({ onOpen }: { onOpen: (appId: AppId) => void }) {
   const [selected, setSelected] = useState<Set<AppId>>(new Set());
   const [renaming, setRenaming] = useState<AppId | null>(null);
   const [labels, setLabels] = useState<Record<string, string>>({});
@@ -21,50 +29,56 @@ export function DesktopIcons({
 
   const commitRename = useCallback((appId: AppId, value: string) => {
     const clean = value.trim();
-    if (clean) setLabels((l) => ({ ...l, [appId]: clean }));
+    if (clean) setLabels((current) => ({ ...current, [appId]: clean }));
     setRenaming(null);
   }, []);
 
-  const beginMarquee = useCallback((event: React.PointerEvent<HTMLDivElement>) => {
-    if (event.button !== 0) return;
-    if ((event.target as HTMLElement).closest(".desktop-shortcut")) return;
-    const rect = layerRef.current!.getBoundingClientRect();
-    const x = event.clientX - rect.left;
-    const y = event.clientY - rect.top;
-    dragRef.current = { x1: x, y1: y, x2: x, y2: y };
-    setMarquee(dragRef.current);
-    if (!event.ctrlKey && !event.metaKey) setSelected(new Set());
+  const beginMarquee = useCallback(
+    (event: React.PointerEvent<HTMLDivElement>) => {
+      if (event.button !== 0) return;
+      if ((event.target as HTMLElement).closest(".desktop-shortcut")) return;
 
-    const onMove = (e: PointerEvent) => {
-      if (!dragRef.current) return;
-      dragRef.current = {
-        ...dragRef.current,
-        x2: e.clientX - rect.left,
-        y2: e.clientY - rect.top,
+      const rect = layerRef.current!.getBoundingClientRect();
+      const x = event.clientX - rect.left;
+      const y = event.clientY - rect.top;
+      dragRef.current = { x1: x, y1: y, x2: x, y2: y };
+      setMarquee(dragRef.current);
+      if (!event.ctrlKey && !event.metaKey) setSelected(new Set());
+
+      const onMove = (moveEvent: PointerEvent) => {
+        if (!dragRef.current) return;
+        dragRef.current = {
+          ...dragRef.current,
+          x2: moveEvent.clientX - rect.left,
+          y2: moveEvent.clientY - rect.top,
+        };
+        setMarquee({ ...dragRef.current });
       };
-      setMarquee({ ...dragRef.current });
-    };
-    const onUp = () => {
-      window.removeEventListener("pointermove", onMove);
-      window.removeEventListener("pointerup", onUp);
-      dragRef.current = null;
-      setMarquee(null);
-    };
-    window.addEventListener("pointermove", onMove);
-    window.addEventListener("pointerup", onUp);
-  }, []);
+      const onUp = () => {
+        window.removeEventListener("pointermove", onMove);
+        window.removeEventListener("pointerup", onUp);
+        dragRef.current = null;
+        setMarquee(null);
+      };
+
+      window.addEventListener("pointermove", onMove);
+      window.addEventListener("pointerup", onUp);
+    },
+    [],
+  );
 
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if ((e.target as HTMLElement)?.tagName === "INPUT") return;
+    const onKey = (event: KeyboardEvent) => {
+      if ((event.target as HTMLElement)?.tagName === "INPUT") return;
       const only = selected.size === 1 ? [...selected][0] : null;
-      if (e.key === "Enter" && only) onOpen(only);
-      if (e.key === "F2" && only) {
-        e.preventDefault();
+      if (event.key === "Enter" && only) onOpen(only);
+      if (event.key === "F2" && only) {
+        event.preventDefault();
         setRenaming(only);
       }
-      if (e.key === "Escape") setSelected(new Set());
+      if (event.key === "Escape") setSelected(new Set());
     };
+
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [selected, onOpen]);
@@ -79,68 +93,60 @@ export function DesktopIcons({
     : null;
 
   return (
-    <div
-      className="desktop-grid"
-      ref={layerRef}
-      onPointerDown={beginMarquee}
-      onContextMenu={(e) => {
-        e.preventDefault();
-        const target = (e.target as HTMLElement).closest(".desktop-shortcut");
-        const appId = target?.getAttribute("data-app") as AppId | null;
-        if (appId) setSelected(new Set([appId]));
-        onContextMenu(e.clientX, e.clientY, appId ?? null);
-      }}
-    >
-      {DESKTOP_APPS.map((appId: AppId) => {
+    <div className="desktop-grid" ref={layerRef} onPointerDown={beginMarquee}>
+      {DESKTOP_APPS.map((appId) => {
         const meta = APP_REGISTRY[appId];
         const label = labels[appId] ?? meta.title;
         const isSelected = selected.has(appId);
 
         return (
-          <button
-            key={appId}
-            type="button"
-            data-app={appId}
-            className={`desktop-shortcut${isSelected ? " is-selected" : ""}`}
-            onPointerDown={(e) => {
-              e.stopPropagation();
-              if (e.ctrlKey || e.metaKey) {
-                setSelected((s) => {
-                  const next = new Set(s);
-                  if (next.has(appId)) next.delete(appId);
-                  else next.add(appId);
-                  return next;
-                });
-              } else {
-                setSelected(new Set([appId]));
-              }
-            }}
-            onDoubleClick={() => onOpen(appId)}
-            aria-label={label}
-          >
-            <span className="shortcut-icon">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={meta.icon} alt="" aria-hidden />
-            </span>
+          <ShortcutContextMenu key={appId} appId={appId} onOpen={onOpen}>
+            <button
+              type="button"
+              data-app={appId}
+              className={`desktop-shortcut${isSelected ? " is-selected" : ""}`}
+              onPointerDown={(event) => {
+                event.stopPropagation();
+                if (event.ctrlKey || event.metaKey) {
+                  setSelected((current) => {
+                    const next = new Set(current);
+                    if (next.has(appId)) next.delete(appId);
+                    else next.add(appId);
+                    return next;
+                  });
+                } else {
+                  setSelected(new Set([appId]));
+                }
+              }}
+              onDoubleClick={() => onOpen(appId)}
+              aria-label={label}
+            >
+              <span className="shortcut-icon">
+                <ShortcutGlyph appId={appId} />
+              </span>
 
-            {renaming === appId ? (
-              <input
-                className="shortcut-rename"
-                defaultValue={label}
-                autoFocus
-                onFocus={(e) => e.currentTarget.select()}
-                onBlur={(e) => commitRename(appId, e.currentTarget.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") commitRename(appId, e.currentTarget.value);
-                  if (e.key === "Escape") setRenaming(null);
-                }}
-                onPointerDown={(e) => e.stopPropagation()}
-                aria-label="Rename"
-              />
-            ) : (
-              <span className="shortcut-label">{label}</span>
-            )}
-          </button>
+              {renaming === appId ? (
+                <input
+                  className="shortcut-rename"
+                  defaultValue={label}
+                  autoFocus
+                  onFocus={(event) => event.currentTarget.select()}
+                  onBlur={(event) =>
+                    commitRename(appId, event.currentTarget.value)
+                  }
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter")
+                      commitRename(appId, event.currentTarget.value);
+                    if (event.key === "Escape") setRenaming(null);
+                  }}
+                  onPointerDown={(event) => event.stopPropagation()}
+                  aria-label="Rename"
+                />
+              ) : (
+                <span className="shortcut-label">{label}</span>
+              )}
+            </button>
+          </ShortcutContextMenu>
         );
       })}
 

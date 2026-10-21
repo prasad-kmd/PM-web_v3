@@ -16,22 +16,21 @@ export function WindowsLayer({
 }) {
   return (
     <>
-      {windows.map((win) => (
+      {windows.map((windowState) => (
         <Window
-          key={win.id}
-          win={win}
+          key={windowState.id}
+          win={windowState}
           area={area}
-          isTop={win.id === manager.topId}
-          onFocus={() => manager.focus(win.id)}
-          onMove={(rect) => manager.move(win.id, rect)}
-          onResize={(rect) => manager.resize(win.id, rect)}
-          onToggleMaximize={() => manager.toggleMaximize(win.id)}
-          onSnap={(layout) => manager.snap(win.id, layout)}
-          onMinimize={() => manager.minimize(win.id)}
-          onClose={() => manager.close(win.id)}
-          onExitComplete={() => manager.finishExit(win.id)}
+          isTop={windowState.id === manager.topId}
+          onFocus={() => manager.focus(windowState.id)}
+          onMove={(rect) => manager.move(windowState.id, rect)}
+          onResize={(rect) => manager.resize(windowState.id, rect)}
+          onToggleMaximize={() => manager.toggleMaximize(windowState.id)}
+          onSnap={(layout) => manager.snap(windowState.id, layout)}
+          onClose={() => manager.close(windowState.id)}
+          onExitComplete={() => manager.finishExit(windowState.id)}
         >
-          <AppBody appId={win.appId} />
+          <AppBody appId={windowState.appId} />
         </Window>
       ))}
     </>

@@ -1,65 +1,107 @@
 "use client";
 
-import { motion } from "framer-motion";
-import { FLYOUT_IN } from "@/lib/windows";
+import {
+  InformationCircleIcon,
+  LayoutGridIcon,
+  PencilEditIcon,
+  Refresh01Icon,
+  Settings02Icon,
+} from "@hugeicons/core-free-icons";
+import { HugeiconsIcon, type IconSvgElement } from "@hugeicons/react";
+import { toast } from "sonner";
+import {
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuGroup,
+  ContextMenuItem,
+  ContextMenuSeparator,
+  ContextMenuShortcut,
+  ContextMenuTrigger,
+} from "@/components/ui/context-menu";
+import { APP_REGISTRY, type AppId } from "@/lib/registry";
 
-export type CtxItem = {
-  id: string;
-  label: string;
-  icon?: React.ReactNode;
-  shortcut?: string;
-  disabled?: boolean;
-  separator?: boolean;
-  onSelect?: () => void;
-};
+function MenuIcon({ icon }: { icon: IconSvgElement }) {
+  return <HugeiconsIcon icon={icon} strokeWidth={2} size={16} />;
+}
 
-/* Acrylic context menu (desktop + icons + taskbar). */
-export function ContextMenu({
-  x,
-  y,
-  items,
-  onClose,
+export function DesktopContextMenuContent({
+  onOpenSettings,
 }: {
-  x: number;
-  y: number;
-  items: CtxItem[];
-  onClose: () => void;
+  onOpenSettings: () => void;
 }) {
-  // Flip when close to the viewport edge so the menu never clips.
-  const width = 232;
-  const left = Math.min(x, window.innerWidth - width - 8);
-  const top = Math.min(y, window.innerHeight - items.length * 30 - 16);
+  return (
+    <ContextMenuContent className="w-56">
+      <ContextMenuGroup>
+        <ContextMenuItem onClick={onOpenSettings}>
+          <MenuIcon icon={Settings02Icon} />
+          Open Settings
+        </ContextMenuItem>
+        <ContextMenuItem onClick={() => toast.success("Desktop organized")}>
+          <MenuIcon icon={Refresh01Icon} />
+          Clean up icons
+        </ContextMenuItem>
+      </ContextMenuGroup>
+      <ContextMenuSeparator />
+      <ContextMenuGroup>
+        <ContextMenuItem onClick={onOpenSettings}>
+          <MenuIcon icon={LayoutGridIcon} />
+          Appearance settings
+        </ContextMenuItem>
+      </ContextMenuGroup>
+      <ContextMenuSeparator />
+      <ContextMenuGroup>
+        <ContextMenuItem
+          onClick={() => toast.info("Engineering Workspace · Next.js 16")}
+        >
+          <MenuIcon icon={InformationCircleIcon} />
+          About Prasad M. Workspace
+        </ContextMenuItem>
+      </ContextMenuGroup>
+    </ContextMenuContent>
+  );
+}
+
+export function ShortcutContextMenu({
+  appId,
+  children,
+  onOpen,
+}: {
+  appId: AppId;
+  children: React.ReactNode;
+  onOpen: (appId: AppId) => void;
+}) {
+  const meta = APP_REGISTRY[appId];
 
   return (
-    <motion.div
-      className="ctx-menu"
-      style={{ left, top }}
-      role="menu"
-      initial={{ opacity: 0, scale: 0.96, y: -4 }}
-      animate={{ opacity: 1, scale: 1, y: 0 }}
-      exit={{ opacity: 0, scale: 0.97, y: -2 }}
-      transition={FLYOUT_IN}
-    >
-      {items.map((item) =>
-        item.separator ? (
-          <div key={item.id} className="ctx-separator" />
-        ) : (
-          <button
-            key={item.id}
-            type="button"
-            role="menuitem"
-            className={`ctx-item${item.disabled ? " is-disabled" : ""}`}
-            onClick={() => {
-              item.onSelect?.();
-              onClose();
-            }}
+    <ContextMenu>
+      <ContextMenuTrigger className="desktop-context-trigger">
+        {children}
+      </ContextMenuTrigger>
+      <ContextMenuContent className="w-52">
+        <ContextMenuGroup>
+          <ContextMenuItem onClick={() => onOpen(appId)}>
+            <MenuIcon icon={Settings02Icon} />
+            Open
+            <ContextMenuShortcut>↵</ContextMenuShortcut>
+          </ContextMenuItem>
+        </ContextMenuGroup>
+        <ContextMenuSeparator />
+        <ContextMenuGroup>
+          <ContextMenuItem
+            onClick={() =>
+              toast("Select the shortcut and press F2 to rename it.")
+            }
           >
-            {item.icon}
-            <span className="flex-1">{item.label}</span>
-            {item.shortcut && <kbd>{item.shortcut}</kbd>}
-          </button>
-        ),
-      )}
-    </motion.div>
+            <MenuIcon icon={PencilEditIcon} />
+            Rename
+            <ContextMenuShortcut>F2</ContextMenuShortcut>
+          </ContextMenuItem>
+          <ContextMenuItem onClick={() => toast.info(meta.description)}>
+            <MenuIcon icon={InformationCircleIcon} />
+            Get info
+          </ContextMenuItem>
+        </ContextMenuGroup>
+      </ContextMenuContent>
+    </ContextMenu>
   );
 }

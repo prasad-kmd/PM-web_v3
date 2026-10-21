@@ -1,106 +1,49 @@
 ---
-name: Fluent Design System
+name: Animate UI DesktopOS
+reference: https://animate-ui.com/docs
+product-topology: Interactive desktop workspace
 colors:
-  surface: '#fcf9f8'
-  surface-dim: '#dcd9d9'
-  surface-bright: '#fcf9f8'
-  surface-container-lowest: '#ffffff'
-  surface-container-low: '#f6f3f2'
-  surface-container: '#f0eded'
-  surface-container-high: '#eae7e7'
-  surface-container-highest: '#e5e2e1'
-  on-surface: '#1b1c1c'
-  on-surface-variant: '#414752'
-  inverse-surface: '#303030'
-  inverse-on-surface: '#f3f0ef'
-  outline: '#717783'
-  outline-variant: '#c1c6d4'
-  surface-tint: '#005eb1'
-  primary: '#004f96'
-  on-primary: '#ffffff'
-  primary-container: '#0067c0'
-  on-primary-container: '#dbe7ff'
-  inverse-primary: '#a6c8ff'
-  secondary: '#00658d'
-  on-secondary: '#ffffff'
-  secondary-container: '#4bc1fe'
-  on-secondary-container: '#004d6c'
-  tertiary: '#4d4f4f'
-  on-tertiary: '#ffffff'
-  tertiary-container: '#666767'
-  on-tertiary-container: '#e6e6e6'
-  error: '#ba1a1a'
-  on-error: '#ffffff'
-  error-container: '#ffdad6'
-  on-error-container: '#93000a'
-  primary-fixed: '#d5e3ff'
-  primary-fixed-dim: '#a6c8ff'
-  on-primary-fixed: '#001c3b'
-  on-primary-fixed-variant: '#004787'
-  secondary-fixed: '#c6e7ff'
-  secondary-fixed-dim: '#81cfff'
-  on-secondary-fixed: '#001e2d'
-  on-secondary-fixed-variant: '#004c6b'
-  tertiary-fixed: '#e2e2e2'
-  tertiary-fixed-dim: '#c6c6c7'
-  on-tertiary-fixed: '#1a1c1c'
-  on-tertiary-fixed-variant: '#454747'
-  background: '#fcf9f8'
-  on-background: '#1b1c1c'
-  surface-variant: '#e5e2e1'
+  background-light: oklch(1 0 0)
+  foreground-light: oklch(0.145 0 0)
+  card-light: oklch(1 0 0)
+  border-light: oklch(0.922 0 0)
+  muted-light: oklch(0.97 0 0)
+  muted-foreground-light: oklch(0.556 0 0)
+  background-dark: oklch(0.145 0 0)
+  foreground-dark: oklch(0.985 0 0)
+  card-dark: oklch(0.205 0 0)
+  border-dark: oklch(1 0 0 / 10%)
+  muted-dark: oklch(0.269 0 0)
+  muted-foreground-dark: oklch(0.708 0 0)
+  destructive-light: oklch(0.577 0.245 27.325)
+  destructive-dark: oklch(0.704 0.191 22.216)
 typography:
-  display-window-title:
-    fontFamily: Segoe UI, -apple-system, BlinkMacSystemFont, sans-serif
-    fontSize: 28px
-    fontWeight: '500'
-    lineHeight: 36px
-    letterSpacing: -0.01em
-  headline-section:
-    fontFamily: Segoe UI, -apple-system, BlinkMacSystemFont, sans-serif
-    fontSize: 18px
-    fontWeight: '600'
-    lineHeight: 24px
-    letterSpacing: -0.005em
-  title-card:
-    fontFamily: Segoe UI, -apple-system, BlinkMacSystemFont, sans-serif
+  ui:
+    fontFamily: Outfit, Arial, sans-serif
     fontSize: 14px
-    fontWeight: '500'
+    fontWeight: "400"
     lineHeight: 20px
-    letterSpacing: '0'
-  body-default:
-    fontFamily: Segoe UI, -apple-system, BlinkMacSystemFont, sans-serif
-    fontSize: 14px
-    fontWeight: '400'
-    lineHeight: 20px
-    letterSpacing: '0'
-  body-secondary:
-    fontFamily: Segoe UI, -apple-system, BlinkMacSystemFont, sans-serif
-    fontSize: 12.33px
-    fontWeight: '400'
-    lineHeight: 16px
-    letterSpacing: '0'
-  caption-small:
-    fontFamily: Segoe UI, -apple-system, BlinkMacSystemFont, sans-serif
-    fontSize: 11px
-    fontWeight: '400'
-    lineHeight: 14px
-    letterSpacing: '0'
-  code-mono:
-    fontFamily: Consolas, source-code-pro, Menlo, Monaco, monospace
+  titlebar:
+    fontFamily: Outfit, Arial, sans-serif
     fontSize: 13px
-    fontWeight: '400'
+    fontWeight: "500"
+    lineHeight: 16px
+  metadata:
+    fontFamily: Outfit, Arial, sans-serif
+    fontSize: 12px
+    fontWeight: "500"
+    lineHeight: 16px
+  code:
+    fontFamily: SFMono-Regular, Consolas, Liberation Mono, monospace
+    fontSize: 12px
+    fontWeight: "400"
     lineHeight: 18px
-    letterSpacing: '0'
 rounded:
-  sm: 0.25rem
-  DEFAULT: 0.5rem
-  md: 0.75rem
-  lg: 1rem
-  xl: 1.5rem
-  full: 9999px
+  compact: 0.375rem
+  DEFAULT: 0.625rem
+  window: 0.625rem
 spacing:
-  gutter: 8px
-  margin: 12px
+  baseline: 4px
   space-xs: 4px
   space-sm: 8px
   space-md: 12px
@@ -109,48 +52,128 @@ spacing:
 ---
 
 ## Brand & Style
-This design system embodies a serene, natural, and highly polished desktop computing experience inspired by physical materials interacting with digital light. It moves away from harsh flat planes toward gentle layering, tactile translucency, and intentional softness. Every surface feels tangible yet unobtrusive, creating a calm backdrop that lets user content shine while maintaining authoritative desktop window chrome aesthetics.
 
-The visual atmosphere is defined by two foundational materials: **Mica** and **Acrylic**. Mica acts as an ambient canvas material that samples desktop background tones through a fixed, subtle radial tint, giving top-level app windows depth without unnecessary rendering cost. Acrylic brings active translucency, high-saturation color sampling, and Gaussian backdrop blurs to transient surfaces like the centered Taskbar, Start Menu flyouts, Quick Settings, and context menus. Paired with soft 6px-8px rounded corners, precision hairline borders, smooth cubic-bezier transitions, and delicate diffuse drop shadows (`0 0 6px rgba(0, 0, 0, 0.25)`), the interface projects an airy, sophisticated, and dependable environment across both Light and Dark modes.
+This design system keeps **PM Web v3 as an interactive DesktopOS**. It is not a documentation website and must not become a generic header, sidebar, or card-grid portfolio.
+
+The interface retains a full-screen workspace canvas, persistent menubar, desktop shortcuts, concurrent application windows, drag/resize behavior, edge snap, and browser-persisted window geometry. Animate UI Docs supplies the visual language: neutral semantic surfaces, Outfit typography, compact control geometry, live Base UI primitives, and restrained motion.
+
+The visual atmosphere is precise and quiet. The desktop is a solid semantic canvas with intentional open space. Windows are deliberate work surfaces with minimal, neutral chrome. The result should feel like a purpose-built workspace assembled from Animate UI components.
 
 ## Colors
-The system uses functional semantic CSS variables and data attributes (`data-theme="light"` and `data-theme="dark"`) to handle seamless system-wide theme switches with high accessibility and contrast.
 
-### Primary Foundation
-- **Fluent Accent Blue (Light Mode)** — `#0067c0`: The iconic accent used for primary CTA buttons, active taskbar badges, focused input underscores, and toggle states.
-- **Fluent Vibrant Sky Blue (Dark Mode)** — `#4cc2ff`: High-luminosity neon-sky accent tuned specifically for high legibility against dark slate surfaces.
-- **Canvas / Wallpaper Theme Base (Light)** — `#eeeeee`: Base desktop backing behind wallpaper canvas.
-- **Canvas / Wallpaper Theme Base (Dark)** — `#1e1e26`: Deep obsidian purple-slate backdrop.
-- **Mica Base (Light)** — `#f3f3f3` with radial gradient Emulating desktop wallpaper illumination.
-- **Taskbar Acrylic Glass (Light)** — `rgba(243, 243, 243, 0.85)` with `backdrop-filter: saturate(3) blur(20px)`: Soft frosted glass running across the screen bottom.
+The system uses Animate UI’s exact semantic CSS variables and a root `.dark` class. Components consume semantic tokens only; raw replacement values and custom palette extensions are not permitted.
 
-### Functional States
-- **Close / Destructive Hover** — `#e81123`: Immediate high-visibility red highlight across the window close button.
-- **System Modal Dim Backdrop** — `rgba(0, 0, 0, 0.60)` for focused dialogs and overlays.
+### Primary foundation
+
+- **Background / Light** — `oklch(1 0 0)`: Menubar, desktop canvas, and quiet structural surface.
+- **Foreground / Light** — `oklch(0.145 0 0)`: Main text, symbols, and primary controls.
+- **Card / Light** — `oklch(1 0 0)`: Window and application surface.
+- **Border / Light** — `oklch(0.922 0 0)`: Hairline structural separation.
+- **Muted / Light** — `oklch(0.97 0 0)`: Hover and secondary surface.
+- **Background / Dark** — `oklch(0.145 0 0)`: Exact near-black Animate UI desktop base; never forced `#000`.
+- **Foreground / Dark** — `oklch(0.985 0 0)`: Primary dark-mode text and controls.
+- **Card / Dark** — `oklch(0.205 0 0)`: Elevated window and popover surface.
+- **Border / Dark** — `oklch(1 0 0 / 10%)`: Dark-mode structural hairline.
+- **Muted / Dark** — `oklch(0.269 0 0)`: Hover, selected, and secondary surface.
+- **Destructive** — `oklch(0.577 0.245 27.325)` in light mode and `oklch(0.704 0.191 22.216)` in dark mode: close action feedback only.
+
+### Functional states
+
+- **Primary** is neutral near-black in light mode and near-white in dark mode. It is used for the PM mark and high-contrast identity only.
+- **Accent** is the reference muted surface (`oklch(0.97 0 0)` light / `oklch(0.269 0 0)` dark). It is used for hover, selected, and open states.
+- **Ring** is `oklch(0.708 0 0)` in light mode and `oklch(0.556 0 0)` in dark mode. It remains visible for keyboard focus.
+- The defined semantic palette and surface treatments are the complete visual vocabulary.
 
 ## Typography
-The typographic engine relies on **Segoe UI** (falling back gracefully to modern native platform fonts). It conveys crisp legibility, generous x-height, and a neutral editorial tone. Headings feature gentle negative tracking (`-0.01em`) to maintain solidity, while body text keeps standard tracking (`0`) for maximal clarity. Baseline heights strictly conform to multiples of 4px.
+
+The typographic engine is **Outfit** (bundled locally as a variable font). It gives interface text the same compact, technical clarity as the Animate UI docs reference. Monospace is reserved for source, file metadata, and technical content.
+
+Window titles use 13px medium weight and remain centered. Standard menu items, controls, and body text use 14px. Supporting status, date/time, shortcut labels, and sectional labels use 12–13px. Numeric status values use tabular figures.
+
+Typography uses sentence case, practical weight hierarchy, and normal readable tracking. Decorative display faces, gradient text, typewriter effects, oversized hero headings, and all-caps decoration are excluded.
 
 ## Layout & Spacing
-The layout model follows a strict 4px baseline rhythm, utilizing a flexible window-based desktop paradigm where elements snap to coordinate grids and maintain breathing room through deliberate, measured whitespace. 
 
-Windows scale across form factors with minimum constraints, collapsing sidebars into drawer overlays on narrow screens while preserving native desktop proportions like the fixed 48px taskbar and 28px titlebars.
+The layout follows a strict desktop-workspace model with a 4px spacing rhythm.
+
+- **Menubar:** Fixed to the top edge; 40px tall; full width; page-background surface with a 1px bottom border.
+- **Workspace:** Starts below the menubar and fills the remaining viewport. It is an intentionally open spatial canvas.
+- **Desktop shortcuts:** Right-aligned grid with 88px columns, 82px-wide shortcut controls, 36px icon tiles, and 12px labels.
+- **Windows:** Open in a cascade, retain their saved geometry, and stay independent of one another. They may be dragged, resized, maximized/restored, closed, focused, and edge-snapped.
+- **Application interiors:** Use compact vertical spacing and bounded reading widths inside the window body. Settings has a small app sidebar; Read Me uses documentation-quality text and code—but both remain applications inside a desktop window.
+- **Direct routes:** `/settings` and `/readme` render the same app bodies in a contained desktop-style surface with a clear route back to the workspace.
+
+Navigation remains local to the menubar, shortcut canvas, window controls, and contextual menus.
 
 ## Elevation & Depth
-Visual hierarchy is conveyed primarily through tonal layering, translucent acrylic materials, and ambient diffuse drop shadows. Top-level application windows float above the desktop canvas using soft, extra-diffused shadows (`0 0 6px rgba(0, 0, 0, 0.25)`), while transient UI surfaces like flyouts and context menus leverage 20px Gaussian backdrop blurs. Low-contrast hairline borders provide structural separation without visual heaviness.
+
+Depth is functional, not atmospheric. The desktop canvas remains flat and quiet so that the active window is the only strong elevation cue.
+
+Top-level windows use a single restrained shadow, a 1px semantic border, and the card surface. Inactive windows reduce title contrast and shadow density. Popup menus retain the exact published Animate UI/Base UI popover treatment, including its component-provided backdrop blur; this remains scoped to transient primitives.
+
+Maximized windows meet the workspace edge and lose their outer corner radius. Elevation remains limited to clear structural hierarchy, with no decorative layers competing with the work surface.
 
 ## Shapes
-The shape language favors approachable, gentle curves with a standard roundedness level. Base window corners are set to `6px`, creating a friendly yet precise desktop aesthetic. Smaller elements like buttons, inputs, and list items use `4px` rounded corners. When windows are maximized, their corner radius instantly collapses to `0px` to match native operating system behaviors.
+
+The core radius is **10px** (`0.625rem`). Compact controls use 6px. Shortcut icon tiles use 8px. The shape language is measured, not pill-like.
+
+- Menubar icon actions: 28px square with 6px radius.
+- Menubar composition: 32px high with compact rounded triggers.
+- Desktop shortcut: 10px radius.
+- Window and settings cards: 10px radius.
+- Window titlebar: 40px high.
+- Window controls: two 40px-wide actions—maximize/restore and close only.
+- Maximized windows: 0px outer radius.
+
+Window actions are limited to maximize/restore and close. Icon tiles use single-stroke Hugeicons, and radii remain compact and consistent.
 
 ## Components
-Consistent styling of common UI components is anchored by the following specifications:
 
-- **Buttons:** Primary action buttons feature the fluent accent color with white/black text, 4px border radius, and smooth opacity transitions. Secondary buttons use transparent fills with subtle hairline borders.
-- **Input Fields:** Styled with clean backgrounds, 4px rounded corners, and a distinctive accent-colored bottom underscore or outline on focus.
-- **Checkboxes & Radio Buttons:** Compact, geometric selections that adhere to the 4px roundedness scale, utilizing primary accent fills when checked.
-- **Cards & Tiles:** Semi-opaque card surfaces with subtle borders and hover states that shift opacity or brightness to indicate interactivity, complete with chevron affordances where applicable.
-- **Lists & Menus:** Clean vertical list structures featuring 28px–32px item heights, generous padding, and acrylic background materials with backdrop blurs for floating context menus.
+### Menubar
+
+The menubar is a persistent desktop affordance with a compact PM identity mark on the left, the real Animate UI Base UI Menubar, and a theme control plus date/time status on the right. Its dark form is near-black because it inherits the reference dark background token; it is not an isolated forced-black bar.
+
+Use the published Menubar composition: one animated popup is handed between triggers, item highlights and keyboard behavior are owned by the primitive, and menus preserve their reference origin, radius, border, shadow, and semantic tokens.
+
+### Desktop shortcuts and context menus
+
+Shortcuts remain real buttons with select, multi-select, F2 rename, Enter open, marquee selection, and right-click behavior. They use single-stroke Hugeicons-style icons in neutral icon tiles with clean text treatment.
+
+Empty-canvas and shortcut context menus use the actual Animate UI Base UI Context Menu primitive: `Root → Trigger → Portal → Positioner → Popup`. Collision handling, keyboard behavior, focus management, reduced-motion support, and popup motion belong to the primitive.
+
+### Windows
+
+Windows are non-modal Animate UI dialogs with an independent outer geometry layer. The exact lifecycle is:
+
+```txt
+Dialog.Root modal={false} → Dialog.Portal → Dialog.Popup
+```
+
+The popup owns Animate UI’s entrance, exit, and reduced-motion behavior. The outer layer owns drag, resize, position, dimensions, z-order, maximize/restore, and invisible edge snap. Do not replace the dialog motion with a custom popup animation or add a Snap-preview overlay.
+
+Window chrome uses a card surface, a 1px border, a centered title, and only maximize/restore plus close controls. The close action turns destructive only on hover/focus.
+
+### Settings and Read Me
+
+Settings offers the exact light and dark reference modes. Read Me is a clean technical document inside the app, with a compact toolbar, readable body copy, bounded code presentation, and copy feedback.
+
+### Motion and accessibility
+
+Animate UI motion is functional and restrained. Primitives are used directly where available; custom motion does not imitate or compete with their lifecycles.
+
+- Animate transforms, opacity, and filter—not layout properties—for visual transitions.
+- Entrances use short strong ease-out or spring responses; exits are quicker.
+- Repeated interaction retargets instead of restarting.
+- Reduced motion, keyboard navigation, collision handling, and focus behavior remain enabled.
+- Sidebar-style indicators, when used within an app, follow the reference springs:
+
+```ts
+{ type: "spring", stiffness: 500, damping: 35 } // indicator
+{ type: "spring", stiffness: 200, damping: 20 } // label shift
+```
+
+All interactive controls must retain semantic elements, accessible names, visible `ring` focus states, and sufficient contrast in both theme modes.
 
 ---
 
-For more detailed info - [GitHub Repo](https://github.com/blueedgetechno/win11React) or [Live Preview](https://win11.blueedge.me/)
+For visual and primitive reference: [Animate UI Docs](https://animate-ui.com/docs) · [Animate UI v2 source](https://github.com/imskyleen/animate-ui)
