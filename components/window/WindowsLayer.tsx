@@ -5,7 +5,6 @@ import type { WindowManager } from "@/hooks/useWindowManager";
 import type { Area } from "@/lib/windows";
 import { Window } from "./Window";
 
-/* Renders every live window inside the working area. */
 export function WindowsLayer({
   windows,
   area,
@@ -22,6 +21,7 @@ export function WindowsLayer({
           key={win.id}
           win={win}
           area={area}
+          isTop={win.id === manager.topId}
           onFocus={() => manager.focus(win.id)}
           onMove={(rect) => manager.move(win.id, rect)}
           onResize={(rect) => manager.resize(win.id, rect)}

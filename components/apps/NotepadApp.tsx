@@ -1,48 +1,87 @@
 "use client";
 
-export function NotepadApp() {
-  return (
-    <div className="h-full flex flex-col">
-      <div className="flex items-center gap-1 px-2 py-1 border-b border-[var(--menu-line)] bg-[var(--surface)] text-[11px] shrink-0">
-        <span className="px-2 py-1 rounded hover:bg-[var(--hover-wash)] cursor-pointer">File</span>
-        <span className="px-2 py-1 rounded hover:bg-[var(--hover-wash)] cursor-pointer">Edit</span>
-        <span className="px-2 py-1 rounded hover:bg-[var(--hover-wash)] cursor-pointer">View</span>
-        <span className="ml-auto text-[11px] text-[var(--muted-ink)] hidden sm:inline">Ln 1, Col 1 • UTF-8 • CRLF</span>
-      </div>
-      <div className="flex-1 overflow-auto p-6 bg-white dark:bg-[#1e1e1e] text-[#1b1c1c] dark:text-[#e8e8e8]">
-        <div className="max-w-[680px] mx-auto">
-          <p className="text-[11px] tracking-widest font-semibold text-[var(--flu-accent)] mb-2">WELCOME / START HERE</p>
-          <h2 className="text-[22px] font-semibold tracking-tight mb-3" style={{ fontFamily: "Consolas, ui-monospace, monospace" }}>
-            This desktop is the starting point.
-          </h2>
-          <p className="text-[13px] leading-7 text-[#3a3d45] dark:text-[#c8c8cc]">
-            Hey — I’m <strong>Prasad</strong>, an engineer from Kandy, LK — bridging site work and software. This portfolio is a small workspace.
-            Open <strong>Settings</strong> to personalize the desktop, or read this note for quick links.
-          </p>
+import { Copy, Terminal } from "lucide-react";
+import { toast } from "sonner";
 
-          <div className="mt-6 p-4 rounded-lg bg-[#f6f8fa] dark:bg-[#252526] border border-[var(--menu-line)]">
-            <p className="text-[11px] font-semibold tracking-wide text-[var(--muted-ink)] mb-2">QUICK LINKS</p>
-            <pre className="text-[12px] leading-6 overflow-x-auto" style={{ fontFamily: "Consolas, ui-monospace, monospace" }}>{`const links = {
-  github:   "github.com/prasad-kmd",
-  email:    "prasad@example.com",
-  location: "Kandy, Central Province, LK",
-  stack:    ["Next.js", "TypeScript", "Tailwind", "PWA"],
+export function NotepadApp() {
+  const copyLinks = () => {
+    navigator.clipboard?.writeText(
+      "https://github.com/prasad-kmd\nprasad.madhuranga@protonmail.com",
+    );
+    toast.success("Copied links to clipboard");
+  };
+
+  return (
+    <div className="notes-container">
+      {/* Notes Toolbar */}
+      <div className="notes-toolbar">
+        <span className="font-medium">Welcome Note — Read Me.txt</span>
+        <span>UTF-8 • Markdown Supported</span>
+      </div>
+
+      {/* Notes Body */}
+      <div className="notes-content">
+        <div className="max-w-[620px] mx-auto space-y-5">
+          <div className="notes-date">October 21, 2026</div>
+
+          <div>
+            <h1 className="text-xl font-bold tracking-tight mb-2">
+              Prasad M. — Engineering Workspace
+            </h1>
+            <p className="text-sm text-[var(--on-surface-variant)] leading-relaxed">
+              Welcome. I am a <strong>Civil Engineer &amp; Frontend Software Developer</strong> based
+              in Kandy, Sri Lanka. I build high-performance web platforms for field engineering,
+              quantity surveying, and tactile digital workspaces.
+            </p>
+          </div>
+
+          <div className="p-4 rounded-xl bg-[var(--surface-hover)] border border-[var(--border-subtle)] space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-semibold flex items-center gap-1.5 text-[var(--sys-accent)]">
+                <Terminal size={14} /> Quick Telemetry &amp; Links
+              </span>
+              <button
+                type="button"
+                onClick={copyLinks}
+                className="text-[11px] text-[var(--muted-ink)] hover:text-[var(--on-surface)] flex items-center gap-1 cursor-pointer"
+                title="Copy links"
+              >
+                <Copy size={12} /> Copy
+              </button>
+            </div>
+
+            <pre
+              className="text-xs font-mono text-[var(--on-surface)] overflow-x-auto leading-relaxed pt-1"
+              style={{ fontFamily: "var(--font-mono)" }}
+            >{`const engineer = {
+  name:     "Prasad M.",
+  location: "Kandy, Central Province, Sri Lanka",
+  field:    ["Civil Engineering", "Site QA/QC", "Quantity Surveying"],
+  stack:    ["Next.js 16", "TypeScript", "Tailwind v4", "Motion", "PWA"],
+  github:   "https://github.com/prasad-kmd",
+  email:    "prasad.madhuranga@protonmail.com"
 };`}</pre>
           </div>
 
-          <div className="mt-6 space-y-2 text-[12px] leading-6">
-            <p className="font-medium">How to use this desktop:</p>
-            <ul className="list-disc pl-5 space-y-1 text-[var(--muted-ink)] dark:text-[#a8a8ad]">
-              <li>Drag windows by their titlebar — double-click to maximize.</li>
-              <li>Hover the Maximize button for Snap Layouts (Left/Right/Quadrants).</li>
-              <li>Right-click the desktop for View &amp; Personalize.</li>
-              <li>Press <kbd className="px-1 py-0.5 rounded bg-[var(--surface-container)] border border-[var(--menu-line)] text-[11px]">Esc</kbd> to close menus and windows.</li>
+          <div className="space-y-2 text-xs leading-relaxed text-[var(--on-surface-variant)]">
+            <h2 className="text-sm font-semibold text-[var(--on-surface)] pt-2">
+              Workspace Controls:
+            </h2>
+            <ul className="list-disc pl-5 space-y-1">
+              <li>
+                <strong>Window Management:</strong> Drag the glass titlebar to reposition. Click the red, amber, and green traffic lights to close, minimize, or zoom.
+              </li>
+              <li>
+                <strong>Floating Navbar:</strong> Open windows appear symmetrically on the left and right of the central anchor button.
+              </li>
+              <li>
+                <strong>Snap Layouts:</strong> Hover over the green traffic light to preview half and quadrant splits.
+              </li>
+              <li>
+                <strong>Customization:</strong> Open <em>Settings</em> to switch between Dark &amp; Light themes or pick your wallpaper.
+              </li>
             </ul>
           </div>
-
-          <p className="text-[11px] text-[var(--muted-ink)] mt-6 border-t border-[var(--menu-line)] pt-4">
-            Built with Next.js 16 + Tailwind v4 + Base UI + Framer Motion — Mica/Acrylic materials from <code>DESIGN.md</code>.
-          </p>
         </div>
       </div>
     </div>

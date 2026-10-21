@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { animate, motion, useMotionValue, type MotionValue, type Transition } from "framer-motion";
-import { Minus, Square, X, Copy } from "lucide-react";
 import { APP_REGISTRY } from "@/lib/registry";
 import {
   CLOSE_TRANSITION,
@@ -19,13 +18,6 @@ import {
 import type { WindowState } from "@/hooks/useWindowManager";
 import { SnapOverlay } from "./SnapOverlay";
 
-/* =========================================================
-   Window — Mica chrome, motion-value driven
-   Geometry lives in motion values so drag/resize write
-   straight to the compositor (no React re-render per frame)
-   while maximize / snap / minimize animate on springs.
-   ========================================================= */
-
 type Dir = "n" | "s" | "e" | "w" | "ne" | "nw" | "se" | "sw";
 
 function setMV(mv: MotionValue<number>, value: number, transition: Transition = GEO_TRANSITION) {
@@ -39,6 +31,7 @@ function setMV(mv: MotionValue<number>, value: number, transition: Transition = 
 export function Window({
   win,
   area,
+  isTop,
   onFocus,
   onMove,
   onResize,
@@ -51,6 +44,7 @@ export function Window({
 }: {
   win: WindowState;
   area: Area;
+  isTop: boolean;
   onFocus: () => void;
   onMove: (rect: Rect) => void;
   onResize: (rect: Rect) => void;
@@ -81,7 +75,6 @@ export function Window({
     mountedRef.current = true;
 
     if (win.spawn === "taskbar") {
-      // Grow back out of its taskbar button.
       x.set(win.anchor.cx - win.rect.w / 2);
       y.set(win.anchor.cy - win.rect.h / 2);
       scale.set(0.12);
@@ -89,17 +82,17 @@ export function Window({
       animate(x, win.rect.x, RESTORE_TRANSITION);
       animate(y, win.rect.y, RESTORE_TRANSITION);
       animate(scale, 1, RESTORE_TRANSITION);
-      animate(opacity, 1, { duration: 0.12, ease: [0.16, 1, 0.3, 1] });
+      animate(opacity, 1, { duration: 0.14, ease: [0.18, 1, 0.32, 1] });
     } else {
-      scale.set(0.94);
+      scale.set(0.96);
       opacity.set(0);
       animate(scale, 1, OPEN_TRANSITION);
-      animate(opacity, 1, { duration: 0.14, ease: [0.16, 1, 0.3, 1] });
+      animate(opacity, 1, { duration: 0.16, ease: [0.22, 1, 0.36, 1] });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  /* ---- geometry sync (maximize / snap / restore) ---- */
+  /* ---- geometry sync ---- */
   useEffect(() => {
     if (interacting.current || exitingRef.current) return;
     setMV(x, win.rect.x);
@@ -117,14 +110,14 @@ export function Window({
     if (win.exiting === "minimize") {
       animate(x, win.anchor.cx - w.get() / 2, MINIMIZE_TRANSITION);
       animate(y, win.anchor.cy - h.get() / 2, MINIMIZE_TRANSITION);
-      animate(scale, 0.12, MINIMIZE_TRANSITION);
-      animate(opacity, 0, { duration: 0.18, ease: [0.4, 0, 1, 1] });
+      animate(scale, 0.1, MINIMIZE_TRANSITION);
+      animate(opacity, 0, { duration: 0.2, ease: [0.38, 0, 0.9, 1] });
     } else {
       animate(scale, 0.94, CLOSE_TRANSITION);
       animate(opacity, 0, CLOSE_TRANSITION);
     }
 
-    const total = win.exiting === "minimize" ? 230 : 170;
+    const total = win.exiting === "minimize" ? 250 : 170;
     const t = window.setTimeout(onExitComplete, total);
     return () => window.clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -134,6 +127,7 @@ export function Window({
   const startDrag = useCallback(
     (event: React.PointerEvent<HTMLElement>) => {
       if (event.button !== 0 || win.maximized || win.exiting) return;
+      if ((event.target as HTMLElement).closest(".traffic-btn")) return;
       event.preventDefault();
       onFocus();
       interacting.current = true;
@@ -157,7 +151,6 @@ export function Window({
         window.removeEventListener("pointerup", onUp);
         interacting.current = false;
 
-        // Edge snapping, like the real shell.
         const relX = e.clientX - area.left;
         if (e.clientY - area.top <= 4) {
           onToggleMaximize();
@@ -232,10 +225,10 @@ export function Window({
     [area, onFocus, onResize, x, y, w, h, win.exiting],
   );
 
-  /* ---- snap layout flyout on maximize hover ---- */
+  /* ---- snap layout flyout on green zoom button hover ---- */
   const showSnap = useCallback(() => {
     if (snapTimer.current) window.clearTimeout(snapTimer.current);
-    snapTimer.current = window.setTimeout(() => setSnapOpen(true), 380);
+    snapTimer.current = window.setTimeout(() => setSnapOpen(true), 400);
   }, []);
   const hideSnap = useCallback(() => {
     if (snapTimer.current) window.clearTimeout(snapTimer.current);
@@ -251,35 +244,64 @@ export function Window({
 
   return (
     <motion.section
-      className={`window${win.maximized ? " is-maximized" : ""}`}
-      style={{ x, y, width: w, height: h, scale, opacity, zIndex: win.z, transformOrigin: "center" }}
+      className={`window${win.maximized ? " is-maximized" : ""}${!isTop ? " is-inactive" : ""}`}
+      style={{
+        x,
+        y,
+        width: w,
+        height: h,
+        scale,
+        opacity,
+        zIndex: win.z,
+        transformOrigin: "center",
+      }}
       onPointerDown={onFocus}
       role="dialog"
       aria-label={meta.title}
     >
-      <header className="window-titlebar" onPointerDown={startDrag} onDoubleClick={onToggleMaximize}>
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={meta.icon} alt="" aria-hidden />
-        <span className="window-title">{win.title}</span>
-
-        <div className="window-controls">
-          <button className="win-btn" onClick={onMinimize} aria-label="Minimize" title="Minimize">
-            <Minus />
+      <header
+        className="window-titlebar"
+        onPointerDown={startDrag}
+        onDoubleClick={onToggleMaximize}
+      >
+        {/* macOS Traffic Lights */}
+        <div className="traffic-lights" aria-label="Window controls">
+          <button
+            type="button"
+            className="traffic-btn traffic-close"
+            onClick={onClose}
+            aria-label="Close"
+            title="Close"
+          >
+            <span className="traffic-glyph">✕</span>
           </button>
           <button
-            className="win-btn"
+            type="button"
+            className="traffic-btn traffic-minimize"
+            onClick={onMinimize}
+            aria-label="Minimize"
+            title="Minimize"
+          >
+            <span className="traffic-glyph">—</span>
+          </button>
+          <button
+            type="button"
+            className="traffic-btn traffic-zoom"
             onClick={onToggleMaximize}
             onMouseEnter={showSnap}
             onMouseLeave={hideSnap}
-            aria-label={win.maximized ? "Restore" : "Maximize"}
-            title={win.maximized ? "Restore" : "Maximize"}
+            aria-label={win.maximized ? "Restore" : "Zoom"}
+            title={win.maximized ? "Restore" : "Zoom"}
           >
-            {win.maximized ? <Copy /> : <Square />}
-          </button>
-          <button className="win-btn close" onClick={onClose} aria-label="Close" title="Close">
-            <X />
+            <span className="traffic-glyph">⤢</span>
           </button>
         </div>
+
+        {/* Centered Window Title */}
+        <span className="window-title">{win.title}</span>
+
+        {/* Empty placeholder on the right for symmetry */}
+        <div style={{ width: 50 }} aria-hidden />
       </header>
 
       <div className="window-body">{children}</div>

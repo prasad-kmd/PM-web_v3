@@ -2,7 +2,10 @@
 
 import { useEffect, useState } from "react";
 
-/* Status-bar clock — ticks every second, SSR-safe (renders after mount). */
+/**
+ * Clock hook with format: YYYY-MM-DD , hh:MM A/PM
+ * Example: 2026-10-21 , 09:45 AM
+ */
 export function useClock() {
   const [now, setNow] = useState<Date | null>(null);
 
@@ -12,13 +15,23 @@ export function useClock() {
     return () => window.clearInterval(id);
   }, []);
 
-  const time = now
-    ? now.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit", hour12: false })
-    : "--:--";
-  const seconds = now ? now.getSeconds().toString().padStart(2, "0") : "00";
-  const date = now
-    ? now.toLocaleDateString(undefined, { weekday: "short", day: "numeric", month: "short" })
-    : "";
+  if (!now) {
+    return { formatted: "----.--.-- , --:-- --" };
+  }
 
-  return { now, time, seconds, date };
+  const pad = (n: number) => n.toString().padStart(2, "0");
+  const year = now.getFullYear();
+  const month = pad(now.getMonth() + 1);
+  const day = pad(now.getDate());
+
+  let hours = now.getHours();
+  const ampm = hours >= 12 ? "PM" : "AM";
+  hours = hours % 12;
+  hours = hours ? hours : 12;
+  const hh = pad(hours);
+  const mm = pad(now.getMinutes());
+
+  const formatted = `${year}-${month}-${day} , ${hh}:${mm} ${ampm}`;
+
+  return { now, formatted };
 }

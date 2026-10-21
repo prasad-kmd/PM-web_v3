@@ -1,11 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { APP_REGISTRY, PINNED_ORDER, type AppId } from "@/lib/registry";
-
-/* =========================================================
-   Desktop icons — column-fill grid, marquee select, F2 rename
-   ========================================================= */
+import { APP_REGISTRY, DESKTOP_APPS, type AppId } from "@/lib/registry";
 
 type Marquee = { x1: number; y1: number; x2: number; y2: number };
 
@@ -23,14 +19,11 @@ export function DesktopIcons({
   const layerRef = useRef<HTMLDivElement>(null);
   const dragRef = useRef<Marquee | null>(null);
 
-  const commitRename = useCallback(
-    (appId: AppId, value: string) => {
-      const clean = value.trim();
-      if (clean) setLabels((l) => ({ ...l, [appId]: clean }));
-      setRenaming(null);
-    },
-    [],
-  );
+  const commitRename = useCallback((appId: AppId, value: string) => {
+    const clean = value.trim();
+    if (clean) setLabels((l) => ({ ...l, [appId]: clean }));
+    setRenaming(null);
+  }, []);
 
   const beginMarquee = useCallback((event: React.PointerEvent<HTMLDivElement>) => {
     if (event.button !== 0) return;
@@ -61,7 +54,6 @@ export function DesktopIcons({
     window.addEventListener("pointerup", onUp);
   }, []);
 
-  // Keyboard: Enter opens, F2 renames, Delete clears selection, Esc deselects.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if ((e.target as HTMLElement)?.tagName === "INPUT") return;
@@ -99,7 +91,7 @@ export function DesktopIcons({
         onContextMenu(e.clientX, e.clientY, appId ?? null);
       }}
     >
-      {PINNED_ORDER.map((appId) => {
+      {DESKTOP_APPS.map((appId: AppId) => {
         const meta = APP_REGISTRY[appId];
         const label = labels[appId] ?? meta.title;
         const isSelected = selected.has(appId);

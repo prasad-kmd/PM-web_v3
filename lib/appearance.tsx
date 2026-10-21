@@ -4,22 +4,26 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState } 
 import { WALLPAPERS, type Theme, type Wallpaper } from "@/lib/registry";
 
 /* =========================================================
-   Appearance — theme / wallpaper / accent
-   One provider, persisted to localStorage, mirrored onto <html>
-   so CSS custom properties react instantly.
+   Appearance Provider — Spatial Glass OS
+   System Theme (Light / Dark), Accent Color, Wallpaper
    ========================================================= */
 
-const STORAGE = { theme: "pm-theme", wallpaper: "pm-wallpaper", accent: "pm-accent" } as const;
+const STORAGE = {
+  theme: "pm-theme",
+  wallpaper: "pm-wallpaper",
+  accent: "pm-accent",
+} as const;
 
 export const ACCENTS = [
-  "#0067c0",
-  "#0f6cbd",
-  "#8764b8",
-  "#d83b01",
-  "#107c10",
-  "#e3008c",
-  "#4cc2ff",
-];
+  { id: "blue", label: "Blue", color: "#0071e3" },
+  { id: "purple", label: "Purple", color: "#af52de" },
+  { id: "pink", label: "Pink", color: "#ff2d55" },
+  { id: "red", label: "Red", color: "#ff3b30" },
+  { id: "orange", label: "Orange", color: "#ff9500" },
+  { id: "yellow", label: "Yellow", color: "#ffcc00" },
+  { id: "green", label: "Green", color: "#34c759" },
+  { id: "graphite", label: "Graphite", color: "#8e8e93" },
+] as const;
 
 type AppearanceValue = {
   theme: Theme;
@@ -46,24 +50,26 @@ function readStored<T extends string>(key: string, fallback: T, valid: readonly 
 export function AppearanceProvider({ children }: { children: React.ReactNode }) {
   const [theme, setThemeState] = useState<Theme>("dark");
   const [wallpaper, setWallpaperState] = useState<Wallpaper>("hill");
-  const [accent, setAccentState] = useState<string>("#0067c0");
+  const [accent, setAccentState] = useState<string>("#0071e3");
 
-  // Hydrate from storage after mount (the layout script already painted it).
   useEffect(() => {
     setThemeState(readStored<Theme>(STORAGE.theme, "dark", ["light", "dark"]));
-    setWallpaperState(
-      readStored<Wallpaper>(STORAGE.wallpaper, "hill", Object.keys(WALLPAPERS)),
+    setWallpaperState(readStored<Wallpaper>(STORAGE.wallpaper, "hill", Object.keys(WALLPAPERS)));
+    setAccentState(
+      readStored<string>(
+        STORAGE.accent,
+        "#0071e3",
+        ACCENTS.map((a) => a.color),
+      ),
     );
-    setAccentState(readStored<string>(STORAGE.accent, "#0067c0", ACCENTS));
   }, []);
 
-  // Mirror to the document.
   useEffect(() => {
     document.documentElement.setAttribute("data-theme", theme);
     try {
       window.localStorage.setItem(STORAGE.theme, theme);
     } catch {
-      /* storage unavailable — non fatal */
+      /* ignore */
     }
   }, [theme]);
 
@@ -72,17 +78,20 @@ export function AppearanceProvider({ children }: { children: React.ReactNode }) 
     try {
       window.localStorage.setItem(STORAGE.wallpaper, wallpaper);
     } catch {
-      /* noop */
+      /* ignore */
     }
   }, [wallpaper]);
 
   useEffect(() => {
+    document.documentElement.style.setProperty("--sys-accent", accent);
+    document.documentElement.style.setProperty("--sys-accent-soft", `${accent}24`);
+    // Backward compatibility for existing selectors
     document.documentElement.style.setProperty("--flu-accent", accent);
-    document.documentElement.style.setProperty("--flu-accent-soft", `${accent}22`);
+    document.documentElement.style.setProperty("--flu-accent-soft", `${accent}24`);
     try {
       window.localStorage.setItem(STORAGE.accent, accent);
     } catch {
-      /* noop */
+      /* ignore */
     }
   }, [accent]);
 
