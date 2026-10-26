@@ -1,5 +1,5 @@
 ---
-name: Animate UI DesktopOS
+name: සෙනවිරත්න-UI DesktopOS
 reference: https://animate-ui.com/docs
 product-topology: Interactive desktop workspace
 colors:

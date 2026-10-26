@@ -25,7 +25,7 @@ export const metadata: Metadata = {
       "A personal engineering portfolio presented as an interactive desktop workspace.",
     type: "website",
   },
-  icons: { icon: "/favicon.svg" },
+  icons: { icon: "/favicon-pm.svg" },
 };
 
 export const viewport: Viewport = {
