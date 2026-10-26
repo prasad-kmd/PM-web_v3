@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { AppPage } from "@/components/apps/AppPage";
 
 export const metadata: Metadata = {
   title: "Resume",
@@ -7,6 +6,8 @@ export const metadata: Metadata = {
     "Profile, experience, education, interests, languages, and contact details for Prasad Madhuranga.",
 };
 
+/* Direct visits to `/resume` render inside the persistent DesktopOS shell
+   with the Resume window opened and focused automatically. */
 export default function ResumeRoute() {
-  return <AppPage appId="resume" />;
+  return null;
 }

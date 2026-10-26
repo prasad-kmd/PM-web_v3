@@ -1,7 +1,6 @@
-import { Desktop } from "@/components/desktop/Desktop";
-
-/* The desktop shell. All behaviour lives in components/* — this route is a
-   one-liner on purpose so the page can stay readable at a glance. */
+/* The persistent DesktopOS shell is mounted in RootLayout so navigating
+   between `/`, `/resume`, and `/settings` updates the URL and history stack
+   without unmounting open windows. */
 export default function Page() {
-  return <Desktop />;
+  return null;
 }

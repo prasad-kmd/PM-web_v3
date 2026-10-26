@@ -1,11 +1,13 @@
 import type { Metadata } from "next";
-import { AppPage } from "@/components/apps/AppPage";
 
 export const metadata: Metadata = {
   title: "Settings",
-  description: "Choose the exact light or dark Animate UI workspace mode.",
+  description:
+    "Configure workspace theme, desktop wallpaper, backdrop visibility, and automatic wallpaper slideshow.",
 };
 
+/* Direct visits to `/settings` render inside the persistent DesktopOS shell
+   with the Settings window opened and focused automatically. */
 export default function SettingsRoute() {
-  return <AppPage appId="settings" />;
+  return null;
 }

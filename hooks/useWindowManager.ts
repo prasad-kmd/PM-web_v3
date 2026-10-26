@@ -105,23 +105,72 @@ function serializeLayout(windowState: WindowState): StoredWindowLayout {
 export function useWindowManager(area: Area, isMobile: boolean) {
   const [windows, setWindows] = useState<WindowState[]>([]);
   const zRef = useRef(10);
-  const layoutsRef = useRef<StoredWindowLayouts>(readStoredLayouts());
+  const layoutsRef = useRef<StoredWindowLayouts>({});
+  const layoutsLoadedRef = useRef(false);
 
-  const persistLayout = useCallback((windowState: WindowState) => {
-    // Mobile maximization is a presentation rule, not a saved desktop layout.
-    if (windowState.mobileMaximized) return;
-
-    const next = {
-      ...layoutsRef.current,
-      [windowState.appId]: serializeLayout(windowState),
-    };
-    layoutsRef.current = next;
-    try {
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
-    } catch {
-      // Private mode or storage limits should never block window interaction.
+  const ensureLayoutsLoaded = useCallback(() => {
+    if (!layoutsLoadedRef.current && typeof window !== "undefined") {
+      layoutsRef.current = readStoredLayouts();
+      layoutsLoadedRef.current = true;
     }
   }, []);
+
+  const persistLayout = useCallback(
+    (windowState: WindowState) => {
+      // Mobile maximization is a presentation rule, not a saved desktop layout.
+      if (windowState.mobileMaximized) return;
+      ensureLayoutsLoaded();
+
+      const next = {
+        ...layoutsRef.current,
+        [windowState.appId]: serializeLayout(windowState),
+      };
+      layoutsRef.current = next;
+      try {
+        window.localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+      } catch {
+        // Private mode or storage limits should never block window interaction.
+      }
+    },
+    [ensureLayoutsLoaded],
+  );
+
+  const buildWindowState = useCallback(
+    (
+      appId: AppId,
+      z: number,
+      targetArea: Area,
+      mobile: boolean,
+    ): WindowState => {
+      ensureLayoutsLoaded();
+      const stored = layoutsRef.current[appId];
+      const freshRect = centeredDefault(targetArea);
+      const restRect = stored
+        ? clampRect(stored.restRect, targetArea)
+        : freshRect;
+      const restoreMaximized = stored?.maximized ?? false;
+      const maximized = mobile || restoreMaximized;
+      const rect = maximized
+        ? { x: 0, y: 0, w: targetArea.w, h: targetArea.h }
+        : stored
+          ? clampRect(stored.rect, targetArea)
+          : freshRect;
+
+      return {
+        id: `${appId}-${Date.now()}`,
+        appId,
+        title: APP_REGISTRY[appId].title,
+        z,
+        rect,
+        restRect,
+        maximized,
+        mobileMaximized: mobile,
+        restoreMaximized,
+        exiting: false,
+      };
+    },
+    [ensureLayoutsLoaded],
+  );
 
   const focus = useCallback((id: string) => {
     zRef.current += 1;
@@ -140,7 +189,8 @@ export function useWindowManager(area: Area, isMobile: boolean) {
   }, []);
 
   const open = useCallback(
-    (appId: AppId) => {
+    (appId: AppId, areaOverride?: Area) => {
+      const effectiveArea = areaOverride ?? area;
       setWindows((current) => {
         const existing = current.find(
           (windowState) => windowState.appId === appId,
@@ -157,33 +207,11 @@ export function useWindowManager(area: Area, isMobile: boolean) {
           );
         }
 
-        const stored = layoutsRef.current[appId];
-        const freshRect = centeredDefault(area);
-        const restRect = stored ? clampRect(stored.restRect, area) : freshRect;
-        const restoreMaximized = stored?.maximized ?? false;
-        const maximized = isMobile || restoreMaximized;
-        const rect = maximized
-          ? { x: 0, y: 0, w: area.w, h: area.h }
-          : stored
-            ? clampRect(stored.rect, area)
-            : freshRect;
-        const windowState: WindowState = {
-          id: `${appId}-${Date.now()}`,
-          appId,
-          title: APP_REGISTRY[appId].title,
-          z,
-          rect,
-          restRect,
-          maximized,
-          mobileMaximized: isMobile,
-          restoreMaximized,
-          exiting: false,
-        };
-
+        const windowState = buildWindowState(appId, z, effectiveArea, isMobile);
         return [...current, windowState];
       });
     },
-    [area, isMobile],
+    [area, buildWindowState, isMobile],
   );
 
   const close = useCallback(
@@ -197,6 +225,77 @@ export function useWindowManager(area: Area, isMobile: boolean) {
       );
     },
     [persistLayout],
+  );
+
+  const closeApp = useCallback(
+    (appId: AppId) => {
+      setWindows((current) =>
+        current.map((windowState) => {
+          if (windowState.appId !== appId || windowState.exiting)
+            return windowState;
+          persistLayout(windowState);
+          return { ...windowState, exiting: true };
+        }),
+      );
+    },
+    [persistLayout],
+  );
+
+  const closeAll = useCallback(() => {
+    setWindows((current) =>
+      current.map((windowState) => {
+        if (windowState.exiting) return windowState;
+        persistLayout(windowState);
+        return { ...windowState, exiting: true };
+      }),
+    );
+  }, [persistLayout]);
+
+  /**
+   * Synchronize window state when the user navigates via Browser Back/Forward.
+   * - Navigating to `/` closes open windows to reveal the desktop.
+   * - Navigating to `/{appId}` focuses or opens that app, closing the superseded
+   *   foreground window if `targetAppId` was already open underneath.
+   */
+  const syncToRoute = useCallback(
+    (targetAppId: AppId | null) => {
+      if (targetAppId === null) {
+        closeAll();
+        return;
+      }
+
+      setWindows((current) => {
+        const active = current.filter((w) => !w.exiting);
+        const currentTop = active.length
+          ? active.reduce((a, b) => (a.z >= b.z ? a : b))
+          : null;
+
+        if (currentTop?.appId === targetAppId) {
+          return current;
+        }
+
+        zRef.current += 1;
+        const nextZ = zRef.current;
+        const existingTarget = current.find((w) => w.appId === targetAppId);
+
+        if (existingTarget) {
+          return current.map((windowState) => {
+            if (windowState.id === existingTarget.id) {
+              return { ...windowState, exiting: false, z: nextZ };
+            }
+            if (currentTop && windowState.id === currentTop.id) {
+              persistLayout(windowState);
+              return { ...windowState, exiting: true };
+            }
+            return windowState;
+          });
+        }
+
+        const opened = buildWindowState(targetAppId, nextZ, area, isMobile);
+        return [...current, opened];
+      });
+    },
+    [area, buildWindowState, closeAll, isMobile, persistLayout],
   );
 
   const toggleMaximize = useCallback(
@@ -283,16 +382,6 @@ export function useWindowManager(area: Area, isMobile: boolean) {
     [isMobile, persistLayout],
   );
 
-  const closeAll = useCallback(() => {
-    setWindows((current) =>
-      current.map((windowState) => {
-        if (windowState.exiting) return windowState;
-        persistLayout(windowState);
-        return { ...windowState, exiting: true };
-      }),
-    );
-  }, [persistLayout]);
-
   // Mobile windows are always full-screen, but the desktop layout remains intact
   // and returns when the presentation mode changes back.
   useEffect(() => {
@@ -360,25 +449,29 @@ export function useWindowManager(area: Area, isMobile: boolean) {
     );
   }, [area, persistLayout]);
 
-  const topId = useMemo(() => {
+  const topWindow = useMemo(() => {
     const active = windows.filter((windowState) => !windowState.exiting);
-    return active.length
-      ? active.reduce((a, b) => (a.z >= b.z ? a : b)).id
-      : null;
+    return active.length ? active.reduce((a, b) => (a.z >= b.z ? a : b)) : null;
   }, [windows]);
+
+  const topId = topWindow?.id ?? null;
+  const topAppId = topWindow?.appId ?? null;
 
   return {
     windows,
     open,
     focus,
     close,
+    closeApp,
     toggleMaximize,
     snap,
     move: updateRect,
     resize: updateRect,
     finishExit,
     closeAll,
+    syncToRoute,
     topId,
+    topAppId,
   };
 }
 

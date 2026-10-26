@@ -6,6 +6,7 @@ export type AppMeta = {
   kind: string;
   description: string;
   icon: string;
+  route: `/${AppId}`;
 };
 
 export const APP_REGISTRY: Record<AppId, AppMeta> = {
@@ -15,6 +16,7 @@ export const APP_REGISTRY: Record<AppId, AppMeta> = {
     kind: "Workspace preferences",
     description: "Theme and desktop wallpaper preferences",
     icon: "/icons/fluent-color/program.svg",
+    route: "/settings",
   },
   resume: {
     id: "resume",
@@ -22,6 +24,7 @@ export const APP_REGISTRY: Record<AppId, AppMeta> = {
     kind: "Professional portfolio",
     description: "Profile, experience, education, and research interests",
     icon: "/icons/fluent-color/document.svg",
+    route: "/resume",
   },
 };
 
@@ -34,3 +37,25 @@ export const RECOMMENDED = [
 ];
 
 export type Theme = "light" | "dark";
+
+export const WORKSPACE_DEFAULT_TITLE = "Prasad M. — Desktop Workspace";
+
+export function getAppIdFromPathname(
+  pathname: string | null | undefined,
+): AppId | null {
+  if (!pathname) return null;
+  const normalized = pathname.replace(/\/+$/, "") || "/";
+  if (normalized === "/resume") return "resume";
+  if (normalized === "/settings") return "settings";
+  return null;
+}
+
+export function getPathnameForApp(appId: AppId | null): string {
+  return appId ? APP_REGISTRY[appId].route : "/";
+}
+
+export function getDocumentTitleForApp(appId: AppId | null): string {
+  return appId
+    ? `${APP_REGISTRY[appId].title} · Prasad M.`
+    : WORKSPACE_DEFAULT_TITLE;
+}

@@ -4,6 +4,7 @@ import {
   ArrowLeft02Icon,
   ArrowRight01Icon,
   Copy01Icon,
+  Image01Icon,
   InformationCircleIcon,
   Refresh01Icon,
   Settings02Icon,
@@ -20,10 +21,13 @@ import {
   ContextMenuShortcut,
   ContextMenuTrigger,
 } from "@/components/ui/context-menu";
+import { useAppearance } from "@/lib/appearance";
 import { APP_REGISTRY, type AppId } from "@/lib/registry";
 
 function MenuIcon({ icon }: { icon: IconSvgElement }) {
-  return <HugeiconsIcon icon={icon} strokeWidth={2} size={16} aria-hidden="true" />;
+  return (
+    <HugeiconsIcon icon={icon} strokeWidth={2} size={16} aria-hidden="true" />
+  );
 }
 
 async function copyText(value: string, successMessage: string) {
@@ -72,6 +76,8 @@ export function DesktopContextMenuContent({
   targetLink: string | null;
   targetImage: string | null;
 }) {
+  const { nextWallpaper } = useAppearance();
+
   return (
     <ContextMenuContent className="w-64">
       {targetLink && (
@@ -82,7 +88,9 @@ export function DesktopContextMenuContent({
               <MenuIcon icon={ArrowRight01Icon} />
               Open link in new tab
             </ContextMenuItem>
-            <ContextMenuItem onClick={() => void copyText(targetLink, "Link address copied")}>
+            <ContextMenuItem
+              onClick={() => void copyText(targetLink, "Link address copied")}
+            >
               <MenuIcon icon={Copy01Icon} />
               Copy link address
             </ContextMenuItem>
@@ -99,7 +107,9 @@ export function DesktopContextMenuContent({
               <MenuIcon icon={ArrowRight01Icon} />
               Open image in new tab
             </ContextMenuItem>
-            <ContextMenuItem onClick={() => void copyText(targetImage, "Image URL copied")}>
+            <ContextMenuItem
+              onClick={() => void copyText(targetImage, "Image URL copied")}
+            >
               <MenuIcon icon={Copy01Icon} />
               Copy image URL
             </ContextMenuItem>
@@ -130,7 +140,13 @@ export function DesktopContextMenuContent({
       <ContextMenuSeparator />
       <ContextMenuGroup>
         <ContextMenuLabel>Workspace</ContextMenuLabel>
-        <ContextMenuItem onClick={() => void copyText(window.location.href, "Page URL copied")}>
+        <ContextMenuItem onClick={nextWallpaper}>
+          <MenuIcon icon={Image01Icon} />
+          Next wallpaper
+        </ContextMenuItem>
+        <ContextMenuItem
+          onClick={() => void copyText(window.location.href, "Page URL copied")}
+        >
           <MenuIcon icon={Copy01Icon} />
           Copy page URL
         </ContextMenuItem>
@@ -182,10 +198,12 @@ export function ShortcutContextMenu({
             <ContextMenuShortcut>↵</ContextMenuShortcut>
           </ContextMenuItem>
           <ContextMenuItem
-            onClick={() => window.open(`/${appId}`, "_blank", "noopener,noreferrer")}
+            onClick={() =>
+              window.open(meta.route, "_blank", "noopener,noreferrer")
+            }
           >
             <MenuIcon icon={ArrowRight01Icon} />
-            Open in new window
+            Open in new tab
           </ContextMenuItem>
         </ContextMenuGroup>
       </ContextMenuContent>

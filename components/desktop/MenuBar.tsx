@@ -2,7 +2,6 @@
 
 import { Moon02Icon, SunMediumIcon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { useClock } from "@/hooks/useClock";
 import { useAppearance } from "@/lib/appearance";
 import type { AppId } from "@/lib/registry";
 import { WorkspaceTooltip } from "@/components/ui/tooltip";
@@ -16,6 +15,7 @@ import {
   MenubarShortcut,
   MenubarTrigger,
 } from "@/components/ui/menubar";
+import { ClockPopover } from "./ClockPopover";
 
 export function MenuBar({
   onOpenApp,
@@ -24,8 +24,7 @@ export function MenuBar({
   onOpenApp: (appId: AppId) => void;
   onCloseAll: () => void;
 }) {
-  const { formatted } = useClock();
-  const { theme, toggleTheme } = useAppearance();
+  const { theme, toggleTheme, nextWallpaper } = useAppearance();
 
   const openResumeSection = (section?: string) => {
     onOpenApp("resume");
@@ -49,7 +48,10 @@ export function MenuBar({
           alt="Prasad Madhuranga"
         />
 
-        <Menubar className="workspace-menubar w-fit" aria-label="Application menus">
+        <Menubar
+          className="workspace-menubar w-fit"
+          aria-label="Application menus"
+        >
           <MenubarMenu>
             <MenubarTrigger>File</MenubarTrigger>
             <MenubarContent>
@@ -69,37 +71,64 @@ export function MenuBar({
           </MenubarMenu>
 
           <MenubarMenu>
-            <MenubarTrigger className="menu-bar-optional-trigger">Explore</MenubarTrigger>
+            <MenubarTrigger className="menu-bar-optional-trigger">
+              Explore
+            </MenubarTrigger>
             <MenubarContent>
               <MenubarGroup>
-                <MenubarItem onClick={() => openResumeSection()}>Portfolio / Resume</MenubarItem>
-                <MenubarItem onClick={() => openResumeSection("projects")}>Projects</MenubarItem>
-                <MenubarItem onClick={() => openResumeSection("experience")}>Experience</MenubarItem>
-                <MenubarItem onClick={() => openResumeSection("education")}>Education</MenubarItem>
-                <MenubarItem onClick={() => openResumeSection("interests")}>Interests</MenubarItem>
-                <MenubarItem onClick={() => openResumeSection("languages")}>Languages</MenubarItem>
+                <MenubarItem onClick={() => openResumeSection()}>
+                  Portfolio / Resume
+                </MenubarItem>
+                <MenubarItem onClick={() => openResumeSection("projects")}>
+                  Projects
+                </MenubarItem>
+                <MenubarItem onClick={() => openResumeSection("experience")}>
+                  Experience
+                </MenubarItem>
+                <MenubarItem onClick={() => openResumeSection("education")}>
+                  Education
+                </MenubarItem>
+                <MenubarItem onClick={() => openResumeSection("interests")}>
+                  Interests
+                </MenubarItem>
+                <MenubarItem onClick={() => openResumeSection("languages")}>
+                  Languages
+                </MenubarItem>
               </MenubarGroup>
             </MenubarContent>
           </MenubarMenu>
 
           <MenubarMenu>
-            <MenubarTrigger className="menu-bar-optional-trigger">View</MenubarTrigger>
+            <MenubarTrigger className="menu-bar-optional-trigger">
+              View
+            </MenubarTrigger>
             <MenubarContent>
               <MenubarGroup>
                 <MenubarItem onClick={toggleTheme}>
                   Use {theme === "dark" ? "light" : "dark"} appearance
                 </MenubarItem>
-                <MenubarItem onClick={() => onOpenApp("settings")}>Appearance settings</MenubarItem>
+                <MenubarItem onClick={nextWallpaper}>
+                  Next wallpaper
+                </MenubarItem>
+                <MenubarItem onClick={() => onOpenApp("settings")}>
+                  Appearance settings
+                </MenubarItem>
               </MenubarGroup>
             </MenubarContent>
           </MenubarMenu>
 
           <MenubarMenu>
-            <MenubarTrigger className="menu-bar-optional-trigger">Window</MenubarTrigger>
+            <MenubarTrigger className="menu-bar-optional-trigger">
+              Window
+            </MenubarTrigger>
             <MenubarContent>
               <MenubarGroup>
-                <MenubarItem onClick={() => onOpenApp("resume")}>Resume</MenubarItem>
-                <MenubarItem onClick={() => onOpenApp("settings")}>Settings</MenubarItem>
+                <MenubarItem onClick={() => onOpenApp("resume")}>
+                  Resume
+                </MenubarItem>
+                <MenubarItem onClick={() => onOpenApp("settings")}>
+                  Settings
+                </MenubarItem>
               </MenubarGroup>
               <MenubarSeparator />
               <MenubarItem variant="destructive" onClick={onCloseAll}>
@@ -109,27 +138,44 @@ export function MenuBar({
           </MenubarMenu>
 
           <MenubarMenu>
-            <MenubarTrigger className="menu-bar-optional-trigger">Help</MenubarTrigger>
+            <MenubarTrigger className="menu-bar-optional-trigger">
+              Help
+            </MenubarTrigger>
             <MenubarContent>
-              <MenubarItem onClick={() => openResumeSection()}>About this workspace</MenubarItem>
-              <MenubarItem onClick={() => openResumeSection("contact")}>Contact</MenubarItem>
+              <MenubarItem onClick={() => openResumeSection()}>
+                About this workspace
+              </MenubarItem>
+              <MenubarItem onClick={() => openResumeSection("contact")}>
+                Contact
+              </MenubarItem>
             </MenubarContent>
           </MenubarMenu>
         </Menubar>
       </div>
 
       <div className="menu-bar-status">
-        <WorkspaceTooltip label={theme === "dark" ? "Switch to light appearance" : "Switch to dark appearance"}>
+        <WorkspaceTooltip
+          label={
+            theme === "dark"
+              ? "Switch to light appearance"
+              : "Switch to dark appearance"
+          }
+        >
           <button
             type="button"
             className="menu-bar-icon-btn menu-bar-theme-toggle"
             onClick={toggleTheme}
             aria-label="Toggle appearance"
           >
-            <HugeiconsIcon icon={theme === "dark" ? SunMediumIcon : Moon02Icon} strokeWidth={2} size={16} />
+            <HugeiconsIcon
+              icon={theme === "dark" ? SunMediumIcon : Moon02Icon}
+              strokeWidth={2}
+              size={16}
+            />
           </button>
         </WorkspaceTooltip>
-        <time className="menu-bar-clock">{formatted}</time>
+
+        <ClockPopover />
       </div>
     </header>
   );

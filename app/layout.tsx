@@ -1,7 +1,22 @@
 import type { Metadata, Viewport } from "next";
+import { cookies } from "next/headers";
 import "./globals.css";
+import { Desktop } from "@/components/desktop/Desktop";
 import { InterfaceProvider } from "@/components/providers/InterfaceProvider";
 import { AppearanceProvider } from "@/lib/appearance";
+import {
+  COOKIE_SLIDESHOW_ENABLED,
+  COOKIE_SLIDESHOW_INTERVAL,
+  COOKIE_THEME,
+  COOKIE_WALLPAPER,
+  COOKIE_WALLPAPER_INTENSITY,
+} from "@/lib/cookies";
+import type { Theme } from "@/lib/registry";
+import {
+  resolveSlideshowInterval,
+  resolveWallpaperId,
+  resolveWallpaperIntensity,
+} from "@/lib/wallpapers";
 
 export const metadata: Metadata = {
   title: {
@@ -37,21 +52,54 @@ export const viewport: Viewport = {
   ],
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
+  const cookieStore = await cookies();
+
+  const initialTheme: Theme =
+    cookieStore.get(COOKIE_THEME)?.value === "light" ? "light" : "dark";
+  const initialWallpaper = resolveWallpaperId(
+    cookieStore.get(COOKIE_WALLPAPER)?.value,
+  );
+  const initialIntensity = resolveWallpaperIntensity(
+    cookieStore.get(COOKIE_WALLPAPER_INTENSITY)?.value,
+  );
+  const initialSlideshowEnabled =
+    cookieStore.get(COOKIE_SLIDESHOW_ENABLED)?.value === "1";
+  const initialSlideshowInterval = resolveSlideshowInterval(
+    cookieStore.get(COOKIE_SLIDESHOW_INTERVAL)?.value,
+  );
+
   return (
-    <html lang="en" className="dark" suppressHydrationWarning>
+    <html
+      lang="en"
+      className={initialTheme === "dark" ? "dark" : undefined}
+      style={{ colorScheme: initialTheme }}
+      data-wallpaper-intensity={initialIntensity}
+      suppressHydrationWarning
+    >
       <head>
         <script
           dangerouslySetInnerHTML={{
-            __html: `(function(){try{var d=document.documentElement;var t=localStorage.getItem('pm-theme');d.classList.toggle('dark',t!=='light');d.style.colorScheme=t==='light'?'light':'dark'}catch(e){}})();`,
+            __html: `(function(){try{var d=document.documentElement;var m=document.cookie.match(/(?:^|; )pm-theme=([^;]*)/);var t=m?decodeURIComponent(m[1]):localStorage.getItem('pm-theme');if(t==='light'||t==='dark'){d.classList.toggle('dark',t==='dark');d.style.colorScheme=t}}catch(e){}})();`,
           }}
         />
       </head>
       <body className="antialiased">
-        <AppearanceProvider>
-          <InterfaceProvider>{children}</InterfaceProvider>
+        <AppearanceProvider
+          initialAppearance={{
+            theme: initialTheme,
+            wallpaper: initialWallpaper,
+            wallpaperIntensity: initialIntensity,
+            slideshowEnabled: initialSlideshowEnabled,
+            slideshowInterval: initialSlideshowInterval,
+          }}
+        >
+          <InterfaceProvider>
+            <Desktop />
+            {children}
+          </InterfaceProvider>
         </AppearanceProvider>
       </body>
     </html>

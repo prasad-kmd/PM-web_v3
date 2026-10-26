@@ -34,7 +34,10 @@ export function WindowsLayer({
           onExitComplete={() => manager.finishExit(windowState.id)}
           onOpenApp={(appId) => manager.open(appId)}
         >
-          <AppBody appId={windowState.appId} />
+          <AppBody
+            appId={windowState.appId}
+            onNavigateHome={manager.closeAll}
+          />
         </Window>
       ))}
     </>

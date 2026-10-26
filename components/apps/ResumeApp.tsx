@@ -1,5 +1,6 @@
 "use client";
 
+import type { MouseEvent } from "react";
 import {
   contactLinks,
   education,
@@ -25,14 +26,32 @@ const profileStats = [
   { label: "Languages", value: languages.length },
 ];
 
-export function ResumeApp() {
+export function ResumeApp({ onNavigateHome }: { onNavigateHome?: () => void }) {
+  const handleHomeClick = (event: MouseEvent<HTMLAnchorElement>) => {
+    if (
+      !onNavigateHome ||
+      event.defaultPrevented ||
+      event.button !== 0 ||
+      event.metaKey ||
+      event.ctrlKey ||
+      event.shiftKey ||
+      event.altKey
+    ) {
+      return;
+    }
+    event.preventDefault();
+    onNavigateHome();
+  };
+
   return (
     <div className="resume-app">
       <div className="resume-toolbar">
         <Breadcrumb className="resume-breadcrumb">
           <BreadcrumbList>
             <BreadcrumbItem>
-              <BreadcrumbLink href="/">Home</BreadcrumbLink>
+              <BreadcrumbLink href="/" onClick={handleHomeClick}>
+                Home
+              </BreadcrumbLink>
             </BreadcrumbItem>
             <BreadcrumbSeparator />
             <BreadcrumbItem>
@@ -44,20 +63,29 @@ export function ResumeApp() {
 
       <div className="resume-content">
         <header className="resume-hero">
-          <div className="resume-monogram" aria-hidden="true">PM</div>
+          <div className="resume-monogram" aria-hidden="true">
+            PM
+          </div>
           <div className="resume-identity">
             <p className="resume-eyebrow">{resumeProfile.role}</p>
             <h1>{resumeProfile.name}</h1>
             <p className="resume-status">{resumeProfile.status}</p>
             <p className="resume-tagline">{resumeProfile.tagline}</p>
             <p className="resume-summary">{resumeProfile.summary}</p>
-            <div className="resume-contact-links" aria-label="Contact and social links">
+            <div
+              className="resume-contact-links"
+              aria-label="Contact and social links"
+            >
               {contactLinks.map((link) => (
                 <a
                   key={link.label}
                   href={link.href}
-                  target={link.href.startsWith("mailto:") ? undefined : "_blank"}
-                  rel={link.href.startsWith("mailto:") ? undefined : "noreferrer"}
+                  target={
+                    link.href.startsWith("mailto:") ? undefined : "_blank"
+                  }
+                  rel={
+                    link.href.startsWith("mailto:") ? undefined : "noreferrer"
+                  }
                 >
                   {link.label} <span aria-hidden="true">↗</span>
                 </a>
@@ -77,7 +105,11 @@ export function ResumeApp() {
 
         <div className="resume-columns">
           <div className="resume-primary-column">
-            <section className="resume-section" id="resume-projects" aria-labelledby="projects-heading">
+            <section
+              className="resume-section"
+              id="resume-projects"
+              aria-labelledby="projects-heading"
+            >
               <div className="resume-section-heading">
                 <div>
                   <p className="resume-section-index">01 / Selected work</p>
@@ -88,12 +120,17 @@ export function ResumeApp() {
               <div className="resume-project-empty">
                 <p>Project case studies are being curated.</p>
                 <span>
-                  No project summaries are published here until their details and outcomes have been verified.
+                  No project summaries are published here until their details
+                  and outcomes have been verified.
                 </span>
               </div>
             </section>
 
-            <section className="resume-section" id="resume-experience" aria-labelledby="experience-heading">
+            <section
+              className="resume-section"
+              id="resume-experience"
+              aria-labelledby="experience-heading"
+            >
               <div className="resume-section-heading">
                 <div>
                   <p className="resume-section-index">02 / Work history</p>
@@ -102,13 +139,20 @@ export function ResumeApp() {
               </div>
               <div className="resume-timeline">
                 {experience.map((entry) => (
-                  <article className="resume-experience" key={`${entry.org}-${entry.role}`}>
+                  <article
+                    className="resume-experience"
+                    key={`${entry.org}-${entry.role}`}
+                  >
                     <time>{entry.period}</time>
                     <h3>{entry.role}</h3>
-                    <p className="resume-experience-org">{entry.org} · {entry.location}</p>
+                    <p className="resume-experience-org">
+                      {entry.org} · {entry.location}
+                    </p>
                     <p className="resume-experience-summary">{entry.summary}</p>
                     <ul>
-                      {entry.points.map((point) => <li key={point}>{point}</li>)}
+                      {entry.points.map((point) => (
+                        <li key={point}>{point}</li>
+                      ))}
                     </ul>
                   </article>
                 ))}
@@ -117,7 +161,11 @@ export function ResumeApp() {
           </div>
 
           <aside className="resume-aside">
-            <section className="resume-section resume-aside-section" id="resume-details" aria-labelledby="details-heading">
+            <section
+              className="resume-section resume-aside-section"
+              id="resume-details"
+              aria-labelledby="details-heading"
+            >
               <p className="resume-section-index">03 / At a glance</p>
               <h2 id="details-heading">Personal details</h2>
               <dl className="resume-details-list">
@@ -130,7 +178,11 @@ export function ResumeApp() {
               </dl>
             </section>
 
-            <section className="resume-section resume-aside-section" id="resume-education" aria-labelledby="education-heading">
+            <section
+              className="resume-section resume-aside-section"
+              id="resume-education"
+              aria-labelledby="education-heading"
+            >
               <p className="resume-section-index">04 / Learning</p>
               <h2 id="education-heading">Education</h2>
               <ol className="resume-education-list">
@@ -138,22 +190,34 @@ export function ResumeApp() {
                   <li key={entry.credential}>
                     <h3>{entry.credential}</h3>
                     <p>{entry.institution}</p>
-                    <span>{entry.location} · {entry.period}</span>
+                    <span>
+                      {entry.location} · {entry.period}
+                    </span>
                     <small>{entry.note}</small>
                   </li>
                 ))}
               </ol>
             </section>
 
-            <section className="resume-section resume-aside-section" id="resume-interests" aria-labelledby="interests-heading">
+            <section
+              className="resume-section resume-aside-section"
+              id="resume-interests"
+              aria-labelledby="interests-heading"
+            >
               <p className="resume-section-index">05 / Areas of interest</p>
               <h2 id="interests-heading">Interests</h2>
               <ul className="resume-interest-list">
-                {interests.map((interest) => <li key={interest}>{interest}</li>)}
+                {interests.map((interest) => (
+                  <li key={interest}>{interest}</li>
+                ))}
               </ul>
             </section>
 
-            <section className="resume-section resume-aside-section" id="resume-languages" aria-labelledby="languages-heading">
+            <section
+              className="resume-section resume-aside-section"
+              id="resume-languages"
+              aria-labelledby="languages-heading"
+            >
               <p className="resume-section-index">06 / Communication</p>
               <h2 id="languages-heading">Languages</h2>
               <ul className="resume-language-list">
@@ -173,7 +237,9 @@ export function ResumeApp() {
             <p className="resume-section-index">Get in touch</p>
             <h2>Let’s build something together.</h2>
           </div>
-          <a href="mailto:prasad.madhuranga@pm.me">Contact Prasad <span aria-hidden="true">↗</span></a>
+          <a href="mailto:prasad.madhuranga@pm.me">
+            Contact Prasad <span aria-hidden="true">↗</span>
+          </a>
         </footer>
       </div>
     </div>
