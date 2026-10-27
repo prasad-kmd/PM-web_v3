@@ -4,7 +4,7 @@
   "private": true,
   "description": "A personal engineering portfolio presented as an interactive desktop workspace.",
   "author": "prasad-kmd",
-  "license": "AGPL-3.0",
+  "license": "CC BY-NC-ND 4.0",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/prasad-kmd/pm-web_v3.git"
