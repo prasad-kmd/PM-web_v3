@@ -1,0 +1,393 @@
+/* ==========================================================================
+   System states: loading (01 + 04), not-found (02), error (04) and the
+   /dev/states preview. global-error (Safe mode) is fully inline-styled.
+   ========================================================================== */
+
+/* ---------- Loading -------------------------------------------------------- */
+.state-loading {
+  position: relative;
+  display: flex;
+  min-height: 100%;
+  flex-direction: column;
+  background: var(--card);
+}
+.state-crumbs {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.state-crumb-sep {
+  width: 5px;
+  height: 5px;
+  border-top: 1.5px solid var(--border);
+  border-right: 1.5px solid var(--border);
+  transform: rotate(45deg);
+}
+.state-bar {
+  position: sticky;
+  z-index: 6;
+  top: 42px;
+  height: 2px;
+  margin-bottom: -2px;
+  overflow: hidden;
+}
+.state-bar span {
+  display: block;
+  width: 35%;
+  height: 100%;
+  background: var(--foreground);
+  animation: state-indeterminate 1.3s cubic-bezier(0.22, 1, 0.36, 1) infinite;
+}
+@keyframes state-indeterminate {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(300%);
+  }
+}
+.state-skel-lib .lib-side {
+  gap: 10px;
+}
+.state-skel-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(184px, 1fr));
+  gap: 20px 16px;
+  margin-top: 18px;
+}
+.state-skel-doc {
+  width: 100%;
+  max-width: 700px;
+  margin: 0 auto;
+  padding: 40px 28px 96px;
+}
+.state-dock {
+  position: sticky;
+  z-index: 6;
+  bottom: calc(14px + env(safe-area-inset-bottom));
+  display: flex;
+  height: 30px;
+  align-items: center;
+  align-self: center;
+  gap: 8px;
+  margin-top: auto;
+  padding: 0 12px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--popover);
+  box-shadow: 0 10px 28px oklch(0 0 0 / 18%);
+  color: var(--popover-foreground);
+  font-size: 12px;
+  animation: state-rise 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+@keyframes state-rise {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+
+/* ---------- Error (not responding) ---------------------------------------- */
+.state-error {
+  position: relative;
+  display: grid;
+  min-height: 100%;
+  background: var(--card);
+}
+.state-frozen {
+  grid-area: 1 / 1;
+  padding: 0 0 24px;
+  filter: grayscale(1) blur(1.5px);
+  opacity: 0.45;
+  pointer-events: none;
+}
+.state-frozen-bar {
+  height: 42px;
+  border-bottom: 1px solid var(--border);
+  background: var(--muted);
+}
+.state-frozen-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 14px;
+  padding: 24px;
+}
+.state-frozen-grid span {
+  aspect-ratio: 4 / 3;
+  border-radius: 8px;
+  background: var(--muted);
+}
+.state-hang {
+  display: flex;
+  width: min(420px, calc(100% - 32px));
+  flex-direction: column;
+  align-items: flex-start;
+  align-self: center;
+  justify-self: center;
+  gap: 10px;
+  grid-area: 1 / 1;
+  margin: 24px 0;
+  padding: 22px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--card);
+  box-shadow: 0 16px 38px oklch(0 0 0 / 18%);
+  animation: state-pop 0.28s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+@keyframes state-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.97);
+  }
+}
+.state-hang-icon {
+  display: grid;
+  width: 44px;
+  height: 44px;
+  place-items: center;
+  border-radius: 10px;
+  background: var(--muted);
+}
+.state-hang h1 {
+  margin: 4px 0 0;
+  font-size: 17px;
+  font-weight: 600;
+  line-height: 1.35;
+}
+.state-hang p {
+  margin: 0;
+  color: var(--muted-foreground);
+  font-size: 13.5px;
+  line-height: 1.55;
+}
+.state-hang-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 6px;
+}
+.state-digest {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--muted-foreground);
+  font-size: 12px;
+}
+.state-digest code {
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 11.5px;
+  color: var(--foreground);
+}
+
+/* ---------- Not found (in-window document) -------------------------------- */
+.state-doc {
+  min-height: 100%;
+  background: var(--card);
+}
+.route-unknown > .state-doc {
+  container: window-body / inline-size;
+  width: min(720px, 100%);
+  min-height: 0;
+  max-height: 100%;
+  overflow: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: 0 16px 38px oklch(0 0 0 / 22%);
+}
+.state-doc-body {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 40px 28px 48px;
+}
+.state-eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 10px;
+  color: var(--muted-foreground);
+  font-size: 12.5px;
+  font-weight: 500;
+}
+.state-code {
+  display: inline-flex;
+  height: 22px;
+  align-items: center;
+  padding: 0 7px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--muted);
+  color: var(--foreground);
+  font-variant-numeric: tabular-nums;
+}
+.state-doc h1 {
+  margin: 0;
+  font-size: 26px;
+  font-weight: 600;
+  line-height: 1.25;
+  letter-spacing: -0.02em;
+}
+.state-lead {
+  margin: 10px 0 0;
+  color: var(--muted-foreground);
+  font-size: 15px;
+  line-height: 1.7;
+}
+.state-path {
+  padding: 1px 6px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--muted);
+  color: var(--foreground);
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 12.5px;
+  overflow-wrap: anywhere;
+}
+.state-section {
+  margin-top: 28px;
+}
+.state-section h2 {
+  margin: 0 0 8px;
+  color: var(--muted-foreground);
+  font-size: 12.5px;
+  font-weight: 500;
+}
+.state-suggestions {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.state-suggestions a {
+  display: grid;
+  align-items: center;
+  grid-template-columns: 40px minmax(0, 1fr) 16px;
+  gap: 12px;
+  padding: 8px;
+  border-radius: 8px;
+  color: var(--muted-foreground);
+  text-decoration: none;
+}
+.state-suggestions a:hover {
+  background: var(--accent);
+  color: var(--foreground);
+}
+.state-sg-icon {
+  display: grid;
+  width: 40px;
+  height: 40px;
+  place-items: center;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--muted);
+  color: var(--foreground);
+}
+.state-sg-copy {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  font-size: 12px;
+}
+.state-sg-copy strong {
+  overflow: hidden;
+  color: var(--foreground);
+  font-size: 13.5px;
+  font-weight: 500;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.state-collections {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(118px, 1fr));
+  gap: 8px;
+}
+.state-collections a {
+  display: flex;
+  height: 38px;
+  align-items: center;
+  gap: 8px;
+  padding: 0 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--foreground);
+  font-size: 13px;
+  text-decoration: none;
+}
+.state-collections a:hover {
+  background: var(--accent);
+}
+.state-collections svg {
+  color: var(--muted-foreground);
+}
+.state-actions-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 28px;
+}
+@container window-body (max-width: 520px) {
+  .state-doc-body {
+    padding: 24px 18px 40px;
+  }
+  .state-doc h1 {
+    font-size: 22px;
+  }
+  .state-skel-doc {
+    padding: 24px 16px 96px;
+  }
+}
+
+/* ---------- /dev/states preview ------------------------------------------- */
+.dev-states {
+  width: min(1100px, 100%);
+  height: min(780px, 100%);
+}
+.dev-states-titlebar {
+  cursor: default;
+}
+.dev-states-tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border);
+  background: var(--background);
+}
+.dev-states-path {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--muted-foreground);
+  font-size: 12px;
+}
+.dev-states-path input {
+  width: 260px;
+  height: 30px;
+  padding: 0 8px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--card);
+  color: var(--foreground);
+  font: 12px var(--font-mono, ui-monospace, monospace);
+}
+.dev-states-file {
+  color: var(--muted-foreground);
+  font: 11.5px var(--font-mono, ui-monospace, monospace);
+}
+.dev-states-tools .rdr-seg button {
+  flex: none;
+}
+.dev-states-frame {
+  position: relative;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .state-bar span {
+    width: 100%;
+    animation: none;
+    opacity: 0.35;
+  }
+  .state-dock,
+  .state-hang {
+    animation: none;
+  }
+}

@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import { WindowBreadcrumb } from "@/components/system/WindowBreadcrumb";
 import { ContactForm } from "./ContactForm";
 import { getSiteUrl } from "@/lib/site";
-import { ogImageUrl } from "@/lib/content-metadata";
+import { OG_IMAGE_SIZE, ogImageUrl } from "@/lib/content-metadata";
 
 const description =
   "Get in touch with Prasad Madhuranga about engineering, ideas, or collaboration.";
@@ -16,7 +16,7 @@ export function generateMetadata(): Metadata {
       title: "Contact",
       description,
       url: `${getSiteUrl()}/contact`,
-      images: [{ url: image, width: 1280, height: 720 }],
+      images: [{ url: image, ...OG_IMAGE_SIZE }],
     },
     twitter: { card: "summary_large_image", images: [image] },
   };
@@ -27,11 +27,7 @@ export default function ContactPage() {
     (process.env.NODE_ENV !== "production" ? "1x00000000000000000000AA" : "");
   return (
     <main className="cms-app">
-      <div className="cms-toolbar">
-        <Link href="/">Workspace</Link>
-        <span>/</span>
-        <span>Contact</span>
-      </div>
+      <WindowBreadcrumb items={[{ label: "Contact" }]} />
       <div className="cms-page">
         <header className="cms-heading">
           <div>

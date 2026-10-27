@@ -1,167 +1,146 @@
 import { ImageResponse } from "next/og";
 import type { NextRequest } from "next/server";
+import { CONTENT_META, type ContentType } from "@/lib/content-types";
+import { OG_IMAGE_SIZE } from "@/lib/content-metadata";
+import { resumeProfile } from "@/lib/resume-data";
+import { getSiteUrl } from "@/lib/site";
+import {
+  loadAvatar,
+  loadCover,
+  loadLogo,
+  loadOgFonts,
+  loadWallpaper,
+} from "@/lib/og/assets";
+import { EditorialCard } from "@/lib/og/EditorialCard";
+import { cleanText } from "@/lib/og/sanitize";
+import {
+  OG_TYPES,
+  resolveOgKind,
+  resolveOgStyle,
+  resolveOgType,
+  type OgCardData,
+} from "@/lib/og/theme";
+import { WindowCard } from "@/lib/og/WindowCard";
+
+/**
+ * Open Graph images (1200 × 630), inspired by v1's generator.
+ *
+ * Query: `title`, `description`, `type` (projects | blog | articles |
+ * tutorials | glossary | pages | default), `kind` (detail | collection |
+ * home), `date`, `read`, `cover` (same-origin `/api/notion-image?…` only),
+ * `style` (editorial | window, default from `OG_STYLE`, else editorial).
+ *
+ * Node runtime: fonts and wallpapers are read from `public/` on disk.
+ */
 export const runtime = "nodejs";
-const labels: Record<string, string> = {
-  projects: "Projects",
-  blog: "Blog",
-  articles: "Articles",
-  tutorials: "Tutorials",
-  glossary: "Glossary",
-  pages: "Workspace",
-  default: "Desktop Workspace",
-};
-function text(value: string, max: number) {
-  return value
-    .replace(/[\u0000-\u001f\u007f]/g, " ")
-    .replace(/<[^>]*>/g, "")
-    .replace(/\s+/g, " ")
-    .trim()
-    .slice(0, max);
+
+function siteHost() {
+  try {
+    return new URL(getSiteUrl()).host;
+  } catch {
+    return "prasadm.vercel.app";
+  }
 }
+
 export async function GET(request: NextRequest) {
   const params = request.nextUrl.searchParams;
-  const title = text(
-    params.get("title") || "Prasad M. — Desktop Workspace",
-    180,
-  );
-  const description = text(
-    params.get("description") ||
-      "An engineering portfolio and personal workspace.",
-    200,
-  );
-  const rawType = params.get("type") || "default";
-  const label = Object.hasOwn(labels, rawType)
-    ? labels[rawType]
-    : labels.default;
-  return new ImageResponse(
-    <div
-      style={{
-        width: "100%",
-        height: "100%",
-        display: "flex",
-        background: "#1d1d1d",
-        color: "#f5f5f5",
-        padding: "56px",
-        fontFamily: "sans-serif",
-      }}
-    >
-      <div
-        style={{
-          width: "100%",
-          height: "100%",
-          display: "flex",
-          flexDirection: "column",
-          border: "1px solid #555",
-          borderRadius: 18,
-          background: "#292929",
-          overflow: "hidden",
-        }}
-      >
-        <div
-          style={{
-            height: 66,
-            display: "flex",
-            alignItems: "center",
-            padding: "0 28px",
-            borderBottom: "1px solid #4a4a4a",
-            color: "#c4c4c4",
-            fontSize: 20,
-          }}
-        >
-          <div style={{ display: "flex", gap: 9, marginRight: 22 }}>
-            <div
-              style={{
-                width: 13,
-                height: 13,
-                borderRadius: 20,
-                background: "#969696",
-              }}
-            />
-            <div
-              style={{
-                width: 13,
-                height: 13,
-                borderRadius: 20,
-                background: "#696969",
-              }}
-            />
-            <div
-              style={{
-                width: 13,
-                height: 13,
-                borderRadius: 20,
-                background: "#505050",
-              }}
-            />
-          </div>
-          <span>{label}</span>
-        </div>
-        <div
-          style={{
-            display: "flex",
-            flex: 1,
-            flexDirection: "column",
-            justifyContent: "space-between",
-            padding: "50px 56px 36px",
-          }}
-        >
-          <div style={{ display: "flex", flexDirection: "column" }}>
-            <div
-              style={{
-                display: "flex",
-                fontSize: 19,
-                color: "#b5b5b5",
-                marginBottom: 22,
-              }}
-            >
-              {label} / Prasad M.
-            </div>
-            <div
-              style={{
-                fontSize: title.length > 90 ? 52 : 64,
-                fontWeight: 700,
-                lineHeight: 1.13,
-                letterSpacing: -1.5,
-                maxHeight: 220,
-                overflow: "hidden",
-              }}
-            >
-              {title}
-            </div>
-            <div
-              style={{
-                fontSize: 25,
-                lineHeight: 1.35,
-                color: "#bdbdbd",
-                marginTop: 22,
-                maxHeight: 110,
-                overflow: "hidden",
-              }}
-            >
-              {description}
-            </div>
-          </div>
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              borderTop: "1px solid #4a4a4a",
-              paddingTop: 21,
-              fontSize: 19,
-              color: "#bababa",
-            }}
-          >
-            <span>Prasad Madhuranga</span>
-            <span>Engineering · Ideas · Work</span>
-          </div>
-        </div>
-      </div>
-    </div>,
-    {
-      width: 1280,
-      height: 720,
-      headers: { "Cache-Control": "public, max-age=3600, s-maxage=86400" },
-    },
-  );
+  const type = resolveOgType(params.get("type"));
+  const kind = resolveOgKind(params.get("kind"), type);
+  const style = resolveOgStyle(params.get("style"));
+  const theme = OG_TYPES[type];
+  const collection =
+    type in CONTENT_META ? CONTENT_META[type as ContentType] : null;
+
+  let title = cleanText(params.get("title"), 120) || "Prasad M.";
+  let description = cleanText(params.get("description"), 160);
+  const date = cleanText(params.get("date"), 32);
+  const readValue = Number.parseInt(params.get("read") || "", 10);
+  const read =
+    Number.isFinite(readValue) && readValue > 0 && readValue < 600
+      ? `${readValue} min read`
+      : "";
+
+  let eyebrow: string = theme.singular;
+  let facts: OgCardData["facts"] = [];
+  let meta: string[] = [];
+  if (kind === "home") {
+    eyebrow = "Desktop workspace";
+    title = resumeProfile.name;
+    description =
+      description ||
+      `${resumeProfile.role} — an engineering portfolio presented as an interactive desktop.`;
+    facts = [
+      { label: "Based in", value: resumeProfile.location },
+      { label: "Role", value: resumeProfile.role },
+    ];
+    meta = [resumeProfile.location];
+  } else if (kind === "collection") {
+    eyebrow = "Collection";
+    facts = [
+      { label: "Section", value: theme.collection },
+      ...(collection ? [{ label: "Format", value: collection.eyebrow }] : []),
+    ];
+    meta = collection ? [collection.eyebrow] : [];
+  } else if (kind === "detail") {
+    facts = [
+      { label: "Type", value: theme.singular },
+      ...(date ? [{ label: "Published", value: date }] : []),
+      ...(read ? [{ label: "Reading time", value: read }] : []),
+    ];
+    meta = [date, read].filter(Boolean);
+  } else {
+    eyebrow = "Workspace";
+    facts = [
+      { label: "Section", value: title },
+      { label: "Author", value: resumeProfile.name },
+    ];
+  }
+
+  try {
+    const [fonts, avatar, logo, wallpaper, cover] = await Promise.all([
+      loadOgFonts(),
+      loadAvatar(),
+      loadLogo(),
+      loadWallpaper(theme.wallpaper),
+      kind === "detail"
+        ? loadCover(params.get("cover"), request.nextUrl.origin)
+        : Promise.resolve(null),
+    ]);
+    const data: OgCardData = {
+      type,
+      kind,
+      eyebrow,
+      title,
+      description,
+      facts,
+      meta,
+      media: cover ?? wallpaper,
+      hasCover: Boolean(cover),
+      avatar,
+      logo,
+      domain: siteHost(),
+      author: resumeProfile.name,
+    };
+    return new ImageResponse(
+      style === "window" ? (
+        <WindowCard data={data} />
+      ) : (
+        <EditorialCard data={data} />
+      ),
+      {
+        ...OG_IMAGE_SIZE,
+        fonts,
+        headers: {
+          "Cache-Control":
+            "public, max-age=3600, s-maxage=86400, stale-while-revalidate=604800",
+          "X-Content-Type-Options": "nosniff",
+        },
+      },
+    );
+  } catch {
+    return new Response("Image unavailable", {
+      status: 500,
+      headers: { "Cache-Control": "no-store" },
+    });
+  }
 }

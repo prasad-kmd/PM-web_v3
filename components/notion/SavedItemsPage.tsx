@@ -2,18 +2,13 @@
 import Link from "next/link";
 import { useContentBookmarks } from "./ContentBookmarksProvider";
 import { Button } from "@/components/ui/button";
+import { WindowBreadcrumb } from "@/components/system/WindowBreadcrumb";
 
 export function SavedItemsPage() {
   const { bookmarks, removeBookmark, ready } = useContentBookmarks();
   return (
     <main className="cms-app">
-      <div className="cms-toolbar">
-        <Link href="/" className="cms-toolbar-home">
-          Workspace
-        </Link>
-        <span>/</span>
-        <span>Saved</span>
-      </div>
+      <WindowBreadcrumb items={[{ label: "Saved" }]} />
       <div className="cms-page">
         <header className="cms-heading">
           <div>

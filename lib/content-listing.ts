@@ -1,69 +1,108 @@
 // Adapted from PM-Web_V2 (AGPL-3.0); see THIRD_PARTY_NOTICES.md.
-import type { ContentItem, ContentType } from "@/lib/notion-cms";
+//
+// Client-safe listing helpers. Only `q` (search) and `page` (pagination) live
+// in the URL. View, sort, category and glossary letter are local UI state —
+// view and sort are remembered per collection in localStorage.
+import type { ContentType } from "@/lib/content-types";
+import type { ContentItem } from "@/lib/notion-cms";
 
 export type ListingSearchParams = Record<string, string | string[] | undefined>;
 export type ListingView = "grid" | "list";
 export type ListingSort = "newest" | "oldest" | "shortest" | "title";
+
+/** Lean, serialisable item summary sent to the client listing. */
+export type ListingItem = {
+  id: string;
+  slug: string;
+  title: string;
+  description: string;
+  date: string | null;
+  categories: string[];
+  tags: string[];
+  technical: string[];
+  thumbnail: string | null;
+  readTime: number | null;
+  authorName: string | null;
+  authorRole: string | null;
+};
+
 export type ListingOptions = {
   q: string;
   category: string;
   sort: ListingSort;
-  view: ListingView;
   letter: string;
   page: number;
 };
+
 export const LISTING_PAGE_SIZE = 12;
 export const INITIALS = ["#", ..."ABCDEFGHIJKLMNOPQRSTUVWXYZ"];
+export const LISTING_PREFS_KEY = (type: ContentType) =>
+  `pm-listing-prefs-v1:${type}`;
 
-function first(value: string | string[] | undefined): string {
+export const SORT_LABELS: Record<ListingSort, string> = {
+  newest: "Newest first",
+  oldest: "Oldest first",
+  title: "Title A–Z",
+  shortest: "Shortest read",
+};
+
+export function toListingItem(item: ContentItem): ListingItem {
+  return {
+    id: item.id,
+    slug: item.slug,
+    title: item.title,
+    description: item.description,
+    date: item.date,
+    categories: item.categories,
+    tags: item.tags,
+    technical: item.technical,
+    thumbnail: item.thumbnail || item.image,
+    readTime: item.readTime,
+    authorName: item.author?.name ?? null,
+    authorRole: item.author?.role ?? null,
+  };
+}
+
+function first(value: string | string[] | null | undefined): string {
   return (Array.isArray(value) ? value[0] : value) ?? "";
 }
 
-export function parseListingOptions(
-  type: ContentType,
-  params: ListingSearchParams,
-): ListingOptions {
-  const sort = first(params.sort);
-  const view = first(params.view);
-  const letter = first(params.letter).toUpperCase();
+/** The only URL state: `?q=` and `?page=`. */
+export function parseUrlState(params: {
+  q?: string | string[] | null;
+  page?: string | string[] | null;
+}): { q: string; page: number } {
   const page = Number(first(params.page) || 1);
   return {
     q: first(params.q).trim().slice(0, 300),
-    category: first(params.category).slice(0, 200),
-    sort:
-      sort === "newest" ||
-      sort === "oldest" ||
-      sort === "shortest" ||
-      sort === "title"
-        ? sort
-        : type === "glossary"
-          ? "title"
-          : "newest",
-    view:
-      view === "grid" || view === "list"
-        ? view
-        : type === "glossary"
-          ? "list"
-          : "grid",
-    letter: type === "glossary" && INITIALS.includes(letter) ? letter : "",
     page: Number.isSafeInteger(page) && page > 0 ? page : 1,
   };
 }
 
-export function listingHref(
-  type: ContentType,
-  options: ListingOptions,
-  patch: Partial<ListingOptions> = {},
-): string {
-  const values = { ...options, ...patch };
+/** Build `/type?q=…&page=…`, omitting defaults. */
+export function listingUrl(type: ContentType, q: string, page: number) {
   const params = new URLSearchParams();
-  if (values.q) params.set("q", values.q);
-  if (values.category) params.set("category", values.category);
-  if (values.letter) params.set("letter", values.letter);
-  params.set("sort", values.sort);
-  params.set("view", values.view);
-  if (values.page > 1) params.set("page", String(values.page));
-  return `/${type}?${params.toString()}`;
+  if (q) params.set("q", q);
+  if (page > 1) params.set("page", String(page));
+  const query = params.toString();
+  return `/${type}${query ? `?${query}` : ""}`;
+}
+
+export function defaultSort(type: ContentType): ListingSort {
+  return type === "glossary" ? "title" : "newest";
+}
+
+export function defaultView(type: ContentType): ListingView {
+  return type === "glossary" ? "list" : "grid";
+}
+
+export function isListingSort(value: unknown): value is ListingSort {
+  return (
+    value === "newest" ||
+    value === "oldest" ||
+    value === "shortest" ||
+    value === "title"
+  );
 }
 
 export function titleInitial(title: string): string {
@@ -81,7 +120,7 @@ function timestamp(value: string | null): number | null {
   return Number.isFinite(result) ? result : null;
 }
 
-export function selectListing(items: ContentItem[], options: ListingOptions) {
+export function selectListing(items: ListingItem[], options: ListingOptions) {
   const query = options.q.toLocaleLowerCase();
   const searched = items.filter(
     (item) =>
@@ -89,8 +128,8 @@ export function selectListing(items: ContentItem[], options: ListingOptions) {
       [
         item.title,
         item.description,
-        item.author?.name,
-        item.author?.role,
+        item.authorName,
+        item.authorRole,
         ...item.categories,
         ...item.tags,
         ...item.technical,

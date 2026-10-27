@@ -2,6 +2,8 @@ import type { Metadata, Viewport } from "next";
 import { cookies } from "next/headers";
 import "./globals.css";
 import "./cms.css";
+import "./library.css";
+import "./system-states.css";
 import "katex/dist/katex.min.css";
 import { Desktop } from "@/components/desktop/Desktop";
 import { InterfaceProvider } from "@/components/providers/InterfaceProvider";
@@ -15,7 +17,7 @@ import {
 } from "@/lib/cookies";
 import type { Theme } from "@/lib/registry";
 import { getSiteUrl } from "@/lib/site";
-import { ogImageUrl } from "@/lib/content-metadata";
+import { OG_IMAGE_SIZE, ogImageUrl } from "@/lib/content-metadata";
 import {
   resolveSlideshowInterval,
   resolveWallpaperId,
@@ -47,15 +49,20 @@ export const metadata: Metadata = {
     type: "website",
     images: [
       {
-        url: ogImageUrl("Prasad M. — Desktop Workspace"),
-        width: 1280,
-        height: 720,
+        url: ogImageUrl("Prasad M. — Desktop Workspace", "", "default", {
+          kind: "home",
+        }),
+        ...OG_IMAGE_SIZE,
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    images: [ogImageUrl("Prasad M. — Desktop Workspace")],
+    images: [
+      ogImageUrl("Prasad M. — Desktop Workspace", "", "default", {
+        kind: "home",
+      }),
+    ],
   },
   icons: { icon: "/favicon-pm.svg" },
 };

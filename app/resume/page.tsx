@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { getSiteUrl } from "@/lib/site";
-import { ogImageUrl } from "@/lib/content-metadata";
+import { OG_IMAGE_SIZE, ogImageUrl } from "@/lib/content-metadata";
 
 export const metadata: Metadata = {
   title: "Resume",
@@ -15,8 +15,7 @@ export const metadata: Metadata = {
           "Profile and experience of Prasad Madhuranga.",
           "pages",
         ),
-        width: 1280,
-        height: 720,
+        ...OG_IMAGE_SIZE,
       },
     ],
   },

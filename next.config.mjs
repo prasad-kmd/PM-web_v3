@@ -18,6 +18,15 @@ const nextConfig = {
       "sonner",
     ],
   },
+  /* `/api/og` reads fonts, wallpapers and brand assets from public/ at
+     runtime (Node). Trace them into that serverless function explicitly. */
+  outputFileTracingIncludes: {
+    "/api/og": [
+      "./public/og/**",
+      "./public/images/profile-placeholder.jpg",
+      "./public/favicon-pm.svg",
+    ],
+  },
   compiler: {
     // Strip debug logging from production bundles (keeps warnings/errors).
     removeConsole:

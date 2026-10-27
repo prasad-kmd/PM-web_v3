@@ -1,4 +1,10 @@
 import Link from "next/link";
+import {
+  ArrowRight01Icon,
+  Calendar03Icon,
+  Clock01Icon,
+} from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import { notFound } from "next/navigation";
 import {
   CONTENT_META,
@@ -11,11 +17,18 @@ import {
   type ContentType,
 } from "@/lib/notion-cms";
 import { getSiteUrl } from "@/lib/site";
+import { WindowBreadcrumb } from "@/components/system/WindowBreadcrumb";
 import { NotionBlocks } from "./NotionBlocks";
 import {
-  BookmarkToggle,
-  ReaderExperience,
-  ShareButton,
+  ReaderBody,
+  ReaderFooter,
+  ReaderLayout,
+  ReaderOutline,
+  ReaderProgress,
+  ReaderProvider,
+  ReaderSections,
+  ReaderToolbarActions,
+  type ReaderHeading,
 } from "./ReaderControls";
 
 function JsonLd({ type, item }: { type: ContentType; item: ContentItem }) {
@@ -71,6 +84,17 @@ function JsonLd({ type, item }: { type: ContentType; item: ContentItem }) {
     </>
   );
 }
+function byReadingOrder(type: ContentType) {
+  return (a: ContentItem, b: ContentItem) =>
+    type === "glossary"
+      ? a.title.localeCompare(b.title, "en", { sensitivity: "base" })
+      : Date.parse(b.date || "1970-01-01") -
+          Date.parse(a.date || "1970-01-01") || a.title.localeCompare(b.title);
+}
+
+const entryHref = (type: ContentType, slug: string) =>
+  `/${type}/${encodeURIComponent(slug)}`;
+
 export async function ContentDetailPage({
   type,
   slug,
@@ -83,13 +107,15 @@ export async function ContentDetailPage({
   if (result.configured && !result.error && !result.item) notFound();
   if (!result.item)
     return (
-      <main className="cms-app">
-        <div className="cms-toolbar">
-          <Link href={`/${type}`}>← {meta.label}</Link>
-        </div>
-        <div className="cms-page">
-          <div className="cms-empty" role="status">
-            <span className="cms-empty-icon">!</span>
+      <main className="cms-app rdr-app">
+        <WindowBreadcrumb
+          items={[
+            { label: meta.label, href: `/${type}` },
+            { label: "Unavailable" },
+          ]}
+        />
+        <div className="lib-unavailable">
+          <div className="lib-empty" role="status">
             <h1>
               {result.configured
                 ? "Content is temporarily unavailable"
@@ -100,28 +126,42 @@ export async function ContentDetailPage({
                 ? "We couldn’t reach this entry. Please try again."
                 : "This collection is not available yet."}
             </p>
-            <Link href={`/${type}`} className="cms-text-link">
-              Back to {meta.label.toLowerCase()} →
+            <Link href={`/${type}`} className="lib-button">
+              Back to {meta.label.toLowerCase()}
             </Link>
           </div>
         </div>
       </main>
     );
+
   const item = result.item;
-  const headings = getContentHeadings(result.blocks);
+  const rawHeadings = getContentHeadings(result.blocks);
+  const minLevel = Math.min(3, ...rawHeadings.map((heading) => heading.level));
+  const headings: ReaderHeading[] = rawHeadings.map((heading) => ({
+    id: heading.id,
+    label: heading.text,
+    depth: Math.min(2, Math.max(0, heading.level - minLevel)),
+  }));
   const readTime = item.readTime || estimateReadingTime(result.blocks);
   const topics = [
     ...new Set([...item.categories, ...item.tags, ...item.technical]),
   ];
+  const date = formatContentDate(item.date);
+
   const index = await getContentIndex(type);
+  const ordered = [...index.items].sort(byReadingOrder(type));
+  const position = ordered.findIndex((other) => other.id === item.id);
+  const next = position >= 0 ? ordered[position + 1] : undefined;
+  const prev = position > 0 ? ordered[position - 1] : undefined;
   const related = index.items
-    .filter((other) => other.id !== item.id)
+    .filter((other) => other.id !== item.id && other.id !== next?.id)
     .map((other) => ({
       item: other,
       score: [...other.tags, ...other.categories, ...other.technical].filter(
         (tag) => topics.includes(tag),
       ).length,
     }))
+    .filter(({ score }) => score > 0)
     .sort(
       (a, b) =>
         b.score - a.score ||
@@ -129,129 +169,148 @@ export async function ContentDetailPage({
           Date.parse(a.item.date || "1970-01-01"),
     )
     .slice(0, 3);
+
   return (
-    <main className="cms-app">
+    <main className="cms-app rdr-app">
       <JsonLd type={type} item={item} />
-      <div className="cms-toolbar">
-        <Link href="/">Workspace</Link>
-        <span>/</span>
-        <Link href={`/${type}`}>{meta.label}</Link>
-        <span>/</span>
-        <span className="cms-crumb-title">{item.title}</span>
-      </div>
-      <div className="cms-page cms-detail-layout">
-        <article className="cms-detail">
-          <Link className="cms-back" href={`/${type}`}>
-            ← Back to {meta.label.toLowerCase()}
-          </Link>
-          <header className="cms-detail-header">
-            <p className="cms-eyebrow">
-              {meta.singular}
-              {item.aiAssisted ? " · AI-assisted" : ""}
-            </p>
-            <h1>{item.title}</h1>
-            {item.description ? (
-              <p className="cms-deck">{item.description}</p>
-            ) : null}
-            <div className="cms-detail-meta">
-              {item.date ? (
-                <time dateTime={item.date}>{formatContentDate(item.date)}</time>
+      <ReaderProvider
+        headings={headings}
+        nextHref={next ? entryHref(type, next.slug) : null}
+        prevHref={prev ? entryHref(type, prev.slug) : null}
+      >
+        <WindowBreadcrumb
+          items={[
+            { label: meta.label, href: `/${type}` },
+            { label: item.title },
+          ]}
+          actions={<ReaderToolbarActions item={item} />}
+        />
+        <ReaderProgress />
+        <ReaderLayout>
+          <article className="rdr-doc">
+            <header className="rdr-head">
+              <p className="rdr-chip">
+                <span>{item.categories[0] || meta.singular}</span>
+                {item.aiAssisted ? <span>AI-assisted</span> : null}
+              </p>
+              <h1>{item.title}</h1>
+              {item.description ? (
+                <p className="rdr-deck">{item.description}</p>
               ) : null}
-              <span>{readTime} min read</span>
-              {item.author?.name ? <span>By {item.author.name}</span> : null}
-            </div>
-            {topics.length ? (
-              <ul className="cms-topics" aria-label="Topics">
-                {topics.map((topic) => (
-                  <li key={topic}>{topic}</li>
-                ))}
-              </ul>
+              <div className="rdr-meta">
+                {item.author?.name ? (
+                  <span className="rdr-byline">
+                    {item.author.avatar ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={item.author.avatar} alt="" />
+                    ) : null}
+                    {item.author.name}
+                  </span>
+                ) : null}
+                {date && item.date ? (
+                  <span>
+                    <HugeiconsIcon
+                      icon={Calendar03Icon}
+                      size={14}
+                      aria-hidden
+                    />
+                    <time dateTime={item.date}>{date}</time>
+                  </span>
+                ) : null}
+                <span>
+                  <HugeiconsIcon icon={Clock01Icon} size={14} aria-hidden />
+                  {readTime} min read
+                </span>
+              </div>
+            </header>
+            {item.image ? (
+              <figure className="rdr-cover">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={item.image} alt="" />
+              </figure>
             ) : null}
-            <div className="cms-detail-actions">
-              <BookmarkToggle item={item} />
-              <ShareButton />
+            {result.error ? (
+              <div className="cms-notice" role="status">
+                Some content blocks could not be loaded. Please try again later.
+              </div>
+            ) : null}
+            {result.blocks.length ? (
+              <ReaderBody>
+                <NotionBlocks
+                  blocks={result.blocks}
+                  type={type}
+                  pageId={item.id}
+                />
+              </ReaderBody>
+            ) : !result.error ? (
+              <p className="cms-status">
+                This entry does not have body content yet.
+              </p>
+            ) : null}
+
+            <footer className="rdr-end">
+              {topics.length ? (
+                <ul className="rdr-topics" aria-label="Topics">
+                  {topics.map((topic) => (
+                    <li key={topic}>{topic}</li>
+                  ))}
+                </ul>
+              ) : null}
+              {item.author ? (
+                <div className="rdr-author">
+                  {item.author.avatar ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={item.author.avatar} alt="" />
+                  ) : null}
+                  <div>
+                    <strong>{item.author.name}</strong>
+                    {item.author.role ? <span>{item.author.role}</span> : null}
+                    {item.author.biography ? (
+                      <p>{item.author.biography}</p>
+                    ) : null}
+                  </div>
+                </div>
+              ) : null}
               {item.aiAssisted ? (
-                <details className="cms-ai">
+                <details className="rdr-ai">
                   <summary>About AI assistance</summary>
                   <p>This entry was marked as AI-assisted by its author.</p>
                 </details>
               ) : null}
-            </div>
-          </header>
-          {item.image ? (
-            <figure className="cms-hero-image">
-              <img src={item.image} alt="" />
-            </figure>
-          ) : null}
-          {result.error ? (
-            <div className="cms-notice" role="status">
-              Some content blocks could not be loaded. Please try again later.
-            </div>
-          ) : null}
-          {result.blocks.length ? (
-            <ReaderExperience>
-              <NotionBlocks
-                blocks={result.blocks}
-                type={type}
-                pageId={item.id}
-              />
-            </ReaderExperience>
-          ) : !result.error ? (
-            <p className="cms-status">
-              This entry does not have body content yet.
-            </p>
-          ) : null}
-          {related.length ? (
-            <section className="cms-related">
-              <div className="cms-section-head">
-                <h2>More from {meta.label}</h2>
-                <Link href={`/${type}`}>Browse all →</Link>
-              </div>
-              {related.map(({ item: other }) => (
-                <Link
-                  key={other.id}
-                  className="cms-related-link"
-                  href={`/${type}/${encodeURIComponent(other.slug)}`}
-                >
-                  <span>{other.title}</span>
-                  <span aria-hidden="true">↗</span>
+              {next ? (
+                <Link className="rdr-next" href={entryHref(type, next.slug)}>
+                  <span className="rdr-next-label">Next in {meta.label}</span>
+                  <strong>{next.title}</strong>
+                  <HugeiconsIcon
+                    icon={ArrowRight01Icon}
+                    size={16}
+                    aria-hidden
+                  />
                 </Link>
-              ))}
-            </section>
-          ) : null}
-        </article>
-        <aside className="cms-outline">
-          <details open>
-            <summary>On this page</summary>
-            {headings.length ? (
-              <nav aria-label="Article outline">
-                <ul>
-                  {headings.map((heading) => (
-                    <li
-                      key={heading.id}
-                      style={{
-                        paddingLeft: `${Math.max(0, heading.level - 1) * 10}px`,
-                      }}
-                    >
-                      <a href={`#${heading.id}`}>{heading.text}</a>
-                    </li>
+              ) : null}
+              {related.length ? (
+                <nav className="rdr-related" aria-label="Related entries">
+                  <h2>Related</h2>
+                  {related.map(({ item: other }) => (
+                    <Link key={other.id} href={entryHref(type, other.slug)}>
+                      {other.title}
+                    </Link>
                   ))}
-                </ul>
-              </nav>
-            ) : (
-              <p>No sections in this entry.</p>
-            )}
-          </details>
-          {item.author ? (
-            <div className="cms-author">
-              <span className="cms-eyebrow">Author</span>
-              <strong>{item.author.name}</strong>
-              {item.author.role ? <p>{item.author.role}</p> : null}
-              {item.author.biography ? <p>{item.author.biography}</p> : null}
-            </div>
-          ) : null}
-        </aside>
-      </div>
+                </nav>
+              ) : null}
+            </footer>
+          </article>
+          <aside className="rdr-toc" aria-label="On this page">
+            <ReaderOutline />
+          </aside>
+        </ReaderLayout>
+        <ReaderFooter
+          collectionLabel={meta.label}
+          hasNext={Boolean(next)}
+          hasPrev={Boolean(prev)}
+        />
+        <ReaderSections />
+      </ReaderProvider>
     </main>
   );
 }

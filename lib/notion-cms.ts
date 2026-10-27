@@ -3,15 +3,10 @@ import "server-only";
 import { Client } from "@notionhq/client";
 import { cache } from "react";
 
-export const CONTENT_TYPES = [
-  "projects",
-  "blog",
-  "articles",
-  "tutorials",
-  "glossary",
-] as const;
+import { CONTENT_META, CONTENT_TYPES, type ContentType } from "./content-types";
 
-export type ContentType = (typeof CONTENT_TYPES)[number];
+export { CONTENT_META, CONTENT_TYPES, type ContentType };
+export { formatContentDate } from "./content-types";
 
 export type AuthorSummary = {
   id: string;
@@ -61,46 +56,6 @@ export type ContentIndexResult = {
 export type ContentDetailResult = ContentIndexResult & {
   item: ContentItem | null;
   blocks: NotionBlock[];
-};
-
-export const CONTENT_META: Record<
-  ContentType,
-  { label: string; eyebrow: string; singular: string; description: string }
-> = {
-  projects: {
-    label: "Projects",
-    eyebrow: "Selected work",
-    singular: "Project",
-    description:
-      "Engineering work, experiments and things built along the way.",
-  },
-  blog: {
-    label: "Blog",
-    eyebrow: "Field notes",
-    singular: "Post",
-    description: "Ideas, observations and notes from the experience.",
-  },
-  articles: {
-    label: "Articles",
-    eyebrow: "Long-form writing",
-    singular: "Article",
-    description:
-      "Useful insights and writing into engineering, technology and research.",
-  },
-  tutorials: {
-    label: "Tutorials",
-    eyebrow: "Learn by doing",
-    singular: "Tutorial",
-    description:
-      "Practical guides, worked examples and technical walkthroughs.",
-  },
-  glossary: {
-    label: "Glossary",
-    eyebrow: "Reference",
-    singular: "Term",
-    description:
-      "A growing reference for useful engineering terms and concepts.",
-  },
 };
 
 const CACHE_SECONDS = 60 * 60;
@@ -693,16 +648,4 @@ export function estimateReadingTime(blocks: NotionBlock[]): number {
     .split(/\s+/)
     .filter(Boolean).length;
   return Math.max(1, Math.ceil(words / 220));
-}
-
-export function formatContentDate(value: string | null): string | null {
-  if (!value) return null;
-  const timestamp = Date.parse(value);
-  if (!Number.isFinite(timestamp)) return null;
-  return new Intl.DateTimeFormat("en", {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-    timeZone: "UTC",
-  }).format(timestamp);
 }

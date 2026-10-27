@@ -1,6 +1,5 @@
 "use client";
 
-import type { MouseEvent } from "react";
 import {
   contactLinks,
   education,
@@ -10,14 +9,7 @@ import {
   personalDetails,
   resumeProfile,
 } from "@/lib/resume-data";
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb";
+import { WindowBreadcrumb } from "@/components/system/WindowBreadcrumb";
 
 const profileStats = [
   { label: "Workplaces", value: experience.length },
@@ -27,39 +19,12 @@ const profileStats = [
 ];
 
 export function ResumeApp({ onNavigateHome }: { onNavigateHome?: () => void }) {
-  const handleHomeClick = (event: MouseEvent<HTMLAnchorElement>) => {
-    if (
-      !onNavigateHome ||
-      event.defaultPrevented ||
-      event.button !== 0 ||
-      event.metaKey ||
-      event.ctrlKey ||
-      event.shiftKey ||
-      event.altKey
-    ) {
-      return;
-    }
-    event.preventDefault();
-    onNavigateHome();
-  };
-
   return (
     <div className="resume-app">
-      <div className="resume-toolbar">
-        <Breadcrumb className="resume-breadcrumb">
-          <BreadcrumbList>
-            <BreadcrumbItem>
-              <BreadcrumbLink href="/" onClick={handleHomeClick}>
-                Home
-              </BreadcrumbLink>
-            </BreadcrumbItem>
-            <BreadcrumbSeparator />
-            <BreadcrumbItem>
-              <BreadcrumbPage>Resume</BreadcrumbPage>
-            </BreadcrumbItem>
-          </BreadcrumbList>
-        </Breadcrumb>
-      </div>
+      <WindowBreadcrumb
+        items={[{ label: "Resume" }]}
+        onHomeClick={onNavigateHome}
+      />
 
       <div className="resume-content">
         <header className="resume-hero">
