@@ -1,7 +1,9 @@
 "use client";
 
 import { useLayoutEffect, useRef, type ReactNode } from "react";
-import type { AppId } from "@/lib/registry";
+import { LoadingView } from "@/components/system/states/LoadingView";
+import { describeRoute } from "@/components/system/states/route-state";
+import { APP_REGISTRY, type AppId } from "@/lib/registry";
 
 /** Next's layout router is live context, not a cacheable React element. Keep a
  * visual, inert snapshot for unfocused windows; remount the real route when the
@@ -29,12 +31,15 @@ export function LiveRouteSurface({
     </div>
   );
 }
+/** Inert copy of a route window. Before its first visit there is nothing to
+ * copy, so it shows the same skeleton as `app/loading.tsx` — opening a window
+ * and refreshing the page now look identical while the route streams in. */
 export function FrozenRouteSurface({
+  appId,
   snapshot,
-  title,
 }: {
+  appId: AppId;
   snapshot?: HTMLElement;
-  title: string;
 }) {
   const ref = useRef<HTMLDivElement>(null);
   useLayoutEffect(() => {
@@ -46,13 +51,17 @@ export function FrozenRouteSurface({
       .forEach((element) => element.removeAttribute("id"));
     ref.current.replaceChildren(clone);
   }, [snapshot]);
+  if (!snapshot) {
+    const { label, layout } = describeRoute(APP_REGISTRY[appId].route);
+    return (
+      <div className="route-frozen-surface is-loading">
+        <LoadingView label={label} layout={layout} />
+      </div>
+    );
+  }
   return (
     <div className="route-frozen-surface" inert aria-hidden="true">
-      {snapshot ? (
-        <div ref={ref} />
-      ) : (
-        <p className="cms-route-wait">Opening {title}…</p>
-      )}
+      <div ref={ref} className="route-frozen-clone" />
     </div>
   );
 }

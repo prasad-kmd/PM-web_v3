@@ -645,7 +645,9 @@
 .rdr-toc {
   position: sticky;
   top: 74px;
-  max-height: calc(100dvh - 190px);
+  /* --rdr-viewport = the window body's height (set by ReaderProvider):
+     74px sticky offset + 34px status footer + 16px breathing room. */
+  max-height: calc(var(--rdr-viewport, 100dvh) - 124px);
   align-self: start;
   overflow: auto;
   scrollbar-width: thin;
@@ -780,15 +782,73 @@
   color: var(--muted-foreground);
   line-height: 1.55;
 }
-.rdr-ai {
-  color: var(--muted-foreground);
-  font-size: 12px;
-}
-.rdr-ai summary {
+/* AI-assisted disclosure triggers (dialog: components/notion/AiAssistedDialog). */
+.rdr-chip .rdr-ai-chip {
+  display: inline-flex;
+  height: 24px;
+  align-items: center;
+  gap: 5px;
+  padding: 0 9px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--card);
+  color: var(--foreground);
   cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  transition:
+    background-color 150ms ease,
+    border-color 150ms ease;
 }
-.rdr-ai p {
-  margin: 6px 0 0;
+.rdr-ai-chip:hover {
+  border-color: color-mix(in oklab, var(--foreground) 24%, var(--border));
+  background: var(--muted);
+}
+.rdr-ai-chip:focus-visible,
+.rdr-ai-note:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+.rdr-ai-note {
+  display: grid;
+  width: 100%;
+  align-items: start;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 10px;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: color-mix(in oklab, var(--muted) 50%, var(--card));
+  color: var(--muted-foreground);
+  cursor: pointer;
+  font: inherit;
+  font-size: 13px;
+  line-height: 1.5;
+  text-align: start;
+  transition: border-color 150ms ease;
+}
+.rdr-ai-note svg {
+  margin-top: 2px;
+  color: var(--foreground);
+}
+.rdr-ai-note:hover {
+  border-color: color-mix(in oklab, var(--foreground) 24%, var(--border));
+}
+.rdr-ai-note-link {
+  color: var(--foreground);
+  font-weight: 500;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  white-space: nowrap;
+}
+@container window-body (max-width: 520px) {
+  .rdr-ai-note {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+  .rdr-ai-note-link {
+    grid-column: 2;
+  }
 }
 .rdr-next {
   display: grid;

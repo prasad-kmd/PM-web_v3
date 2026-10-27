@@ -18,6 +18,7 @@ import {
 } from "@/lib/notion-cms";
 import { getSiteUrl } from "@/lib/site";
 import { WindowBreadcrumb } from "@/components/system/WindowBreadcrumb";
+import { AiAssistedDialog } from "./AiAssistedDialog";
 import { NotionBlocks } from "./NotionBlocks";
 import {
   ReaderBody,
@@ -191,7 +192,9 @@ export async function ContentDetailPage({
             <header className="rdr-head">
               <p className="rdr-chip">
                 <span>{item.categories[0] || meta.singular}</span>
-                {item.aiAssisted ? <span>AI-assisted</span> : null}
+                {item.aiAssisted ? (
+                  <AiAssistedDialog contentTitle={item.title} />
+                ) : null}
               </p>
               <h1>{item.title}</h1>
               {item.description ? (
@@ -272,10 +275,7 @@ export async function ContentDetailPage({
                 </div>
               ) : null}
               {item.aiAssisted ? (
-                <details className="rdr-ai">
-                  <summary>About AI assistance</summary>
-                  <p>This entry was marked as AI-assisted by its author.</p>
-                </details>
+                <AiAssistedDialog contentTitle={item.title} variant="note" />
               ) : null}
               {next ? (
                 <Link className="rdr-next" href={entryHref(type, next.slug)}>

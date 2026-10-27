@@ -316,15 +316,21 @@
     animation: none;
   }
 }
+/* Route surfaces are flex columns so a short page still fills the window:
+   the route root grows, and pinned footers (.lib-status) meet the bottom
+   edge instead of floating under the last item. */
 .route-content-surface,
-.route-frozen-surface {
+.route-frozen-surface,
+.route-frozen-clone {
+  display: flex;
   min-height: 100%;
+  flex-direction: column;
+}
+.route-content-surface > *,
+.route-frozen-surface > *,
+.route-frozen-clone > * {
+  flex: 1 0 auto;
 }
 .route-frozen-surface {
   pointer-events: none;
-}
-.cms-route-wait {
-  padding: 24px;
-  color: var(--muted-foreground);
-  font-size: 12px;
 }

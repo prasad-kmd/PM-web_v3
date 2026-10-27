@@ -3,7 +3,7 @@
 import { AppBody } from "@/components/apps/AppBody";
 import type { WindowManager } from "@/hooks/useWindowManager";
 import type { Area } from "@/lib/windows";
-import { APP_REGISTRY, usesRouteContent, type AppId } from "@/lib/registry";
+import { usesRouteContent, type AppId } from "@/lib/registry";
 import { FrozenRouteSurface, LiveRouteSurface } from "./RouteContentSurface";
 import type { ReactNode } from "react";
 import { Window } from "./Window";
@@ -29,12 +29,20 @@ export function WindowsLayer({
   captureSnapshot: (appId: AppId, node: HTMLElement) => void;
   hydrated: boolean;
 }) {
+  // Window z values grow on every focus; render their rank instead so windows
+  // stay below portaled popovers/dialogs (z-50) and the menu bar (55).
+  const stackRank = new Map(
+    [...windows]
+      .sort((a, b) => a.z - b.z)
+      .map((windowState, index) => [windowState.id, 11 + index]),
+  );
   return (
     <>
       {windows.map((windowState) => (
         <Window
           key={windowState.id}
           win={windowState}
+          stackIndex={stackRank.get(windowState.id) ?? 11}
           area={area}
           isTop={windowState.id === manager.topId}
           isMobile={isMobile}
@@ -58,8 +66,8 @@ export function WindowsLayer({
                 </LiveRouteSurface>
               ) : (
                 <FrozenRouteSurface
+                  appId={windowState.appId}
                   snapshot={snapshots[windowState.appId]}
-                  title={APP_REGISTRY[windowState.appId].title}
                 />
               )
             ) : null

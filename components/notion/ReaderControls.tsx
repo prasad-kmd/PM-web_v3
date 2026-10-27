@@ -126,6 +126,21 @@ export function ReaderProvider({
       anchorRef.current?.closest<HTMLElement>(".window-body") ?? null;
     scrollerRef.current = scroller;
     setReady(true);
+    if (!scroller) return;
+    // Expose the window's visible height so the sticky outline is sized to
+    // the window, not the browser viewport (100dvh overflows small windows).
+    const syncViewport = () =>
+      scroller.style.setProperty(
+        "--rdr-viewport",
+        `${scroller.clientHeight}px`,
+      );
+    syncViewport();
+    const observer = new ResizeObserver(syncViewport);
+    observer.observe(scroller);
+    return () => {
+      observer.disconnect();
+      scroller.style.removeProperty("--rdr-viewport");
+    };
   }, []);
 
   useEffect(() => {
@@ -450,6 +465,52 @@ export function ReaderLayout({ children }: { children: ReactNode }) {
 /** Desktop outline: Rare UI Rail TOC bound to the window scroller. */
 export function ReaderOutline() {
   const { headings, ready, scrollerRef } = useReader();
+  const followRef = useRef<HTMLDivElement>(null);
+
+  // Rail TOC marks the reached heading with aria-current but never scrolls its
+  // own list. Follow it: keep the active row inside the sticky outline panel
+  // (scrolling only the panel — never the window) unless the pointer is in it.
+  useEffect(() => {
+    const host = followRef.current;
+    const panel = host?.closest<HTMLElement>(".rdr-toc");
+    if (!ready || !host || !panel) return;
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+    let frame = 0;
+    const follow = () => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => {
+        if (panel.scrollHeight <= panel.clientHeight) return;
+        if (panel.matches(":hover")) return;
+        const active = host.querySelector<HTMLElement>(
+          '[aria-current="location"]',
+        );
+        if (!active) return;
+        const box = panel.getBoundingClientRect();
+        const row = active.getBoundingClientRect();
+        const margin = Math.min(64, box.height / 4);
+        if (row.top >= box.top + margin && row.bottom <= box.bottom - margin)
+          return;
+        const target =
+          panel.scrollTop + (row.top - box.top) - (box.height - row.height) / 2;
+        panel.scrollTo({
+          top: Math.max(0, target),
+          behavior: reduceMotion.matches ? "auto" : "smooth",
+        });
+      });
+    };
+    const observer = new MutationObserver(follow);
+    observer.observe(host, {
+      subtree: true,
+      attributes: true,
+      attributeFilter: ["aria-current"],
+    });
+    follow();
+    return () => {
+      observer.disconnect();
+      cancelAnimationFrame(frame);
+    };
+  }, [ready, headings]);
+
   const items = useMemo<RailTocItem[]>(
     () =>
       headings.map((heading) => ({
@@ -459,14 +520,18 @@ export function ReaderOutline() {
       })),
     [headings],
   );
-  if (!ready || !items.length) return null;
+  if (!items.length) return null;
   return (
-    <RailToc
-      items={items}
-      containerRef={scrollerRef}
-      offset={HEADING_OFFSET}
-      className="rdr-rail w-full"
-    />
+    <div ref={followRef} className="rdr-rail-follow">
+      {ready ? (
+        <RailToc
+          items={items}
+          containerRef={scrollerRef}
+          offset={HEADING_OFFSET}
+          className="rdr-rail w-full"
+        />
+      ) : null}
+    </div>
   );
 }
 

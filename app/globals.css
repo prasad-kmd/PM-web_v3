@@ -551,6 +551,12 @@ input:focus-visible {
   display: contents;
 }
 
+/* Coss Dialog layers sit above windows and the menu bar (z 55). */
+[data-slot="dialog-backdrop"],
+[data-slot="dialog-viewport"] {
+  z-index: 60;
+}
+
 /* Coss Card widget, kept deliberately quiet so it belongs to the desktop. */
 .profile-widget {
   position: fixed;

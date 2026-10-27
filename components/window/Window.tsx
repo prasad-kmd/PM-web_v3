@@ -52,6 +52,7 @@ function setMotionValue(
  */
 export function Window({
   win,
+  stackIndex,
   area,
   isTop,
   isMobile,
@@ -66,6 +67,8 @@ export function Window({
   children,
 }: {
   win: WindowState;
+  /** Rendered z-index: the window's rank in the stack, not its raw counter. */
+  stackIndex: number;
   area: Area;
   isTop: boolean;
   isMobile: boolean;
@@ -315,7 +318,7 @@ export function Window({
       <Dialog.Portal>
         <motion.div
           className="window-geometry"
-          style={{ x, y, width: w, height: h, zIndex: win.z }}
+          style={{ x, y, width: w, height: h, zIndex: stackIndex }}
           onPointerDown={onFocus}
           onFocusCapture={onFocus}
         >
