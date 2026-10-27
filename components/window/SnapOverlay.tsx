@@ -1,6 +1,6 @@
 "use client";
 
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, motion } from "motion/react";
 import type { SnapLayout } from "@/lib/windows";
 import { FLYOUT_IN, FLYOUT_OUT } from "@/lib/windows";
 

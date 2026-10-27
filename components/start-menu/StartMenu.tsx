@@ -1,7 +1,13 @@
 "use client";
 
-import { AnimatePresence, motion } from "framer-motion";
-import { ChevronRight, Power, Search, SunMoon } from "lucide-react";
+import { AnimatePresence, motion } from "motion/react";
+import {
+  ChevronRightIcon,
+  PowerIcon,
+  Search01Icon,
+  SunMoonIcon,
+} from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useAppearance } from "@/lib/appearance";
@@ -75,7 +81,7 @@ export function StartMenu({
           >
             <div className="start-search-wrap">
               <label className="start-search">
-                <Search />
+                <HugeiconsIcon icon={Search01Icon} strokeWidth={2} aria-hidden="true" />
                 <input
                   ref={inputRef}
                   value={query}
@@ -96,7 +102,7 @@ export function StartMenu({
                       className="start-more-btn"
                       onClick={() => setAllApps(true)}
                     >
-                      All apps <ChevronRight size={12} />
+                      All apps <HugeiconsIcon icon={ChevronRightIcon} strokeWidth={2} aria-hidden="true" size={12} />
                     </button>
                   </div>
 
@@ -209,7 +215,7 @@ export function StartMenu({
                   title={theme === "dark" ? "Switch to light" : "Switch to dark"}
                   aria-label="Toggle theme"
                 >
-                  <SunMoon />
+                  <HugeiconsIcon icon={SunMoonIcon} strokeWidth={2} aria-hidden="true" />
                 </button>
                 <button
                   type="button"
@@ -221,7 +227,7 @@ export function StartMenu({
                   title="Power"
                   aria-label="Power"
                 >
-                  <Power />
+                  <HugeiconsIcon icon={PowerIcon} strokeWidth={2} aria-hidden="true" />
                 </button>
               </div>
             </footer>

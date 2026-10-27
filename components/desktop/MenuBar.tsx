@@ -3,7 +3,7 @@
 import { Moon02Icon, SunMediumIcon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { useAppearance } from "@/lib/appearance";
-import type { AppId } from "@/lib/registry";
+import { APP_REGISTRY, DESKTOP_APPS, type AppId } from "@/lib/registry";
 import { WorkspaceTooltip } from "@/components/ui/tooltip";
 import {
   Menubar,
@@ -79,9 +79,20 @@ export function MenuBar({
                 <MenubarItem onClick={() => openResumeSection()}>
                   Portfolio / Resume
                 </MenubarItem>
-                <MenubarItem onClick={() => openResumeSection("projects")}>
-                  Projects
-                </MenubarItem>
+                {(
+                  [
+                    "projects",
+                    "blog",
+                    "articles",
+                    "tutorials",
+                    "glossary",
+                    "bookmarks",
+                  ] as AppId[]
+                ).map((id) => (
+                  <MenubarItem key={id} onClick={() => onOpenApp(id)}>
+                    {APP_REGISTRY[id].title}
+                  </MenubarItem>
+                ))}
                 <MenubarItem onClick={() => openResumeSection("experience")}>
                   Experience
                 </MenubarItem>
@@ -123,12 +134,11 @@ export function MenuBar({
             </MenubarTrigger>
             <MenubarContent>
               <MenubarGroup>
-                <MenubarItem onClick={() => onOpenApp("resume")}>
-                  Resume
-                </MenubarItem>
-                <MenubarItem onClick={() => onOpenApp("settings")}>
-                  Settings
-                </MenubarItem>
+                {DESKTOP_APPS.map((id) => (
+                  <MenubarItem key={id} onClick={() => onOpenApp(id)}>
+                    {APP_REGISTRY[id].title}
+                  </MenubarItem>
+                ))}
               </MenubarGroup>
               <MenubarSeparator />
               <MenubarItem variant="destructive" onClick={onCloseAll}>
@@ -145,7 +155,7 @@ export function MenuBar({
               <MenubarItem onClick={() => openResumeSection()}>
                 About this workspace
               </MenubarItem>
-              <MenubarItem onClick={() => openResumeSection("contact")}>
+              <MenubarItem onClick={() => onOpenApp("contact")}>
                 Contact
               </MenubarItem>
             </MenubarContent>

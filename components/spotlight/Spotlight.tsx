@@ -1,16 +1,17 @@
 "use client";
 
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, motion } from "motion/react";
 import {
-  FileText,
-  Mail,
-  Moon,
-  Palette,
-  Search,
-  Settings as SettingsIcon,
-  Sun,
-  Terminal,
-} from "lucide-react";
+  FileTextIcon,
+  Mail01Icon,
+  Moon01Icon,
+  PaletteIcon,
+  Search01Icon,
+  Settings02Icon,
+  Sun01Icon,
+  TerminalIcon,
+} from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useAppearance } from "@/lib/appearance";
@@ -56,7 +57,7 @@ export function Spotlight({
         category: "Applications",
         title: "System Settings",
         subtitle: "Personalize theme, accent color, and wallpaper",
-        icon: <SettingsIcon size={16} />,
+        icon: <HugeiconsIcon icon={Settings02Icon} strokeWidth={2} aria-hidden="true" size={16} />,
         onSelect: () => onOpenApp("settings"),
       },
       {
@@ -64,7 +65,7 @@ export function Spotlight({
         category: "Applications",
         title: "Resume",
         subtitle: "Profile, experience, education, interests, and languages",
-        icon: <FileText size={16} />,
+        icon: <HugeiconsIcon icon={FileTextIcon} strokeWidth={2} aria-hidden="true" size={16} />,
         onSelect: () => onOpenApp("resume"),
       },
       {
@@ -72,7 +73,7 @@ export function Spotlight({
         category: "Actions",
         title: `Switch to ${theme === "dark" ? "Light" : "Dark"} Mode`,
         subtitle: "Toggle system appearance",
-        icon: theme === "dark" ? <Sun size={16} /> : <Moon size={16} />,
+        icon: theme === "dark" ? <HugeiconsIcon icon={Sun01Icon} strokeWidth={2} aria-hidden="true" size={16} /> : <HugeiconsIcon icon={Moon01Icon} strokeWidth={2} aria-hidden="true" size={16} />,
         onSelect: () => {
           toggleTheme();
           toast.success(`Switched to ${theme === "dark" ? "light" : "dark"} mode`);
@@ -83,7 +84,7 @@ export function Spotlight({
         category: "Actions",
         title: "Set Wallpaper: Hill Country (Kandy)",
         subtitle: "Scenic Central Province landscape",
-        icon: <Palette size={16} />,
+        icon: <HugeiconsIcon icon={PaletteIcon} strokeWidth={2} aria-hidden="true" size={16} />,
         onSelect: () => {
           setWallpaper("hill-country");
           toast.success("Wallpaper updated to Hill Country");
@@ -94,7 +95,7 @@ export function Spotlight({
         category: "Actions",
         title: "Set Wallpaper: Bloom",
         subtitle: "Glossy flowing ribbon sculpture",
-        icon: <Palette size={16} />,
+        icon: <HugeiconsIcon icon={PaletteIcon} strokeWidth={2} aria-hidden="true" size={16} />,
         onSelect: () => {
           setWallpaper("bloom");
           toast.success("Wallpaper updated to Spatial Bloom");
@@ -105,7 +106,7 @@ export function Spotlight({
         category: "Actions",
         title: "GitHub Profile",
         subtitle: "github.com/prasad-kmd",
-        icon: <Terminal size={16} />,
+        icon: <HugeiconsIcon icon={TerminalIcon} strokeWidth={2} aria-hidden="true" size={16} />,
         onSelect: () => window.open("https://github.com/prasad-kmd", "_blank"),
       },
       {
@@ -113,7 +114,7 @@ export function Spotlight({
         category: "Actions",
         title: "Copy Email Address",
         subtitle: "prasad.madhuranga@pm.me",
-        icon: <Mail size={16} />,
+        icon: <HugeiconsIcon icon={Mail01Icon} strokeWidth={2} aria-hidden="true" size={16} />,
         onSelect: () => {
           navigator.clipboard?.writeText("prasad.madhuranga@pm.me");
           toast.success("Copied email to clipboard");
@@ -184,7 +185,7 @@ export function Spotlight({
             transition={open ? SPOTLIGHT_IN : SPOTLIGHT_OUT}
           >
             <div className="spotlight-search-wrap">
-              <Search size={18} />
+              <HugeiconsIcon icon={Search01Icon} strokeWidth={2} aria-hidden="true" size={18} />
               <input
                 ref={inputRef}
                 className="spotlight-input"

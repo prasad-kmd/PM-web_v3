@@ -1,6 +1,6 @@
 "use client";
 
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, motion } from "motion/react";
 import { APP_REGISTRY, type AppId } from "@/lib/registry";
 
 /* =========================================================

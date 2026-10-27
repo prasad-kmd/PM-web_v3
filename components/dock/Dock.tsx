@@ -1,7 +1,7 @@
 "use client";
 
-import { motion } from "framer-motion";
-import { Compass, Folder, Search, Sparkles, Terminal } from "lucide-react";
+import { Search01Icon, TerminalIcon } from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import { useState } from "react";
 import { APP_REGISTRY, DOCK_ORDER, type AppId } from "@/lib/registry";
 
@@ -38,7 +38,7 @@ export function Dock({
           aria-label="Spotlight Search (⌘Space)"
         >
           <div className="dock-icon-box bg-gradient-to-br from-indigo-500 to-purple-600 text-white shadow-md">
-            <Search size={22} strokeWidth={2.4} />
+            <HugeiconsIcon icon={Search01Icon} aria-hidden="true" size={22} strokeWidth={2.4} />
           </div>
           {hovered === "Spotlight Search" && (
             <span className="dock-tooltip">Spotlight (⌘Space)</span>
@@ -91,7 +91,7 @@ export function Dock({
           aria-label="GitHub Profile"
         >
           <div className="dock-icon-box bg-gradient-to-br from-neutral-700 to-neutral-900 text-white shadow-md">
-            <Terminal size={22} strokeWidth={2.2} />
+            <HugeiconsIcon icon={TerminalIcon} aria-hidden="true" size={22} strokeWidth={2.2} />
           </div>
           {hovered === "GitHub Profile" && (
             <span className="dock-tooltip">GitHub Profile</span>

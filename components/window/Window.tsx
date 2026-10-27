@@ -317,6 +317,7 @@ export function Window({
           className="window-geometry"
           style={{ x, y, width: w, height: h, zIndex: win.z }}
           onPointerDown={onFocus}
+          onFocusCapture={onFocus}
         >
           <Dialog.Popup
             from="top"

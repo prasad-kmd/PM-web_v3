@@ -34,6 +34,12 @@
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
+  --animate-skeleton: skeleton 2s -1s infinite linear;
+  @keyframes skeleton {
+  to {
+    background-position: -200% 0;
+    }
+  }
 }
 
 :root {
@@ -729,18 +735,6 @@ input:focus-visible {
   text-align: center;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
-}
-
-.shortcut-rename {
-  width: 74px;
-  border: 1px solid var(--ring);
-  border-radius: 6px;
-  background: var(--card);
-  color: var(--card-foreground);
-  font-size: 12px;
-  outline: none;
-  padding: 1px 3px;
-  text-align: center;
 }
 
 .marquee {
@@ -1897,3 +1891,26 @@ input:focus-visible {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* Server-rendered route surface: visible to readers and crawlers before the
+   existing non-modal window manager takes over after hydration. */
+.route-server-window {
+  position: fixed;
+  z-index: 10;
+  top: calc(var(--menubar-h) + max(12px, (100dvh - var(--menubar-h) - 640px) / 2));
+  left: 50%;
+  width: min(900px, calc(100vw - 24px));
+  height: min(640px, calc(100dvh - var(--menubar-h) - 24px));
+  transform: translateX(-50%);
+}
+.route-server-surface { height: 100%; }
+.route-unknown { position: fixed; z-index: 30; inset: var(--menubar-h) 0 0; pointer-events: none; display: grid; place-items: center; padding: 16px; }
+.route-unknown > * { pointer-events: auto; }
+@media (max-width: 768px) {
+  .route-server-window { top: var(--menubar-h); width: 100%; height: calc(100dvh - var(--menubar-h)); }
+  .route-server-surface { border-radius: 0; }
+}
+
+/* Keep the expanded shortcut set reachable on short and narrow screens. */
+@media (min-width: 769px) { .desktop-grid { height: calc(100% - 28px); max-width: min(45vw, 360px); overflow: auto; } }
+@media (max-width: 768px) { .desktop-grid { bottom: 0; overflow: auto; align-content: start; } }

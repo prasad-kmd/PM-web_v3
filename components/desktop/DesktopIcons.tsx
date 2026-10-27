@@ -1,6 +1,16 @@
 "use client";
 
-import { FileTextIcon, Settings02Icon } from "@hugeicons/core-free-icons";
+import {
+  FileTextIcon,
+  Settings02Icon,
+  Folder01Icon,
+  Notebook01Icon,
+  News01Icon,
+  BookOpen01Icon,
+  Book02Icon,
+  Bookmark01Icon,
+  Mail01Icon,
+} from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { APP_REGISTRY, DESKTOP_APPS, type AppId } from "@/lib/registry";
@@ -11,7 +21,19 @@ type Marquee = { x1: number; y1: number; x2: number; y2: number };
 function ShortcutGlyph({ appId }: { appId: AppId }) {
   return (
     <HugeiconsIcon
-      icon={appId === "settings" ? Settings02Icon : FileTextIcon}
+      icon={
+        {
+          settings: Settings02Icon,
+          resume: FileTextIcon,
+          projects: Folder01Icon,
+          blog: Notebook01Icon,
+          articles: News01Icon,
+          tutorials: BookOpen01Icon,
+          glossary: Book02Icon,
+          bookmarks: Bookmark01Icon,
+          contact: Mail01Icon,
+        }[appId]
+      }
       strokeWidth={2}
       size={19}
       aria-hidden
@@ -21,17 +43,9 @@ function ShortcutGlyph({ appId }: { appId: AppId }) {
 
 export function DesktopIcons({ onOpen }: { onOpen: (appId: AppId) => void }) {
   const [selected, setSelected] = useState<Set<AppId>>(new Set());
-  const [renaming, setRenaming] = useState<AppId | null>(null);
-  const [labels, setLabels] = useState<Record<string, string>>({});
   const [marquee, setMarquee] = useState<Marquee | null>(null);
   const layerRef = useRef<HTMLDivElement>(null);
   const dragRef = useRef<Marquee | null>(null);
-
-  const commitRename = useCallback((appId: AppId, value: string) => {
-    const clean = value.trim();
-    if (clean) setLabels((current) => ({ ...current, [appId]: clean }));
-    setRenaming(null);
-  }, []);
 
   const beginMarquee = useCallback(
     (event: React.PointerEvent<HTMLDivElement>) => {
@@ -69,13 +83,21 @@ export function DesktopIcons({ onOpen }: { onOpen: (appId: AppId) => void }) {
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
-      if ((event.target as HTMLElement)?.tagName === "INPUT") return;
+      const target = event.target;
+      if (!(target instanceof HTMLElement)) return;
+      // Native shortcut buttons already handle Enter. Never intercept keyboard
+      // input inside windows, links, form controls, menus or editable text.
+      if (target.closest(".desktop-shortcut")) {
+        if (event.key === "Escape") setSelected(new Set());
+        return;
+      }
+      const onDesktop =
+        layerRef.current?.contains(target) ||
+        (target === document.body &&
+          !document.querySelector(".window-geometry"));
+      if (!onDesktop) return;
       const only = selected.size === 1 ? [...selected][0] : null;
       if (event.key === "Enter" && only) onOpen(only);
-      if (event.key === "F2" && only) {
-        event.preventDefault();
-        setRenaming(only);
-      }
       if (event.key === "Escape") setSelected(new Set());
     };
 
@@ -96,7 +118,7 @@ export function DesktopIcons({ onOpen }: { onOpen: (appId: AppId) => void }) {
     <div className="desktop-grid" ref={layerRef} onPointerDown={beginMarquee}>
       {DESKTOP_APPS.map((appId) => {
         const meta = APP_REGISTRY[appId];
-        const label = labels[appId] ?? meta.title;
+        const label = meta.title;
         const isSelected = selected.has(appId);
 
         return (
@@ -125,26 +147,7 @@ export function DesktopIcons({ onOpen }: { onOpen: (appId: AppId) => void }) {
                 <ShortcutGlyph appId={appId} />
               </span>
 
-              {renaming === appId ? (
-                <input
-                  className="shortcut-rename"
-                  defaultValue={label}
-                  autoFocus
-                  onFocus={(event) => event.currentTarget.select()}
-                  onBlur={(event) =>
-                    commitRename(appId, event.currentTarget.value)
-                  }
-                  onKeyDown={(event) => {
-                    if (event.key === "Enter")
-                      commitRename(appId, event.currentTarget.value);
-                    if (event.key === "Escape") setRenaming(null);
-                  }}
-                  onPointerDown={(event) => event.stopPropagation()}
-                  aria-label="Rename"
-                />
-              ) : (
-                <span className="shortcut-label">{label}</span>
-              )}
+              <span className="shortcut-label">{label}</span>
             </button>
           </ShortcutContextMenu>
         );

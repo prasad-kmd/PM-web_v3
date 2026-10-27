@@ -3,6 +3,9 @@
 import { AppBody } from "@/components/apps/AppBody";
 import type { WindowManager } from "@/hooks/useWindowManager";
 import type { Area } from "@/lib/windows";
+import { APP_REGISTRY, usesRouteContent, type AppId } from "@/lib/registry";
+import { FrozenRouteSurface, LiveRouteSurface } from "./RouteContentSurface";
+import type { ReactNode } from "react";
 import { Window } from "./Window";
 
 export function WindowsLayer({
@@ -10,11 +13,21 @@ export function WindowsLayer({
   area,
   manager,
   isMobile,
+  routeApp,
+  routeContent,
+  snapshots,
+  captureSnapshot,
+  hydrated,
 }: {
   windows: WindowManager["windows"];
   area: Area;
   manager: WindowManager;
   isMobile: boolean;
+  routeApp: AppId | null;
+  routeContent: ReactNode;
+  snapshots: Partial<Record<AppId, HTMLElement>>;
+  captureSnapshot: (appId: AppId, node: HTMLElement) => void;
+  hydrated: boolean;
 }) {
   return (
     <>
@@ -34,10 +47,28 @@ export function WindowsLayer({
           onExitComplete={() => manager.finishExit(windowState.id)}
           onOpenApp={(appId) => manager.open(appId)}
         >
-          <AppBody
-            appId={windowState.appId}
-            onNavigateHome={manager.closeAll}
-          />
+          {usesRouteContent(windowState.appId) ? (
+            hydrated ? (
+              windowState.appId === routeApp ? (
+                <LiveRouteSurface
+                  appId={windowState.appId}
+                  capture={captureSnapshot}
+                >
+                  {routeContent}
+                </LiveRouteSurface>
+              ) : (
+                <FrozenRouteSurface
+                  snapshot={snapshots[windowState.appId]}
+                  title={APP_REGISTRY[windowState.appId].title}
+                />
+              )
+            ) : null
+          ) : (
+            <AppBody
+              appId={windowState.appId}
+              onNavigateHome={manager.closeAll}
+            />
+          )}
         </Window>
       ))}
     </>

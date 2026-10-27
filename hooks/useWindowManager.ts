@@ -254,8 +254,7 @@ export function useWindowManager(area: Area, isMobile: boolean) {
   /**
    * Synchronize window state when the user navigates via Browser Back/Forward.
    * - Navigating to `/` closes open windows to reveal the desktop.
-   * - Navigating to `/{appId}` focuses or opens that app, closing the superseded
-   *   foreground window if `targetAppId` was already open underneath.
+   * - Navigating to `/{appId}` focuses or opens that app without closing other windows.
    */
   const syncToRoute = useCallback(
     (targetAppId: AppId | null) => {
@@ -282,10 +281,6 @@ export function useWindowManager(area: Area, isMobile: boolean) {
           return current.map((windowState) => {
             if (windowState.id === existingTarget.id) {
               return { ...windowState, exiting: false, z: nextZ };
-            }
-            if (currentTop && windowState.id === currentTop.id) {
-              persistLayout(windowState);
-              return { ...windowState, exiting: true };
             }
             return windowState;
           });

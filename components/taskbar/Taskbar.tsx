@@ -1,7 +1,8 @@
 "use client";
 
-import { motion } from "framer-motion";
-import { Search } from "lucide-react";
+import { motion } from "motion/react";
+import { Search01Icon } from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import { useEffect } from "react";
 import { APP_REGISTRY, PINNED_ORDER, type AppId } from "@/lib/registry";
 import { FLYOUT_IN } from "@/lib/windows";
@@ -74,7 +75,7 @@ export function Taskbar({
           transition={{ duration: 0.12, ease: [0.2, 0, 0, 1] }}
           aria-label="Search"
         >
-          <Search size={18} />
+          <HugeiconsIcon icon={Search01Icon} strokeWidth={2} aria-hidden="true" size={18} />
         </motion.button>
       </div>
 

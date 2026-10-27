@@ -1,6 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import { cookies } from "next/headers";
 import "./globals.css";
+import "./cms.css";
+import "katex/dist/katex.min.css";
 import { Desktop } from "@/components/desktop/Desktop";
 import { InterfaceProvider } from "@/components/providers/InterfaceProvider";
 import { AppearanceProvider } from "@/lib/appearance";
@@ -12,6 +14,8 @@ import {
   COOKIE_WALLPAPER_INTENSITY,
 } from "@/lib/cookies";
 import type { Theme } from "@/lib/registry";
+import { getSiteUrl } from "@/lib/site";
+import { ogImageUrl } from "@/lib/content-metadata";
 import {
   resolveSlideshowInterval,
   resolveWallpaperId,
@@ -19,6 +23,8 @@ import {
 } from "@/lib/wallpapers";
 
 export const metadata: Metadata = {
+  metadataBase: new URL(getSiteUrl()),
+  alternates: { types: { "application/rss+xml": "/feed.xml" } },
   title: {
     default: "Prasad M. — Desktop Workspace",
     template: "%s · Prasad M.",
@@ -39,6 +45,17 @@ export const metadata: Metadata = {
     description:
       "A personal engineering portfolio presented as an interactive desktop workspace.",
     type: "website",
+    images: [
+      {
+        url: ogImageUrl("Prasad M. — Desktop Workspace"),
+        width: 1280,
+        height: 720,
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    images: [ogImageUrl("Prasad M. — Desktop Workspace")],
   },
   icons: { icon: "/favicon-pm.svg" },
 };
@@ -97,8 +114,7 @@ export default async function RootLayout({
           }}
         >
           <InterfaceProvider>
-            <Desktop />
-            {children}
+            <Desktop>{children}</Desktop>
           </InterfaceProvider>
         </AppearanceProvider>
       </body>

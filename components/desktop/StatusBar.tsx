@@ -1,7 +1,8 @@
 "use client";
 
-import { AnimatePresence } from "framer-motion";
-import { Bell } from "lucide-react";
+import { AnimatePresence } from "motion/react";
+import { Notification01Icon } from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import { useEffect, useRef, useState } from "react";
 import { useClock } from "@/hooks/useClock";
 import { CalendarFlyout } from "./CalendarFlyout";
@@ -84,7 +85,7 @@ export function StatusBar({ focusedTitle }: { focusedTitle: string | null }) {
             aria-label="Notifications"
             aria-expanded={flyout === "notifications"}
           >
-            <Bell size={13} />
+            <HugeiconsIcon icon={Notification01Icon} strokeWidth={2} aria-hidden="true" size={13} />
             {unread > 0 && <span className="status-badge">{unread}</span>}
           </button>
 

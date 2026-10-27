@@ -138,7 +138,7 @@ Use the published Menubar composition: one animated popup is handed between trig
 
 ### Desktop shortcuts and context menus
 
-Shortcuts remain real buttons with select, multi-select, F2 rename, Enter open, marquee selection, and right-click behavior. They use single-stroke Hugeicons-style icons in neutral icon tiles with clean text treatment.
+Shortcuts remain real buttons with select, multi-select, Enter open, marquee selection, and right-click behavior. They use single-stroke Hugeicons-style icons in neutral icon tiles with clean text treatment.
 
 Empty-canvas and shortcut context menus use the actual Animate UI Base UI Context Menu primitive: `Root → Trigger → Portal → Positioner → Popup`. Collision handling, keyboard behavior, focus management, reduced-motion support, and popup motion belong to the primitive.
 

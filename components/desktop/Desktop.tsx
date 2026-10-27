@@ -7,7 +7,8 @@ import {
   useRef,
   useState,
 } from "react";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import type { ReactNode } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { useShouldReduceMotion } from "@animate-ui/react/utils/motion";
 import { Toaster } from "sonner";
@@ -16,9 +17,10 @@ import { WindowsLayer } from "@/components/window/WindowsLayer";
 import { useWindowManager } from "@/hooks/useWindowManager";
 import { useAppearance } from "@/lib/appearance";
 import {
+  APP_REGISTRY,
   getAppIdFromPathname,
-  getDocumentTitleForApp,
   getPathnameForApp,
+  usesRouteContent,
   type AppId,
 } from "@/lib/registry";
 import { getWallpaper } from "@/lib/wallpapers";
@@ -50,7 +52,8 @@ function useMobileWindowMode() {
   return isMobile;
 }
 
-export function Desktop() {
+export function Desktop({ children }: { children?: ReactNode }) {
+  const [hydrated, setHydrated] = useState(false);
   const [area, setArea] = useState<Area>({ w: 1280, h: 720, left: 0, top: 40 });
   const [contextTarget, setContextTarget] = useState<{
     link: string | null;
@@ -58,6 +61,18 @@ export function Desktop() {
   }>({ link: null, image: null });
   const workRef = useRef<HTMLDivElement>(null);
   const pathname = usePathname();
+  const router = useRouter();
+  const search = useSearchParams().toString();
+  const routeApp = getAppIdFromPathname(pathname);
+  const [snapshots, setSnapshots] = useState<
+    Partial<Record<AppId, HTMLElement>>
+  >({});
+  const captureSnapshot = useCallback(
+    (appId: AppId, node: HTMLElement) =>
+      setSnapshots((current) => ({ ...current, [appId]: node })),
+    [],
+  );
+  const routePaths = useRef<Partial<Record<AppId, string>>>({});
   const shouldReduceMotion = useShouldReduceMotion();
   const { wallpaper, wallpaperIntensity } = useAppearance();
   const currentWallpaper = getWallpaper(wallpaper);
@@ -121,11 +136,12 @@ export function Desktop() {
       const initialApp = getAppIdFromPathname(window.location.pathname);
       lastSyncedAppRef.current = initialApp;
       if (initialApp) {
+        routePaths.current[initialApp] =
+          window.location.pathname + window.location.search;
         expectedRouteAppRef.current = initialApp;
         handlingRouteChangeRef.current = true;
         open(initialApp, initialArea);
       }
-      document.title = getDocumentTitleForApp(initialApp);
       initializedRef.current = true;
     }
 
@@ -142,10 +158,23 @@ export function Desktop() {
     };
   }, [open]);
 
-  // Synchronize foreground DesktopOS window -> Browser URL & document title.
+  // Keep a real server-rendered route surface until the window manager hydrates.
+  useEffect(() => {
+    setHydrated(true);
+  }, []);
+
+  // Remember the path and query for each routed window.
+  useEffect(() => {
+    if (routeApp && usesRouteContent(routeApp)) {
+      routePaths.current[routeApp] =
+        window.location.pathname + window.location.search;
+    }
+  }, [pathname, routeApp, search]);
+
+  // Window focus changes use the App Router, not just pushState: server content
+  // and generateMetadata must refresh as well as the URL.
   useEffect(() => {
     if (!initializedRef.current) return;
-
     if (handlingRouteChangeRef.current) {
       if (topAppId === expectedRouteAppRef.current) {
         handlingRouteChangeRef.current = false;
@@ -153,46 +182,46 @@ export function Desktop() {
       }
       return;
     }
-
-    const desiredPath = getPathnameForApp(topAppId);
-    const currentPath = window.location.pathname.replace(/\/+$/, "") || "/";
-
+    const currentApp = getAppIdFromPathname(window.location.pathname);
+    if (currentApp === topAppId) return;
+    const desired = topAppId
+      ? routePaths.current[topAppId] || getPathnameForApp(topAppId)
+      : "/";
     lastSyncedAppRef.current = topAppId;
-    if (currentPath !== desiredPath) {
-      window.history.pushState({ desktopApp: topAppId }, "", desiredPath);
-    }
-    document.title = getDocumentTitleForApp(topAppId);
-  }, [topAppId]);
+    router.push(desired, { scroll: false });
+  }, [router, topAppId]);
 
-  // Synchronize Browser Back / Forward buttons (popstate) -> DesktopOS windows.
+  // Browser Back/Forward must focus the correct existing window.
   useEffect(() => {
     const handlePopState = () => {
-      const routeApp = getAppIdFromPathname(window.location.pathname);
-      lastSyncedAppRef.current = routeApp;
-      document.title = getDocumentTitleForApp(routeApp);
-
-      if (routeApp !== currentTopAppRef.current) {
-        expectedRouteAppRef.current = routeApp;
+      const nextApp = getAppIdFromPathname(window.location.pathname);
+      if (nextApp)
+        routePaths.current[nextApp] =
+          window.location.pathname + window.location.search;
+      lastSyncedAppRef.current = nextApp;
+      if (nextApp !== currentTopAppRef.current) {
+        expectedRouteAppRef.current = nextApp;
         handlingRouteChangeRef.current = true;
-        syncToRoute(routeApp);
+        syncToRoute(nextApp);
       }
     };
-
     window.addEventListener("popstate", handlePopState);
     return () => window.removeEventListener("popstate", handlePopState);
   }, [syncToRoute]);
 
-  // Also respond to Next.js client navigations (e.g. <Link href="/...">).
+  // Also respond to Next Link/navigation, including nested content routes.
   useEffect(() => {
     if (!initializedRef.current || handlingRouteChangeRef.current) return;
-    const routeApp = getAppIdFromPathname(pathname);
-    if (routeApp !== lastSyncedAppRef.current) {
-      lastSyncedAppRef.current = routeApp;
-      document.title = getDocumentTitleForApp(routeApp);
-      if (routeApp !== currentTopAppRef.current) {
-        expectedRouteAppRef.current = routeApp;
+    const nextApp = getAppIdFromPathname(pathname);
+    if (nextApp)
+      routePaths.current[nextApp] =
+        window.location.pathname + window.location.search;
+    if (nextApp !== lastSyncedAppRef.current) {
+      lastSyncedAppRef.current = nextApp;
+      if (nextApp !== currentTopAppRef.current) {
+        expectedRouteAppRef.current = nextApp;
         handlingRouteChangeRef.current = true;
-        syncToRoute(routeApp);
+        syncToRoute(nextApp);
       }
     }
   }, [pathname, syncToRoute]);
@@ -230,11 +259,34 @@ export function Desktop() {
         >
           <ProfileWidget />
           <DesktopIcons onOpen={openApp} />
+          {usesRouteContent(routeApp) && !hydrated ? (
+            <section
+              className="route-server-window"
+              aria-label={`${APP_REGISTRY[routeApp].title} window`}
+            >
+              <div className="window route-server-surface">
+                <div className="window-titlebar">
+                  <span className="window-title">
+                    {APP_REGISTRY[routeApp].title}
+                  </span>
+                </div>
+                <div className="window-body">{children}</div>
+              </div>
+            </section>
+          ) : null}
+          {!routeApp && pathname && pathname !== "/" ? (
+            <div className="route-unknown">{children}</div>
+          ) : null}
           <WindowsLayer
             windows={manager.windows}
             area={area}
             manager={manager}
             isMobile={isMobileWindowMode}
+            routeApp={routeApp}
+            routeContent={children}
+            snapshots={snapshots}
+            captureSnapshot={captureSnapshot}
+            hydrated={hydrated}
           />
         </ContextMenuTrigger>
         <DesktopContextMenuContent

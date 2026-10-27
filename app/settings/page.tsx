@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Settings",
+  robots: { index: false, follow: true },
   description:
     "Configure workspace theme, desktop wallpaper, backdrop visibility, and automatic wallpaper slideshow.",
 };

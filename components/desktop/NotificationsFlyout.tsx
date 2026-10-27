@@ -1,7 +1,8 @@
 "use client";
 
-import { motion } from "framer-motion";
-import { Bell, BellOff } from "lucide-react";
+import { motion } from "motion/react";
+import { Notification01Icon, NotificationOff01Icon } from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import { FLYOUT_IN } from "@/lib/windows";
 
 /* Notification centre — opens from the status-bar bell. */
@@ -36,7 +37,7 @@ export function NotificationsFlyout({
         <h3>Notifications</h3>
         {items.length > 0 && (
           <button type="button" className="notif-clear" onClick={onClear}>
-            <BellOff size={12} /> Clear all
+            <HugeiconsIcon icon={NotificationOff01Icon} strokeWidth={2} aria-hidden="true" size={12} /> Clear all
           </button>
         )}
       </div>
@@ -44,7 +45,7 @@ export function NotificationsFlyout({
       <div className="notif-list">
         {items.length === 0 && (
           <div className="notif-empty">
-            <Bell size={18} />
+            <HugeiconsIcon icon={Notification01Icon} strokeWidth={2} aria-hidden="true" size={18} />
             <p>You’re all caught up.</p>
           </div>
         )}

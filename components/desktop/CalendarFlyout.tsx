@@ -1,7 +1,8 @@
 "use client";
 
-import { motion } from "framer-motion";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { motion } from "motion/react";
+import { ChevronLeftIcon, ChevronRightIcon } from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import { useMemo, useState } from "react";
 import { FLYOUT_IN } from "@/lib/windows";
 
@@ -51,7 +52,7 @@ export function CalendarFlyout() {
             onClick={() => setCursor(new Date(cursor.getFullYear(), cursor.getMonth() - 1, 1))}
             aria-label="Previous month"
           >
-            <ChevronLeft size={14} />
+            <HugeiconsIcon icon={ChevronLeftIcon} strokeWidth={2} aria-hidden="true" size={14} />
           </button>
           <button
             type="button"
@@ -59,7 +60,7 @@ export function CalendarFlyout() {
             onClick={() => setCursor(new Date(cursor.getFullYear(), cursor.getMonth() + 1, 1))}
             aria-label="Next month"
           >
-            <ChevronRight size={14} />
+            <HugeiconsIcon icon={ChevronRightIcon} strokeWidth={2} aria-hidden="true" size={14} />
           </button>
         </div>
       </div>
