@@ -1444,49 +1444,58 @@ input:focus-visible {
 }
 
 /* ---------------------------------------------------------------------------
-   Beam card — v2's pointer gradient border, re-cut in monochrome.
+   Beam card — v2's BorderGlow, in monochrome.
 
-   v2 painted the palette on a masked 2px ring and kept the card face opaque on
-   top, so the light only ever touched the edge. This keeps that structure:
-   a single masked ring above the card, no tinted wash inside it, and the angle
-   driven by the pointer through a short rAF lerp (0.22/frame).
+   v2 adapted React Bits' `BorderGlow`: a crisp gradient ring *plus* a blurred
+   copy of that ring that blooms around the edge, both rotated to follow the
+   pointer. Two details make it read as a glow instead of a wash:
 
-   `--beam-angle` is a registered custom property so the one-off arrival sweep
-   can interpolate it; the pointer path writes it directly each frame.
+   · the halo is a masked ring (`mask-composite: exclude` + padding), not a
+     filled gradient, so there is nothing to tint the middle of the card;
+   · the halo sits at `inset: -14px`, so even after blurring, the only part it
+     can paint is the 14px band *outside* the card's border box.
+
+   `--beam-angle` is a registered custom property (`inherits: true`) so the
+   pseudo-elements see the angle the component writes, and so the one-off
+   arrival sweep can interpolate it. v2 centres its bright stop on the *middle*
+   of the conic (the point nearest the pointer); the `+ 180deg` start in both
+   gradients below reproduces that, so the light lands under the pointer
+   instead of behind it. `--beam-glow` carries v2's edge-proximity weighting.
 --------------------------------------------------------------------------- */
 @property --beam-angle {
   syntax: "<angle>";
-  /* Must inherit: the angle is set on the card and read by its ::before. */
   inherits: true;
   initial-value: 160deg;
 }
 
 .beam {
   --beam-angle: 160deg;
+  --beam-ring: 1.5px;
+  --beam-bloom: 14px;
+  --beam-glow: 1;
   position: relative;
   isolation: isolate;
   border-radius: 10px;
 }
 
+/* The ring: the same band, masked down to the border itself. */
 .beam::before {
-  /* Ring, not a wash: the mask keeps only the 2px border band, so nothing is
-     ever painted over the card face. */
   position: absolute;
-  z-index: 2;
-  inset: -1px;
-  padding: 2px;
+  z-index: 3;
+  inset: calc(var(--beam-ring) * -1);
+  padding: var(--beam-ring);
   border-radius: inherit;
-  /* The band is centred on 0deg of the gradient (stops wrap past 360), so the
-     angle the component writes lands exactly opposite the pointer. */
+  /* v2's bright stop lives at the conic's 50% mark, so the start is rotated
+     half a turn: the band then lands on the point nearest the pointer. */
   background: conic-gradient(
-    from var(--beam-angle),
-    transparent 296deg,
-    color-mix(in oklab, var(--foreground) 40%, transparent) 336deg,
-    color-mix(in oklab, var(--foreground) 90%, transparent) 350deg,
+    from calc(var(--beam-angle) + 180deg),
+    transparent 300deg,
+    color-mix(in oklab, var(--foreground) 45%, transparent) 338deg,
+    color-mix(in oklab, var(--foreground) 92%, transparent) 351deg,
     var(--foreground) 360deg,
     var(--foreground) 360deg,
-    color-mix(in oklab, var(--foreground) 90%, transparent) 370deg,
-    color-mix(in oklab, var(--foreground) 40%, transparent) 384deg,
+    color-mix(in oklab, var(--foreground) 92%, transparent) 369deg,
+    color-mix(in oklab, var(--foreground) 45%, transparent) 382deg,
     transparent 40deg
   );
   -webkit-mask:
@@ -1500,14 +1509,53 @@ input:focus-visible {
   content: "";
   opacity: 0;
   pointer-events: none;
-  transition: opacity 220ms ease;
+  transition: opacity 420ms ease-out;
+}
+
+/* The bloom: a blurred ring outside the card, cut off at the border box. */
+.beam::after {
+  position: absolute;
+  z-index: 1;
+  inset: calc(var(--beam-bloom) * -1);
+  padding: var(--beam-bloom);
+  border-radius: calc(10px + var(--beam-bloom));
+  background: conic-gradient(
+    from calc(var(--beam-angle) + 180deg),
+    transparent 300deg,
+    color-mix(in oklab, var(--foreground) 34%, transparent) 338deg,
+    color-mix(in oklab, var(--foreground) 78%, transparent) 351deg,
+    var(--foreground) 360deg,
+    var(--foreground) 360deg,
+    color-mix(in oklab, var(--foreground) 78%, transparent) 369deg,
+    color-mix(in oklab, var(--foreground) 34%, transparent) 382deg,
+    transparent 40deg
+  );
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  mask-composite: exclude;
+  filter: blur(9px);
+  content: "";
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 900ms ease-out;
 }
 
 .beam[data-lit]::before {
   opacity: 1;
 }
 
-/* Arrival: the band travels once around the card, then leaves. */
+.beam[data-lit]::after {
+  /* v2: `calc(0.95 * --glow-strength)`, where strength rises from 0.55 in the
+     middle of the card to 1 at its perimeter. */
+  opacity: calc(0.95 * var(--beam-glow));
+}
+
+/* Arrival: ring and bloom travel once around the card, then leave. */
 @keyframes beam-turn {
   from {
     --beam-angle: -60deg;
@@ -1518,35 +1566,52 @@ input:focus-visible {
 }
 
 @keyframes beam-flash {
-  0% {
-    opacity: 0;
-  }
-  10% {
-    opacity: 1;
-  }
-  78% {
-    opacity: 1;
-  }
+  0%,
   100% {
     opacity: 0;
+  }
+  25%,
+  75% {
+    opacity: 1;
+  }
+}
+
+@keyframes beam-bloom-flash {
+  0%,
+  100% {
+    opacity: 0;
+  }
+  25%,
+  75% {
+    opacity: calc(0.95 * var(--beam-glow));
   }
 }
 
 .beam[data-intro]::before {
   animation:
-    beam-turn 1700ms cubic-bezier(0.22, 0.61, 0.36, 1) both,
-    beam-flash 1700ms cubic-bezier(0.22, 0.61, 0.36, 1) both;
+    beam-turn 2000ms cubic-bezier(0, 0, 0, 1) both,
+    beam-flash 2000ms cubic-bezier(0, 0, 0, 1) both;
 }
 
-/* Browsers without mask-composite get a still hairline instead of a mask bug. */
+.beam[data-intro]::after {
+  animation:
+    beam-turn 2000ms cubic-bezier(0, 0, 0, 1) both,
+    beam-bloom-flash 2000ms cubic-bezier(0, 0, 0, 1) both;
+}
+
+/* Without mask-composite the ring would flood the card, so fall back to a
+   static hairline and no bloom at all. */
 @supports not (mask-composite: exclude) {
   .beam::before {
     background: none;
     -webkit-mask: none;
     mask: none;
     box-shadow: inset 0 0 0 1px
-      color-mix(in oklab, var(--foreground) 35%, var(--border));
-    opacity: 0.6;
+      color-mix(in oklab, var(--foreground) 32%, var(--border));
+    opacity: 0.55;
+  }
+  .beam::after {
+    display: none;
   }
   .beam[data-intro]::before {
     animation: none;
@@ -1554,12 +1619,16 @@ input:focus-visible {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .beam::before {
+  .beam::before,
+  .beam::after {
     transition: none;
   }
   .beam[data-intro]::before {
     animation: none;
     opacity: 0.5;
+  }
+  .beam[data-intro]::after {
+    animation: none;
   }
 }
 
@@ -1715,6 +1784,28 @@ input:focus-visible {
   flex-wrap: wrap;
   gap: 6px;
   margin-top: 14px;
+}
+
+/* The CV action leads the row: a solid chip, then the quiet link chips. */
+.resume-contact-links .resume-cv {
+  border-color: transparent;
+  background: var(--foreground);
+  color: var(--background);
+  font-weight: 600;
+  gap: 6px;
+  padding: 5px 11px;
+}
+
+.resume-contact-links .resume-cv:hover {
+  background: color-mix(in oklab, var(--foreground) 88%, var(--background));
+  border-color: transparent;
+}
+
+.resume-contact-links .resume-cv[aria-disabled="true"] {
+  background: var(--card);
+  color: var(--muted-foreground);
+  cursor: not-allowed;
+  border-color: var(--border);
 }
 
 .resume-contact-links a {
@@ -2011,6 +2102,7 @@ input:focus-visible {
 
 .resume-experience {
   position: relative;
+  /* Timeline entries, not cards: no border, so nothing to glow along. */
 }
 
 .resume-experience::after {
@@ -2171,28 +2263,6 @@ input:focus-visible {
   list-style: none;
 }
 
-.resume-print {
-  display: inline-flex;
-  width: 100%;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  background: var(--card);
-  color: var(--foreground);
-  cursor: pointer;
-  font-size: 11px;
-  font-weight: 500;
-  padding: 7px 10px;
-  text-decoration: none;
-  transition: background-color 140ms ease;
-}
-
-.resume-print:hover {
-  background: var(--accent);
-}
-
 /* --- Footer -------------------------------------------------------------- */
 .resume-footer {
   display: flex;
@@ -2285,9 +2355,6 @@ input:focus-visible {
   }
   .resume-aside {
     position: static;
-  }
-  .resume-print {
-    display: none;
   }
 }
 

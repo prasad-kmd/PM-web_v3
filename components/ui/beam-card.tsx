@@ -43,13 +43,14 @@ export function BeamCard({
   const target = useRef(160);
   const reduceMotion = useShouldReduceMotion();
 
-  // The arrival sweep is one-shot: drop the attribute so hover control of the
-  // ring is not held hostage by an animation's fill state afterwards.
+  // The arrival sweep is one-shot (2000ms, matching v2): drop the attribute a
+  // beat after it ends so hover control of the ring is not held hostage by an
+  // animation's fill state.
   useEffect(() => {
     if (!intro) return;
     const timer = window.setTimeout(() => {
       ref.current?.removeAttribute("data-intro");
-    }, 1800);
+    }, 2100);
     return () => window.clearTimeout(timer);
   }, [intro]);
 
@@ -67,9 +68,20 @@ export function BeamCard({
       const rect = node.getBoundingClientRect();
       const x = event.clientX - rect.left - rect.width / 2;
       const y = event.clientY - rect.top - rect.height / 2;
-      // Conic gradients start at 12 o'clock; the lit band sits opposite the
-      // pointer, which is what makes the edge read as a reflection.
+      // Same maths as v2's PointerGradientBorder / React Bits' BorderGlow: the
+      // raw pointer bearing, let the CSS place the band half a turn around.
       const next = (Math.atan2(y, x) * 180) / Math.PI - 90;
+
+      // v2's edge-proximity weighting: the bloom swells as the pointer nears
+      // the perimeter and settles back over the middle of the card.
+      const proximity = Math.min(
+        1,
+        Math.max(
+          Math.abs(x) / (rect.width / 2),
+          Math.abs(y) / (rect.height / 2),
+        ),
+      );
+      node.style.setProperty("--beam-glow", String(0.55 + proximity * 0.45));
       const current = angle.current;
       target.current =
         current + (((((next - current + 180) % 360) + 360) % 360) - 180);

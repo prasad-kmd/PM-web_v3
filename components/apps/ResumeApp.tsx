@@ -38,12 +38,11 @@ type ProjectState = {
   source: "live" | "curated";
 };
 
-const profileStats = [
-  { label: "Workplaces", value: experience.length },
-  { label: "Qualifications", value: education.length },
-  { label: "Interests", value: interests.length },
-  { label: "Languages", value: languages.length },
-];
+/**
+ * The CV is a file, not a build step: drop it at `public/cv/resume-v2.pdf` and
+ * this link opens it in a new tab, the way v1's `/portfolio` hero does.
+ */
+const CV_HREF = "/cv/resume-v2.pdf";
 
 const pad = (value: number) => String(value).padStart(2, "0");
 
@@ -64,6 +63,17 @@ export function ResumeApp({ onNavigateHome }: { onNavigateHome?: () => void }) {
     items: [],
     source: "curated",
   });
+  // The CV may not be in the repo yet; a missing file should read as "not
+  // uploaded" rather than opening a 404 tab.
+  const [cvReady, setCvReady] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    fetch(CV_HREF, { method: "HEAD", signal: controller.signal })
+      .then((response) => setCvReady(response.ok))
+      .catch(() => setCvReady(false));
+    return () => controller.abort();
+  }, []);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -98,6 +108,15 @@ export function ResumeApp({ onNavigateHome }: { onNavigateHome?: () => void }) {
 
   const shown = projects.items.length ? projects.items : selectedProjects;
   const isLoading = projects.status === "loading";
+
+  // Header stats: the project count is the one number that changes as the
+  // collection grows, so it leads and replaces the static interest count.
+  const stats = [
+    { label: "Projects", value: shown.length },
+    { label: "Workplaces", value: experience.length },
+    { label: "Qualifications", value: education.length },
+    { label: "Languages", value: languages.length },
+  ];
 
   return (
     <div className="resume-app">
@@ -141,6 +160,29 @@ export function ResumeApp({ onNavigateHome }: { onNavigateHome?: () => void }) {
               className="resume-contact-links"
               aria-label="Contact and social links"
             >
+              <a
+                className="resume-cv"
+                href={CV_HREF}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-disabled={cvReady === false}
+                title={
+                  cvReady === false
+                    ? "Add public/cv/resume-v2.pdf to publish the CV"
+                    : "Opens the CV in a new tab"
+                }
+                onClick={(event) => {
+                  if (cvReady === false) event.preventDefault();
+                }}
+              >
+                <HugeiconsIcon
+                  icon={FileDownloadIcon}
+                  strokeWidth={2}
+                  size={13}
+                  aria-hidden
+                />
+                {cvReady === false ? "CV not uploaded" : "View / Download CV"}
+              </a>
               {contactLinks.map((link) =>
                 link.href.startsWith("/") ? (
                   <Link key={link.label} href={link.href}>
@@ -195,7 +237,7 @@ export function ResumeApp({ onNavigateHome }: { onNavigateHome?: () => void }) {
             </div>
 
             <dl className="resume-stat-grid" aria-label="Profile overview">
-              {profileStats.map((stat) => (
+              {stats.map((stat) => (
                 <div className="resume-stat" key={stat.label}>
                   <dt>{stat.label}</dt>
                   <dd>{pad(stat.value)}</dd>
@@ -362,8 +404,10 @@ export function ResumeApp({ onNavigateHome }: { onNavigateHome?: () => void }) {
                   </span>
                 </div>
                 <div className="resume-timeline">
+                  {/* No beam here: experience entries are a timeline, not
+                      cards — they have no border for a glow to travel along. */}
                   {experience.map((entry) => (
-                    <BeamCard
+                    <div
                       className="resume-experience"
                       key={`${entry.org}-${entry.role}`}
                     >
@@ -388,7 +432,7 @@ export function ResumeApp({ onNavigateHome }: { onNavigateHome?: () => void }) {
                           <li key={point}>{point}</li>
                         ))}
                       </ul>
-                    </BeamCard>
+                    </div>
                   ))}
                 </div>
               </section>
@@ -463,19 +507,6 @@ export function ResumeApp({ onNavigateHome }: { onNavigateHome?: () => void }) {
                   ))}
                 </ul>
               </BeamCard>
-
-              {/* A real file, not `window.print()`: the PDF is generated from
-                  lib/resume-data.ts by /api/resume/pdf, so it can be edited and
-                  re-issued without touching the app. */}
-              <a className="resume-print" href="/api/resume/pdf" download>
-                <HugeiconsIcon
-                  icon={FileDownloadIcon}
-                  strokeWidth={2}
-                  size={13}
-                  aria-hidden
-                />
-                Download PDF
-              </a>
             </aside>
           </div>
 
