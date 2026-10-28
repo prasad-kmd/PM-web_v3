@@ -17,6 +17,7 @@ import {
   RefreshIcon,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
+import { toast } from "sonner";
 import { BeamCard } from "@/components/ui/beam-card";
 import { WindowBreadcrumb } from "@/components/system/WindowBreadcrumb";
 import type { LatestItem } from "@/lib/latest-types";
@@ -63,8 +64,9 @@ export function ResumeApp({ onNavigateHome }: { onNavigateHome?: () => void }) {
     items: [],
     source: "curated",
   });
-  // The CV may not be in the repo yet; a missing file should read as "not
-  // uploaded" rather than opening a 404 tab.
+  // The CV may not be in the repo yet. The probe decides whether a click opens
+  // the file or explains, in a toast, that it has not been uploaded — the
+  // button stays a button either way.
   const [cvReady, setCvReady] = useState<boolean | null>(null);
 
   useEffect(() => {
@@ -165,14 +167,17 @@ export function ResumeApp({ onNavigateHome }: { onNavigateHome?: () => void }) {
                 href={CV_HREF}
                 target="_blank"
                 rel="noopener noreferrer"
-                aria-disabled={cvReady === false}
-                title={
-                  cvReady === false
-                    ? "Add public/cv/resume-v2.pdf to publish the CV"
-                    : "Opens the CV in a new tab"
-                }
+                title="Opens the CV in a new tab"
                 onClick={(event) => {
-                  if (cvReady === false) event.preventDefault();
+                  if (cvReady === false) {
+                    event.preventDefault();
+                    toast.error("Unavailable", {
+                      description:
+                        "CV isn't available at the moment. Please check later.",
+                    });
+                    return;
+                  }
+                  toast.success("Opening CV in a new tab…");
                 }}
               >
                 <HugeiconsIcon
@@ -181,7 +186,7 @@ export function ResumeApp({ onNavigateHome }: { onNavigateHome?: () => void }) {
                   size={13}
                   aria-hidden
                 />
-                {cvReady === false ? "CV not uploaded" : "View / Download CV"}
+                View / Download CV
               </a>
               {contactLinks.map((link) =>
                 link.href.startsWith("/") ? (

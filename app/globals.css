@@ -1444,59 +1444,86 @@ input:focus-visible {
 }
 
 /* ---------------------------------------------------------------------------
-   Beam card — v2's BorderGlow, in monochrome.
+   Beam card — React Bits' `BorderGlow`, in monochrome.
 
-   v2 adapted React Bits' `BorderGlow`: a crisp gradient ring *plus* a blurred
-   copy of that ring that blooms around the edge, both rotated to follow the
-   pointer. Two details make it read as a glow instead of a wash:
+   This is a direct port of React Bits' BorderGlow component (the piece v2's
+   `PointerGradientBorder` was built from). The method, in the order the
+   original applies it:
 
-   · the halo is a masked ring (`mask-composite: exclude` + padding), not a
-     filled gradient, so there is nothing to tint the middle of the card;
-   · the halo sits at `inset: -14px`, so even after blurring, the only part it
-     can paint is the 14px band *outside* the card's border box.
+   1. Two numbers are read from the pointer and written onto the card:
+        · `--cursor-angle`   — atan2(dy, dx) in degrees, + 90, normalised to
+          0–360: the bearing from the centre of the card to the pointer.
+        · `--edge-proximity` — 0–100: how close the pointer is to the nearest
+          edge (0 in the middle of the card, 100 on the perimeter).
 
-   `--beam-angle` is a registered custom property (`inherits: true`) so the
-   pseudo-elements see the angle the component writes, and so the one-off
-   arrival sweep can interpolate it. v2 centres its bright stop on the *middle*
-   of the conic (the point nearest the pointer); the `+ 180deg` start in both
-   gradients below reproduces that, so the light lands under the pointer
-   instead of behind it. `--beam-glow` carries v2's edge-proximity weighting.
+   2. Three layers read those numbers, and each one only appears above its own
+      sensitivity threshold:
+        · `.beam::before` — the rim. Clipped to the 1px border with
+          `mask-composite: exclude`, and shaped by a conic gradient centred on
+          `--cursor-angle`: lit over the pointer's half of the rim, feathered at
+          ±`--cone-spread`, gone on the far side. Fades in above
+          `--color-sensitivity` (50).
+        · `.beam-edge` — the bloom. Sits `--beam-glow` (40px) outside the border
+          box, masked to the narrow cone around `--cursor-angle`
+          (2.5% / 10% / 90% / 97.5%), and multiplied in with `plus-lighter` so it
+          adds light to the wallpaper instead of painting over it. Fades in
+          above `--edge-sensitivity` (30).
+        · `.beam-edge::before` — the original's seven-step box-shadow stack
+          (1 / 3 / 6 / 15 / 25 / 50px at 60 / 50 / 40 / 30 / 20 / 10% alpha),
+          which is what gives BorderGlow its soft, layered bloom.
+
+   3. Layers fade in over 250ms and out over 750ms on leave — the original's
+      `:not(:hover):not(.sweep-active)` rule.
+
+   4. Arrival: `intro` replays BorderGlow's sweep exactly — proximity 0 → 100
+      over 500ms, then `--cursor-angle` 110deg → 465deg (1.5s ease-in to
+      halfway, 2.25s ease-out to the end), then proximity 100 → 0 over the last
+      1.5s. It is driven in JS, so no keyframes are involved.
+
+   Monochrome adaptations (DESIGN.md): the original's seven-colour mesh becomes
+   a single foreground tint; the `--glow-*` ladder uses the foreground colour at
+   React Bits' alpha steps; `plus-lighter` is swapped for `normal` in the light
+   theme, where adding light does nothing. The original's `inset` shadows (the
+   inner sheen) are omitted: they need a content wrapper with its own opaque
+   background, and this card's face is transparent over the window.
 --------------------------------------------------------------------------- */
-@property --beam-angle {
+@property --cursor-angle {
   syntax: "<angle>";
   inherits: true;
-  initial-value: 160deg;
+  initial-value: 45deg;
 }
 
 .beam {
-  --beam-angle: 160deg;
-  --beam-ring: 1.5px;
-  --beam-bloom: 14px;
-  --beam-glow: 1;
+  --cursor-angle: 45deg;
+  --edge-proximity: 0;
+  --edge-sensitivity: 30;
+  --color-sensitivity: calc(var(--edge-sensitivity) + 20);
+  --cone-spread: 25;
+  --beam-glow: 40px;
+  --beam-radius: 10px;
+  --beam-rim: color-mix(in oklab, var(--foreground) 55%, transparent);
+  --glow-rgb: 24 24 27;
   position: relative;
   isolation: isolate;
-  border-radius: 10px;
+  border-radius: var(--beam-radius);
 }
 
-/* The ring: the same band, masked down to the border itself. */
+.dark .beam {
+  --glow-rgb: 255 255 255;
+}
+
+/* The rim: a conic band over the pointer's half of the border. */
 .beam::before {
   position: absolute;
   z-index: 3;
-  inset: calc(var(--beam-ring) * -1);
-  padding: var(--beam-ring);
+  inset: 0;
+  padding: 1px;
   border-radius: inherit;
-  /* v2's bright stop lives at the conic's 50% mark, so the start is rotated
-     half a turn: the band then lands on the point nearest the pointer. */
   background: conic-gradient(
-    from calc(var(--beam-angle) + 180deg),
-    transparent 300deg,
-    color-mix(in oklab, var(--foreground) 45%, transparent) 338deg,
-    color-mix(in oklab, var(--foreground) 92%, transparent) 351deg,
-    var(--foreground) 360deg,
-    var(--foreground) 360deg,
-    color-mix(in oklab, var(--foreground) 92%, transparent) 369deg,
-    color-mix(in oklab, var(--foreground) 45%, transparent) 382deg,
-    transparent 40deg
+    from var(--cursor-angle),
+    var(--beam-rim) 0% 25%,
+    transparent 40% 60%,
+    var(--beam-rim) 75% 100%
   );
   -webkit-mask:
     linear-gradient(#000 0 0) content-box,
@@ -1507,128 +1534,84 @@ input:focus-visible {
     linear-gradient(#000 0 0);
   mask-composite: exclude;
   content: "";
-  opacity: 0;
+  opacity: calc(
+    (var(--edge-proximity) - var(--color-sensitivity)) /
+      (100 - var(--color-sensitivity))
+  );
   pointer-events: none;
-  transition: opacity 420ms ease-out;
+  transition: opacity 250ms ease-out;
 }
 
-/* The bloom: a blurred ring outside the card, cut off at the border box. */
-.beam::after {
+/* The bloom: the original's cone-masked, layered shadow. */
+.beam-edge {
   position: absolute;
-  z-index: 1;
-  inset: calc(var(--beam-bloom) * -1);
-  padding: var(--beam-bloom);
-  border-radius: calc(10px + var(--beam-bloom));
-  background: conic-gradient(
-    from calc(var(--beam-angle) + 180deg),
-    transparent 300deg,
-    color-mix(in oklab, var(--foreground) 34%, transparent) 338deg,
-    color-mix(in oklab, var(--foreground) 78%, transparent) 351deg,
-    var(--foreground) 360deg,
-    var(--foreground) 360deg,
-    color-mix(in oklab, var(--foreground) 78%, transparent) 369deg,
-    color-mix(in oklab, var(--foreground) 34%, transparent) 382deg,
-    transparent 40deg
+  z-index: 2;
+  inset: calc(var(--beam-glow) * -1);
+  border-radius: calc(var(--beam-radius) + var(--beam-glow));
+  opacity: calc(
+    (var(--edge-proximity) - var(--edge-sensitivity)) /
+      (100 - var(--edge-sensitivity))
   );
-  -webkit-mask:
-    linear-gradient(#000 0 0) content-box,
-    linear-gradient(#000 0 0);
-  -webkit-mask-composite: xor;
-  mask:
-    linear-gradient(#000 0 0) content-box,
-    linear-gradient(#000 0 0);
-  mask-composite: exclude;
-  filter: blur(9px);
-  content: "";
-  opacity: 0;
+  transition: opacity 250ms ease-out;
+  -webkit-mask-image: conic-gradient(
+    from var(--cursor-angle) at center,
+    #000 2.5%,
+    transparent 10%,
+    transparent 90%,
+    #000 97.5%
+  );
+  mask-image: conic-gradient(
+    from var(--cursor-angle) at center,
+    #000 2.5%,
+    transparent 10%,
+    transparent 90%,
+    #000 97.5%
+  );
   pointer-events: none;
-  transition: opacity 900ms ease-out;
 }
 
-.beam[data-lit]::before {
-  opacity: 1;
+.dark .beam-edge {
+  mix-blend-mode: plus-lighter;
 }
 
-.beam[data-lit]::after {
-  /* v2: `calc(0.95 * --glow-strength)`, where strength rises from 0.55 in the
-     middle of the card to 1 at its perimeter. */
-  opacity: calc(0.95 * var(--beam-glow));
+.beam-edge::before {
+  position: absolute;
+  inset: var(--beam-glow);
+  border-radius: var(--beam-radius);
+  box-shadow:
+    0 0 1px 0 rgb(var(--glow-rgb) / 60%),
+    0 0 3px 0 rgb(var(--glow-rgb) / 50%),
+    0 0 6px 0 rgb(var(--glow-rgb) / 40%),
+    0 0 15px 0 rgb(var(--glow-rgb) / 30%),
+    0 0 25px 2px rgb(var(--glow-rgb) / 20%),
+    0 0 50px 2px rgb(var(--glow-rgb) / 10%);
+  content: "";
 }
 
-/* Arrival: ring and bloom travel once around the card, then leave. */
-@keyframes beam-turn {
-  from {
-    --beam-angle: -60deg;
-  }
-  to {
-    --beam-angle: 420deg;
-  }
+/* Leave: the original fades the whole edge out slowly instead of snapping. */
+.beam:not([data-hovered]):not([data-sweep])::before,
+.beam:not([data-hovered]):not([data-sweep]) .beam-edge {
+  opacity: 0;
+  transition: opacity 750ms ease-in-out;
 }
 
-@keyframes beam-flash {
-  0%,
-  100% {
-    opacity: 0;
-  }
-  25%,
-  75% {
-    opacity: 1;
-  }
-}
-
-@keyframes beam-bloom-flash {
-  0%,
-  100% {
-    opacity: 0;
-  }
-  25%,
-  75% {
-    opacity: calc(0.95 * var(--beam-glow));
-  }
-}
-
-.beam[data-intro]::before {
-  animation:
-    beam-turn 2000ms cubic-bezier(0, 0, 0, 1) both,
-    beam-flash 2000ms cubic-bezier(0, 0, 0, 1) both;
-}
-
-.beam[data-intro]::after {
-  animation:
-    beam-turn 2000ms cubic-bezier(0, 0, 0, 1) both,
-    beam-bloom-flash 2000ms cubic-bezier(0, 0, 0, 1) both;
-}
-
-/* Without mask-composite the ring would flood the card, so fall back to a
-   static hairline and no bloom at all. */
+/* Without `mask-composite` the rim would flood the card, so keep the plain
+   hairline the card already draws and drop the bloom. */
 @supports not (mask-composite: exclude) {
   .beam::before {
     background: none;
     -webkit-mask: none;
     mask: none;
-    box-shadow: inset 0 0 0 1px
-      color-mix(in oklab, var(--foreground) 32%, var(--border));
-    opacity: 0.55;
   }
-  .beam::after {
+  .beam-edge {
     display: none;
-  }
-  .beam[data-intro]::before {
-    animation: none;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .beam::before,
-  .beam::after {
+  .beam-edge {
     transition: none;
-  }
-  .beam[data-intro]::before {
-    animation: none;
-    opacity: 0.5;
-  }
-  .beam[data-intro]::after {
-    animation: none;
   }
 }
 
@@ -1799,13 +1782,6 @@ input:focus-visible {
 .resume-contact-links .resume-cv:hover {
   background: color-mix(in oklab, var(--foreground) 88%, var(--background));
   border-color: transparent;
-}
-
-.resume-contact-links .resume-cv[aria-disabled="true"] {
-  background: var(--card);
-  color: var(--muted-foreground);
-  cursor: not-allowed;
-  border-color: var(--border);
 }
 
 .resume-contact-links a {
