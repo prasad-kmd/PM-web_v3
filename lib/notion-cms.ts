@@ -4,6 +4,7 @@ import { Client } from "@notionhq/client";
 import { cache } from "react";
 
 import { CONTENT_META, CONTENT_TYPES, type ContentType } from "./content-types";
+import { resolveInlineLinks, stripInlineLinks } from "./inline-links";
 
 export { CONTENT_META, CONTENT_TYPES, type ContentType };
 export { formatContentDate } from "./content-types";
@@ -71,6 +72,7 @@ const DATABASE_ENV: Record<ContentType, string[]> = {
   articles: ["NOTION_ARTICLES_ID"],
   tutorials: ["NOTION_TUTORIALS_ID"],
   glossary: ["NOTION_GLOSSARY_ID", "NOTION_WIKI_ID"],
+  news: ["NOTION_NEWS_ID", "NOTION_NEWS_DATABASE_ID"],
 };
 const AUTHORS_DATABASE_ENV = "NOTION_AUTHORS_ID";
 
@@ -218,13 +220,46 @@ function readStatus(properties: Record<string, unknown>): string {
   );
 }
 
+/**
+ * Entries sharing a slug (usually identical titles in a collection without a
+ * Slug property) stay reachable: the oldest keeps the plain slug, later ones
+ * get a short page-id suffix, so existing URLs never change when a newer
+ * namesake is published.
+ */
+function dedupeSlugs<
+  T extends { id: string; slug: string; date: string | null },
+>(items: T[]): T[] {
+  const taken = new Set<string>();
+  const renamed = new Map<string, string>();
+  const oldestFirst = [...items].sort(
+    (a, b) =>
+      (a.date ? Date.parse(a.date) : 0) - (b.date ? Date.parse(b.date) : 0) ||
+      a.id.localeCompare(b.id),
+  );
+  for (const item of oldestFirst) {
+    let slug = item.slug;
+    if (taken.has(slug)) {
+      const id = item.id.replace(/-/g, "");
+      slug = `${item.slug}-${id.slice(0, 6)}`;
+      if (taken.has(slug)) slug = `${item.slug}-${id}`;
+      renamed.set(item.id, slug);
+    }
+    taken.add(slug);
+  }
+  return renamed.size
+    ? items.map((item) =>
+        renamed.has(item.id) ? { ...item, slug: renamed.get(item.id)! } : item,
+      )
+    : items;
+}
+
 function normalizePage(
   page: NotionPage,
   type: ContentType,
   author: AuthorSummary | null,
 ): ContentItem {
   const properties = page.properties ?? {};
-  const title = firstTitle(properties);
+  const title = stripInlineLinks(firstTitle(properties));
   const slug =
     slugify(propertyText(findProperty(properties, ["Slug", "URL Slug"]))) ||
     slugify(title) ||
@@ -251,10 +286,11 @@ function normalizePage(
     type,
     title,
     slug,
-    description:
+    description: stripInlineLinks(
       propertyText(
         findProperty(properties, ["Description", "Summary", "Excerpt"]),
-      ) || "",
+      ),
+    ),
     date: date || page.created_time || page.last_edited_time || null,
     lastEditedTime: page.last_edited_time || null,
     tags: propertyValues(findProperty(properties, ["Tags", "Keywords"])),
@@ -493,7 +529,7 @@ export const getContentIndex = cache(
           return dateB - dateA;
         });
 
-      return { items, configured: true, error: null };
+      return { items: dedupeSlugs(items), configured: true, error: null };
     } catch (error) {
       console.error(`Unable to load Notion ${type} content:`, error);
       return { items: [], configured: true, error: "unavailable" };
@@ -551,7 +587,9 @@ export const getContentDetail = cache(
 
     try {
       const notion = createNotionClient();
-      const blocks = await queryBlockChildren(notion, item.id, 0);
+      const blocks = resolveInlineLinks(
+        await queryBlockChildren(notion, item.id, 0),
+      );
       return { ...index, item, blocks };
     } catch (error) {
       console.error(`Unable to load Notion page body for ${item.id}:`, error);

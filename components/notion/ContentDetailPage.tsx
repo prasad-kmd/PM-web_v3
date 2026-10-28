@@ -1,6 +1,7 @@
 import Link from "next/link";
 import {
   ArrowRight01Icon,
+  ArrowUpRight01Icon,
   Calendar03Icon,
   Clock01Icon,
 } from "@hugeicons/core-free-icons";
@@ -17,6 +18,8 @@ import {
   type ContentType,
 } from "@/lib/notion-cms";
 import { getSiteUrl } from "@/lib/site";
+import { isFeedType } from "@/lib/content-listing";
+import { collectLinks } from "@/lib/inline-links";
 import { WindowBreadcrumb } from "@/components/system/WindowBreadcrumb";
 import { AiAssistedDialog } from "./AiAssistedDialog";
 import { NotionBlocks } from "./NotionBlocks";
@@ -42,7 +45,9 @@ function JsonLd({ type, item }: { type: ContentType; item: ContentItem }) {
         ? "CreativeWork"
         : type === "glossary"
           ? "DefinedTerm"
-          : "TechArticle",
+          : type === "news"
+            ? "NewsArticle"
+            : "TechArticle",
     headline: item.title,
     name: item.title,
     description: item.description || undefined,
@@ -148,6 +153,8 @@ export async function ContentDetailPage({
     ...new Set([...item.categories, ...item.tags, ...item.technical]),
   ];
   const date = formatContentDate(item.date);
+  const feed = isFeedType(type);
+  const storyLinks = feed ? collectLinks(result.blocks) : [];
 
   const index = await getContentIndex(type);
   const ordered = [...index.items].sort(byReadingOrder(type));
@@ -191,7 +198,9 @@ export async function ContentDetailPage({
           <article className="rdr-doc">
             <header className="rdr-head">
               <p className="rdr-chip">
-                <span>{item.categories[0] || meta.singular}</span>
+                <span>
+                  {feed ? meta.label : item.categories[0] || meta.singular}
+                </span>
                 {item.aiAssisted ? (
                   <AiAssistedDialog contentTitle={item.title} />
                 ) : null}
@@ -249,6 +258,33 @@ export async function ContentDetailPage({
               <p className="cms-status">
                 This entry does not have body content yet.
               </p>
+            ) : null}
+
+            {storyLinks.length ? (
+              <section className="rdr-sources" aria-labelledby="rdr-sources">
+                <h2 id="rdr-sources">Links in this story</h2>
+                <ul>
+                  {storyLinks.map((link) => (
+                    <li key={link.href}>
+                      <a
+                        href={link.href}
+                        target="_blank"
+                        rel="noreferrer noopener"
+                      >
+                        <HugeiconsIcon
+                          icon={ArrowUpRight01Icon}
+                          size={14}
+                          aria-hidden
+                        />
+                        <span>
+                          <strong>{link.label}</strong>
+                          {link.host ? <span>{link.host}</span> : null}
+                        </span>
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </section>
             ) : null}
 
             <footer className="rdr-end">

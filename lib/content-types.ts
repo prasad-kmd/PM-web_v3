@@ -5,6 +5,7 @@ export const CONTENT_TYPES = [
   "articles",
   "tutorials",
   "glossary",
+  "news",
 ] as const;
 
 export type ContentType = (typeof CONTENT_TYPES)[number];
@@ -46,6 +47,12 @@ export const CONTENT_META: Record<
     singular: "Term",
     description:
       "A growing reference for useful engineering terms and concepts.",
+  },
+  news: {
+    label: "News",
+    eyebrow: "Updates",
+    singular: "Story",
+    description: "Short updates from engineering, technology and research.",
   },
 };
 

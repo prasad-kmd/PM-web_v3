@@ -86,6 +86,7 @@ export function MenuBar({
                     "articles",
                     "tutorials",
                     "glossary",
+                    "news",
                     "bookmarks",
                   ] as AppId[]
                 ).map((id) => (

@@ -6,6 +6,7 @@ import {
   Folder01Icon,
   Notebook01Icon,
   News01Icon,
+  NewspaperIcon,
   BookOpen01Icon,
   Book02Icon,
   Bookmark01Icon,
@@ -30,6 +31,7 @@ function ShortcutGlyph({ appId }: { appId: AppId }) {
           articles: News01Icon,
           tutorials: BookOpen01Icon,
           glossary: Book02Icon,
+          news: NewspaperIcon,
           bookmarks: Bookmark01Icon,
           contact: Mail01Icon,
         }[appId]

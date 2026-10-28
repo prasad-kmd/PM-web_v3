@@ -11,6 +11,7 @@ import {
   type ReactNode,
 } from "react";
 import { toast } from "sonner";
+import { CONTENT_TYPES } from "@/lib/content-types";
 import type { ContentType } from "@/lib/notion-cms";
 
 export type SavedContent = {
@@ -49,9 +50,7 @@ function readBookmarks(): SavedContent[] {
       if (
         !entry ||
         typeof entry !== "object" ||
-        !["projects", "blog", "articles", "tutorials", "glossary"].includes(
-          entry.type,
-        ) ||
+        !(CONTENT_TYPES as readonly string[]).includes(entry.type) ||
         typeof entry.slug !== "string" ||
         typeof entry.title !== "string"
       )

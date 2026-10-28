@@ -4,6 +4,7 @@ import {
   File02Icon,
   Folder01Icon,
   News01Icon,
+  NewspaperIcon,
   Notebook01Icon,
 } from "@hugeicons/core-free-icons";
 
@@ -44,6 +45,13 @@ export const OG_TYPES = {
     wallpaper: "glossary",
     icon: Book02Icon,
   },
+  news: {
+    singular: "News",
+    collection: "News",
+    accent: "#e0a43b",
+    wallpaper: "news",
+    icon: NewspaperIcon,
+  },
   pages: {
     singular: "Page",
     collection: "Workspace",
@@ -71,6 +79,7 @@ export const OG_SHORTCUTS = [
   "articles",
   "tutorials",
   "glossary",
+  "news",
 ] as const satisfies readonly OgType[];
 
 export function resolveOgType(value: string | null): OgType {

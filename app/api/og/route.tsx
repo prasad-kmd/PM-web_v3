@@ -26,7 +26,7 @@ import { WindowCard } from "@/lib/og/WindowCard";
  * Open Graph images (1200 × 630), inspired by v1's generator.
  *
  * Query: `title`, `description`, `type` (projects | blog | articles |
- * tutorials | glossary | pages | default), `kind` (detail | collection |
+ * tutorials | glossary | news | pages | default), `kind` (detail | collection |
  * home), `date`, `read`, `cover` (same-origin `/api/notion-image?…` only),
  * `style` (editorial | window, default from `OG_STYLE`, else editorial).
  *

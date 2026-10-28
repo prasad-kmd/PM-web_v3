@@ -6,6 +6,7 @@ export type AppId =
   | "articles"
   | "tutorials"
   | "glossary"
+  | "news"
   | "bookmarks"
   | "contact";
 
@@ -66,6 +67,14 @@ export const APP_REGISTRY: Record<AppId, AppMeta> = {
     icon: "/icons/fluent-color/archive_folder.svg",
     route: "/glossary",
   },
+  news: {
+    id: "news",
+    title: "News",
+    kind: "Updates",
+    description: "Short updates from engineering, technology, and research",
+    icon: "/icons/fluent-color/file.svg",
+    route: "/news",
+  },
   bookmarks: {
     id: "bookmarks",
     title: "Saved",
@@ -98,6 +107,7 @@ export const DESKTOP_APPS: AppId[] = [
   "articles",
   "tutorials",
   "glossary",
+  "news",
   "bookmarks",
   "contact",
   "settings",
@@ -116,6 +126,7 @@ const ROUTED_APPS: AppId[] = [
   "articles",
   "tutorials",
   "glossary",
+  "news",
   "bookmarks",
   "contact",
 ];

@@ -1,7 +1,7 @@
 // Adapted from PM-Web_V2 (AGPL-3.0); see THIRD_PARTY_NOTICES.md.
 //
 // Client-safe listing helpers. Only `q` (search) and `page` (pagination) live
-// in the URL. View, sort, category and glossary letter are local UI state —
+// in the URL. View, sort, category, month and glossary letter are local UI state —
 // view and sort are remembered per collection in localStorage.
 import type { ContentType } from "@/lib/content-types";
 import type { ContentItem } from "@/lib/notion-cms";
@@ -32,9 +32,22 @@ export type ListingOptions = {
   sort: ListingSort;
   letter: string;
   page: number;
+  /** `YYYY-MM` archive filter (News feed). */
+  month?: string;
+  pageSize?: number;
 };
 
 export const LISTING_PAGE_SIZE = 12;
+/** Collections rendered as a dated feed instead of the grid/list library. */
+export const FEED_TYPES: readonly ContentType[] = ["news"];
+export const isFeedType = (type: ContentType) => FEED_TYPES.includes(type);
+export const listingPageSize = (type: ContentType) =>
+  isFeedType(type) ? 20 : LISTING_PAGE_SIZE;
+/** Sort orders offered per collection (feeds are chronological only). */
+export const sortsFor = (type: ContentType): ListingSort[] =>
+  isFeedType(type)
+    ? ["newest", "oldest"]
+    : ["newest", "oldest", "title", "shortest"];
 export const INITIALS = ["#", ..."ABCDEFGHIJKLMNOPQRSTUVWXYZ"];
 export const LISTING_PREFS_KEY = (type: ContentType) =>
   `pm-listing-prefs-v1:${type}`;
@@ -120,6 +133,23 @@ function timestamp(value: string | null): number | null {
   return Number.isFinite(result) ? result : null;
 }
 
+/** `YYYY-MM` (UTC) for a content date, or "" when missing. */
+export function monthKey(value: string | null): string {
+  const time = timestamp(value);
+  return time === null ? "" : new Date(time).toISOString().slice(0, 7);
+}
+
+/** "October 2026" for a `YYYY-MM` key. */
+export function monthLabel(key: string): string {
+  const time = Date.parse(`${key}-01T00:00:00Z`);
+  if (!Number.isFinite(time)) return "Undated";
+  return new Intl.DateTimeFormat("en", {
+    month: "long",
+    year: "numeric",
+    timeZone: "UTC",
+  }).format(time);
+}
+
 export function selectListing(items: ListingItem[], options: ListingOptions) {
   const query = options.q.toLocaleLowerCase();
   const searched = items.filter(
@@ -144,8 +174,15 @@ export function selectListing(items: ListingItem[], options: ListingOptions) {
     for (const category of new Set(item.categories)) {
       categories.set(category, (categories.get(category) ?? 0) + 1);
     }
+  const months = new Map<string, number>();
+  for (const item of searched) {
+    const key = monthKey(item.date);
+    if (key) months.set(key, (months.get(key) ?? 0) + 1);
+  }
   const categoryItems = searched.filter(
-    (item) => !options.category || item.categories.includes(options.category),
+    (item) =>
+      (!options.category || item.categories.includes(options.category)) &&
+      (!options.month || monthKey(item.date) === options.month),
   );
   const initials = new Set(
     categoryItems.map((item) => titleInitial(item.title)),
@@ -185,16 +222,18 @@ export function selectListing(items: ListingItem[], options: ListingOptions) {
       a.id.localeCompare(b.id)
     );
   });
-  const pageCount = Math.max(1, Math.ceil(filtered.length / LISTING_PAGE_SIZE));
+  const size = options.pageSize ?? LISTING_PAGE_SIZE;
+  const pageCount = Math.max(1, Math.ceil(filtered.length / size));
   const page = Math.min(options.page, pageCount);
-  const offset = (page - 1) * LISTING_PAGE_SIZE;
+  const offset = (page - 1) * size;
   return {
-    items: filtered.slice(offset, offset + LISTING_PAGE_SIZE),
+    items: filtered.slice(offset, offset + size),
     total: filtered.length,
     page,
     pageCount,
     offset,
     categories: [...categories].sort(([a], [b]) => a.localeCompare(b)),
+    months: [...months].sort(([a], [b]) => b.localeCompare(a)),
     initials,
     searchCount: searched.length,
   };

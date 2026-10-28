@@ -3,6 +3,7 @@ import {
   BookOpen01Icon,
   Folder01Icon,
   News01Icon,
+  NewspaperIcon,
   Notebook01Icon,
 } from "@hugeicons/core-free-icons";
 import type { ContentType } from "@/lib/content-types";
@@ -14,4 +15,5 @@ export const COLLECTION_ICONS: Record<ContentType, typeof Folder01Icon> = {
   articles: News01Icon,
   tutorials: BookOpen01Icon,
   glossary: Book02Icon,
+  news: NewspaperIcon,
 };

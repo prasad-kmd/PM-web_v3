@@ -14,9 +14,12 @@ import {
 import { Toggle } from "@base-ui/react/toggle";
 import { ToggleGroup } from "@base-ui/react/toggle-group";
 import {
+  ArrowDown01Icon,
   ArrowLeft01Icon,
   ArrowRight01Icon,
+  ArrowUp01Icon,
   Bookmark01Icon,
+  Calendar03Icon,
   GridViewIcon,
   ListViewIcon,
   Search01Icon,
@@ -40,22 +43,22 @@ import {
   defaultSort,
   defaultView,
   INITIALS,
+  isFeedType,
   isListingSort,
   LISTING_PREFS_KEY,
+  listingPageSize,
   listingUrl,
+  monthLabel,
   parseUrlState,
   selectListing,
   SORT_LABELS,
+  sortsFor,
   type ListingItem,
   type ListingSort,
   type ListingView,
 } from "@/lib/content-listing";
 import { COLLECTION_ICONS } from "./collection-icons";
-
-const SORT_ITEMS = (Object.keys(SORT_LABELS) as ListingSort[]).map((value) => ({
-  value,
-  label: SORT_LABELS[value],
-}));
+import { NewsFeed } from "./NewsFeed";
 
 type BrowserProps = {
   type: ContentType;
@@ -66,6 +69,9 @@ type BrowserProps = {
 };
 
 /** Reads `?q=` and `?page=` from the URL — the only listing state kept there. */
+/** Months shown in the feed Archive before "Show older". */
+const ARCHIVE_PREVIEW = 6;
+
 export function CollectionBrowser(props: BrowserProps) {
   const params = useSearchParams();
   const { q, page } = parseUrlState({
@@ -98,6 +104,11 @@ function CollectionBrowserView({
   page,
 }: BrowserProps & { q: string; page: number }) {
   const meta = CONTENT_META[type];
+  const feed = isFeedType(type);
+  const sortItems = useMemo(
+    () => sortsFor(type).map((value) => ({ value, label: SORT_LABELS[value] })),
+    [type],
+  );
   const rootRef = useRef<HTMLDivElement>(null);
   const searchRef = useRef<HTMLInputElement>(null);
   const searchId = useId();
@@ -105,6 +116,8 @@ function CollectionBrowserView({
   // Local-only UI state (never written to the URL).
   const [category, setCategory] = useState("");
   const [letter, setLetter] = useState("");
+  const [month, setMonth] = useState("");
+  const [showAllMonths, setShowAllMonths] = useState(false);
   const [sort, setSort] = useState<ListingSort>(defaultSort(type));
   const [view, setView] = useState<ListingView>(defaultView(type));
   const [draft, setDraft] = useState(q);
@@ -116,7 +129,8 @@ function CollectionBrowserView({
         localStorage.getItem(LISTING_PREFS_KEY(type)) || "null",
       ) as { view?: unknown; sort?: unknown } | null;
       if (saved?.view === "grid" || saved?.view === "list") setView(saved.view);
-      if (isListingSort(saved?.sort)) setSort(saved.sort);
+      if (isListingSort(saved?.sort) && sortsFor(type).includes(saved.sort))
+        setSort(saved.sort);
     } catch {}
   }, [type]);
 
@@ -177,14 +191,27 @@ function CollectionBrowserView({
   }, []);
 
   const listing = useMemo(
-    () => selectListing(items, { q, category, sort, letter, page }),
-    [items, q, category, sort, letter, page],
+    () =>
+      selectListing(items, {
+        q,
+        category,
+        sort,
+        letter,
+        page,
+        month,
+        pageSize: listingPageSize(type),
+      }),
+    [items, q, category, sort, letter, page, month, type],
   );
-  const filtered = Boolean(q || category || letter);
+  const filtered = Boolean(q || category || letter || month);
 
   const resetPage = () => writeUrl(q, 1, "replace");
   const chooseCategory = (next: string) => {
     setCategory((current) => (current === next ? "" : next));
+    resetPage();
+  };
+  const chooseMonth = (next: string) => {
+    setMonth(next);
     resetPage();
   };
   const chooseLetter = (next: string) => {
@@ -201,12 +228,13 @@ function CollectionBrowserView({
   const clearFilters = () => {
     setCategory("");
     setLetter("");
+    setMonth("");
     setDraft("");
     writeUrl("", 1, "replace");
   };
 
   return (
-    <div className="lib" ref={rootRef} data-view={view}>
+    <div className="lib" ref={rootRef} data-view={feed ? "feed" : view}>
       <aside className="lib-side" aria-label="Library">
         <p className="lib-group">Library</p>
         <nav className="lib-sources" aria-label="Collections">
@@ -264,6 +292,77 @@ function CollectionBrowserView({
             </div>
           </>
         ) : null}
+        {feed && listing.months.length ? (
+          <>
+            <p className="lib-group">Archive</p>
+            <div
+              className="lib-sources lib-archive"
+              role="group"
+              aria-label="Archive"
+            >
+              <button
+                type="button"
+                className="lib-source"
+                aria-pressed={!month}
+                onClick={() => chooseMonth("")}
+              >
+                <HugeiconsIcon
+                  icon={Calendar03Icon}
+                  size={14}
+                  strokeWidth={1.8}
+                  aria-hidden
+                />
+                <span>All dates</span>
+                <span className="lib-count">{listing.searchCount}</span>
+              </button>
+              {(showAllMonths ||
+              listing.months.findIndex(([key]) => key === month) >=
+                ARCHIVE_PREVIEW
+                ? listing.months
+                : listing.months.slice(0, ARCHIVE_PREVIEW)
+              ).map(([key, count]) => (
+                <button
+                  key={key}
+                  type="button"
+                  className="lib-source"
+                  aria-pressed={month === key}
+                  onClick={() => chooseMonth(month === key ? "" : key)}
+                >
+                  <HugeiconsIcon
+                    icon={Calendar03Icon}
+                    size={14}
+                    strokeWidth={1.8}
+                    aria-hidden
+                  />
+                  <span>{monthLabel(key)}</span>
+                  <span className="lib-count">{count}</span>
+                </button>
+              ))}
+              {listing.months.length > ARCHIVE_PREVIEW &&
+              listing.months.findIndex(([key]) => key === month) <
+                ARCHIVE_PREVIEW ? (
+                <button
+                  type="button"
+                  className="lib-source lib-archive-more"
+                  aria-expanded={showAllMonths}
+                  onClick={() => setShowAllMonths((open) => !open)}
+                >
+                  <HugeiconsIcon
+                    icon={showAllMonths ? ArrowUp01Icon : ArrowDown01Icon}
+                    size={14}
+                    strokeWidth={1.8}
+                    aria-hidden
+                  />
+                  <span>
+                    {showAllMonths
+                      ? "Show fewer"
+                      : `Show ${listing.months.length - ARCHIVE_PREVIEW} older`}
+                  </span>
+                </button>
+              ) : null}
+            </div>
+          </>
+        ) : null}
       </aside>
 
       <div className="lib-main">
@@ -298,7 +397,7 @@ function CollectionBrowserView({
           </label>
           <span className="lib-grow" />
           <Select
-            items={SORT_ITEMS}
+            items={sortItems}
             value={sort}
             onValueChange={(value) => {
               if (!isListingSort(value)) return;
@@ -314,31 +413,41 @@ function CollectionBrowserView({
               <SelectValue />
             </SelectTrigger>
             <SelectPopup align="end">
-              {SORT_ITEMS.map((option) => (
+              {sortItems.map((option) => (
                 <SelectItem key={option.value} value={option.value}>
                   {option.label}
                 </SelectItem>
               ))}
             </SelectPopup>
           </Select>
-          <ToggleGroup
-            className="lib-seg"
-            aria-label="Layout"
-            value={[view]}
-            onValueChange={(value) => {
-              const next = value[0];
-              if (next !== "grid" && next !== "list") return;
-              setView(next);
-              remember({ view: next, sort });
-            }}
-          >
-            <Toggle value="grid" aria-label="Grid view">
-              <HugeiconsIcon icon={GridViewIcon} size={15} strokeWidth={1.8} />
-            </Toggle>
-            <Toggle value="list" aria-label="List view">
-              <HugeiconsIcon icon={ListViewIcon} size={15} strokeWidth={1.8} />
-            </Toggle>
-          </ToggleGroup>
+          {feed ? null : (
+            <ToggleGroup
+              className="lib-seg"
+              aria-label="Layout"
+              value={[view]}
+              onValueChange={(value) => {
+                const next = value[0];
+                if (next !== "grid" && next !== "list") return;
+                setView(next);
+                remember({ view: next, sort });
+              }}
+            >
+              <Toggle value="grid" aria-label="Grid view">
+                <HugeiconsIcon
+                  icon={GridViewIcon}
+                  size={15}
+                  strokeWidth={1.8}
+                />
+              </Toggle>
+              <Toggle value="list" aria-label="List view">
+                <HugeiconsIcon
+                  icon={ListViewIcon}
+                  size={15}
+                  strokeWidth={1.8}
+                />
+              </Toggle>
+            </ToggleGroup>
+          )}
         </div>
 
         <header className="lib-head">
@@ -371,7 +480,14 @@ function CollectionBrowserView({
           </nav>
         ) : null}
 
-        {listing.items.length ? (
+        {listing.items.length && feed ? (
+          <NewsFeed
+            type={type}
+            items={listing.items}
+            label={meta.label}
+            showLatest={sort === "newest" && listing.page === 1 && !filtered}
+          />
+        ) : listing.items.length ? (
           <>
             {view === "list" ? (
               <div className="lib-cols" aria-hidden>
@@ -461,6 +577,9 @@ function CollectionBrowserView({
             {listing.total} {listing.total === 1 ? "item" : "items"}
             {filtered && listing.total !== items.length
               ? ` of ${items.length}`
+              : ""}
+            {feed && !month && listing.months.length
+              ? ` · ${listing.months.length} ${listing.months.length === 1 ? "month" : "months"}`
               : ""}
           </span>
           {listing.pageCount > 1 ? (

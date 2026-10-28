@@ -14,7 +14,8 @@ import { getSiteUrl } from "@/lib/site";
 
 /**
  * Shared building blocks for the explicit per-collection routes
- * (`app/projects`, `app/blog`, `app/articles`, `app/tutorials`, `app/glossary`).
+ * (`app/projects`, `app/blog`, `app/articles`, `app/tutorials`, `app/glossary`,
+ * `app/news`).
  *
  * Every collection owns its own route files so it can be customised on its own,
  * while metadata, static params and revalidation stay consistent from here.

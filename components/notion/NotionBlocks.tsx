@@ -11,6 +11,7 @@ import { CopyCodeButton } from "@/components/notion/CopyCodeButton";
 import { MermaidDiagram } from "@/components/notion/MermaidDiagram";
 import { NotionQuiz, type QuizSpec } from "@/components/notion/NotionQuiz";
 import { TabbedContent } from "@/components/notion/TabbedContent";
+import { inlineLinksToMarkdown, safeHref } from "@/lib/inline-links";
 
 type RecordValue = Record<string, unknown>;
 
@@ -32,19 +33,6 @@ function textValue(value: unknown): string {
           : "";
     })
     .join("");
-}
-
-function safeHref(value: unknown): string | null {
-  if (typeof value !== "string" || !value.trim()) return null;
-  const href = value.trim();
-  if (
-    /^(https?:|mailto:|tel:)/i.test(href) ||
-    (href.startsWith("/") && !href.startsWith("//") && !href.includes("\\")) ||
-    href.startsWith("#")
-  ) {
-    return href;
-  }
-  return null;
 }
 
 /**
@@ -130,7 +118,9 @@ function ShikiCode({ highlighted }: { highlighted: HighlightedCode }) {
 }
 
 function renderMarkdown(source: string): string {
-  const raw = marked.parse(source, { async: false }) as string;
+  const raw = marked.parse(inlineLinksToMarkdown(source), {
+    async: false,
+  }) as string;
   return sanitizeHtml(raw, {
     allowedTags: [
       "a",
