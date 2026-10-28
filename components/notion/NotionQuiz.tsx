@@ -4,13 +4,14 @@
 
 import { useState } from "react";
 import {
-  ArrowRight01Icon,
   Cancel01Icon,
   RefreshCcwIcon,
   Tick02Icon,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { Button } from "@/components/ui/button";
+import { Button as PressButton } from "@animate-ui/react/primitives/buttons/button";
+import { buttonVariants } from "@/components/ui/button";
+import { ArrowSwap } from "@/components/notion/ContentButton";
 
 export type QuizQuestion = {
   question: string;
@@ -113,11 +114,13 @@ export function NotionQuiz({ quiz }: { quiz: QuizSpec }) {
               You got {score} of {quiz.questions.length} questions right.
             </p>
           </div>
-          <Button
+          <PressButton
             type="button"
-            variant="outline"
             onClick={reset}
-            className="gap-2"
+            className={buttonVariants({
+              variant: "outline",
+              className: "gap-2",
+            })}
           >
             <HugeiconsIcon
               icon={RefreshCcwIcon}
@@ -126,7 +129,7 @@ export function NotionQuiz({ quiz }: { quiz: QuizSpec }) {
               className="size-4"
             />{" "}
             Try again
-          </Button>
+          </PressButton>
         </div>
       ) : (
         <div className="p-5 md:p-6">
@@ -142,9 +145,10 @@ export function NotionQuiz({ quiz }: { quiz: QuizSpec }) {
                 optionIndex !== question.answer;
               const isSelected = selected === optionIndex;
               return (
-                <button
+                <PressButton
                   key={`${optionIndex}-${option}`}
                   type="button"
+                  tapScale={0.985}
                   disabled={answered}
                   aria-pressed={isSelected}
                   onClick={() => setSelected(optionIndex)}
@@ -172,7 +176,7 @@ export function NotionQuiz({ quiz }: { quiz: QuizSpec }) {
                     )}
                   </span>
                   {option}
-                </button>
+                </PressButton>
               );
             })}
           </div>
@@ -184,25 +188,25 @@ export function NotionQuiz({ quiz }: { quiz: QuizSpec }) {
           ) : null}
           <div className="mt-5 flex justify-end">
             {!answered ? (
-              <Button
+              <PressButton
                 type="button"
                 onClick={checkAnswer}
                 disabled={selected === null}
+                className={buttonVariants()}
               >
                 Check answer
-              </Button>
+              </PressButton>
             ) : (
-              <Button type="button" onClick={nextQuestion} className="gap-2">
+              <PressButton
+                type="button"
+                onClick={nextQuestion}
+                className={buttonVariants({ className: "rdr-has-arrow gap-2" })}
+              >
                 {index + 1 === quiz.questions.length
                   ? "See result"
                   : "Next question"}
-                <HugeiconsIcon
-                  icon={ArrowRight01Icon}
-                  strokeWidth={2}
-                  aria-hidden="true"
-                  className="size-4"
-                />
-              </Button>
+                <ArrowSwap />
+              </PressButton>
             )}
           </div>
         </div>

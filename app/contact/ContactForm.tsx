@@ -1,5 +1,5 @@
 "use client";
-import { useRef, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { Turnstile, type TurnstileInstance } from "@marsidev/react-turnstile";
 import { Field, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
@@ -16,6 +16,14 @@ export function ContactForm({ siteKey }: { siteKey: string }) {
     [error, setError] = useState(""),
     [success, setSuccess] = useState(""),
     [errors, setErrors] = useState<Errors>({});
+  // Links elsewhere on the site (e.g. "Send a correction") open
+  // /contact?subject=… so the visitor lands with the subject filled in.
+  useEffect(() => {
+    const subject = new URLSearchParams(window.location.search).get("subject");
+    const field = formRef.current?.elements.namedItem("subject");
+    if (subject && field instanceof HTMLInputElement && !field.value)
+      field.value = subject.slice(0, 120);
+  }, []);
   function clear(name: string) {
     setErrors((current) => {
       const next = { ...current };
@@ -247,8 +255,8 @@ export function ContactForm({ siteKey }: { siteKey: string }) {
           />
         ) : (
           <p role="status">
-            The contact form is not configured. Please use the email link
-            instead.
+            The contact form is not configured. Please use the email option on
+            this page instead.
           </p>
         )}
       </div>

@@ -98,5 +98,5 @@ export const contactLinks = [
   { label: "GitHub", href: "https://github.com/prasad-kmd" },
   { label: "Twitter", href: "https://twitter.com/prasadmadhuran1" },
   { label: "LinkedIn", href: "https://linkedin.com/in/prasad-madhuranga" },
-  { label: "Email", href: "mailto:prasad.madhuranga@pm.me" },
+  { label: "Contact", href: "/contact" },
 ];

@@ -21,7 +21,8 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { CONTACT_EMAIL } from "@/lib/site";
+import Link from "next/link";
+import { contactHref } from "@/lib/site";
 
 /**
  * AI-assisted disclosure — the v1 indicator's explanation and v2's structured
@@ -99,9 +100,7 @@ export function AiAssistedDialog({
   // default first-focusable is the correction link, which would scroll the
   // panel and hide the introduction.
   const closeRef = useRef<HTMLButtonElement>(null);
-  const correctionHref = `mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent(
-    `Correction: ${contentTitle}`,
-  )}`;
+  const correctionHref = contactHref(`Correction: ${contentTitle}`);
 
   return (
     <Dialog>
@@ -186,12 +185,9 @@ export function AiAssistedDialog({
             />
             <p>
               Spotted an error?{" "}
-              <a
-                href={correctionHref}
-                className="font-medium text-foreground underline underline-offset-4 hover:no-underline"
-              >
+              <Link href={correctionHref} className="rdr-link font-medium">
                 Send a correction
-              </a>
+              </Link>
               . Fixes can be credited and published.
             </p>
           </section>

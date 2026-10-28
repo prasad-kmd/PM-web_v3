@@ -1,17 +1,23 @@
 // Adapted from PM-Web_V2 (AGPL-3.0); URL checks and v3 styles adjusted.
-import type { CSSProperties, ReactNode } from "react";
+import type { ReactNode } from "react";
 import Image from "next/image";
 import { marked } from "marked";
 import sanitizeHtml from "sanitize-html";
 import katex from "katex";
-import type { ThemedToken } from "shiki";
 import type { ContentType, NotionBlock } from "@/lib/notion-cms";
 import { highlightCode, type HighlightedCode } from "@/lib/highlighting/shiki";
-import { CopyCodeButton } from "@/components/notion/CopyCodeButton";
+import { NotionCodeBlock } from "@/components/notion/NotionCodeBlock";
+import {
+  ArrowSwap,
+  ContentButton,
+  ContentCardLink,
+} from "@/components/notion/ContentButton";
 import { MermaidDiagram } from "@/components/notion/MermaidDiagram";
 import { NotionQuiz, type QuizSpec } from "@/components/notion/NotionQuiz";
 import { TabbedContent } from "@/components/notion/TabbedContent";
 import { inlineLinksToMarkdown, safeHref } from "@/lib/inline-links";
+import { contactEmail } from "@/lib/contact/email";
+import { CONTACT_PATH } from "@/lib/site";
 
 type RecordValue = Record<string, unknown>;
 
@@ -33,20 +39,6 @@ function textValue(value: unknown): string {
           : "";
     })
     .join("");
-}
-
-/**
- * Shiki emits font styles as a bitmask (italic = 1, bold = 2, underline = 4).
- * Turn the set bits into inline styles for the token span.
- */
-function tokenStyle(token: ThemedToken): CSSProperties {
-  const style: CSSProperties = {};
-  if (token.color) style.color = token.color;
-  const fontStyle = token.fontStyle ?? 0;
-  if (fontStyle & 1) style.fontStyle = "italic";
-  if (fontStyle & 2) style.fontWeight = 600;
-  if (fontStyle & 4) style.textDecoration = "underline";
-  return style;
 }
 
 /**
@@ -91,36 +83,72 @@ async function collectHighlights(blocks: NotionBlock[]): Promise<HighlightMap> {
   return highlights;
 }
 
-function ShikiCode({ highlighted }: { highlighted: HighlightedCode }) {
-  return (
-    <pre
-      className="overflow-x-auto p-4 text-[13px] leading-6"
-      style={{
-        backgroundColor: highlighted.background,
-        color: highlighted.foreground,
-      }}
-    >
-      <code className={`language-${highlighted.language}`}>
-        {highlighted.lines.map((line, lineIndex) => (
-          // Lines only change when the source changes, so the index is a
-          // stable key here.
-          <span key={lineIndex} className="block">
-            {line.map((token, tokenIndex) => (
-              <span key={tokenIndex} style={tokenStyle(token)}>
-                {token.content}
-              </span>
-            ))}
-          </span>
-        ))}
-      </code>
-    </pre>
+/*
+ * The contact address is only shown on the contact page (behind Turnstile).
+ * If a Notion entry links or mentions it, point readers to the contact page.
+ */
+const escapeRegExp = (value: string) =>
+  value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+function contactEmailPattern(flags = "gi"): RegExp {
+  return new RegExp(escapeRegExp(contactEmail()), flags);
+}
+
+function guardContactHref(href: string): string {
+  if (!/^mailto:/i.test(href)) return href;
+  const address = decodeURIComponent(href.slice(7).split("?")[0]).trim();
+  return address.toLowerCase() === contactEmail().toLowerCase()
+    ? CONTACT_PATH
+    : href;
+}
+
+function guardContactMarkdown(source: string): string {
+  const email = escapeRegExp(contactEmail());
+  return source
+    .replace(
+      new RegExp(`\\[([^\\]]*)\\]\\(\\s*<?mailto:${email}[^)]*\\)`, "gi"),
+      (_match, label: string) =>
+        `[${contactEmailPattern("i").test(label) || !label.trim() ? "contact page" : label}](${CONTACT_PATH})`,
+    )
+    .replace(new RegExp(`<?mailto:${email}[^\\s)>]*>?`, "gi"), CONTACT_PATH)
+    .replace(
+      new RegExp(`<?${email}>?`, "gi"),
+      `[contact page](${CONTACT_PATH})`,
+    );
+}
+
+/** Replaces mentions of the contact address in plain text. */
+function guardContactText(text: string, linked: boolean): ReactNode {
+  const pattern = contactEmailPattern();
+  if (!pattern.test(text)) return text;
+  const parts = text.split(contactEmailPattern());
+  return parts.flatMap((part, index) =>
+    index === 0
+      ? [part]
+      : [
+          linked ? (
+            "contact page"
+          ) : (
+            <a
+              key={`contact-${index}`}
+              href={CONTACT_PATH}
+              className="rdr-link"
+            >
+              contact page
+            </a>
+          ),
+          part,
+        ],
   );
 }
 
 function renderMarkdown(source: string): string {
-  const raw = marked.parse(inlineLinksToMarkdown(source), {
-    async: false,
-  }) as string;
+  const raw = marked.parse(
+    guardContactMarkdown(inlineLinksToMarkdown(source)),
+    {
+      async: false,
+    },
+  ) as string;
   return sanitizeHtml(raw, {
     allowedTags: [
       "a",
@@ -229,15 +257,9 @@ function renderShortcode(text: string, id: string): ReactNode | null {
     if (!href) return null;
     return (
       <p key={id} className="my-6">
-        <a
-          href={href}
-          target={href.startsWith("http") ? "_blank" : undefined}
-          rel={href.startsWith("http") ? "noreferrer noopener" : undefined}
-          className="inline-flex items-center gap-3 rounded-lg bg-primary px-5 py-3 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-        >
+        <ContentButton href={href}>
           {button[3].trim() || "Open link"}
-          <span aria-hidden="true">→</span>
-        </a>
+        </ContentButton>
       </p>
     );
   }
@@ -283,10 +305,11 @@ function renderText(items: unknown): ReactNode {
     const directHref =
       typeof item.href === "string" ? item.href : record(item.href)?.url;
     const textLink = record(record(item.text)?.link)?.url;
-    const link = safeHref(directHref ?? textLink);
+    const safeLink = safeHref(directHref ?? textLink);
+    const link = safeLink ? guardContactHref(safeLink) : null;
     const colorClass = ""; // Rich text follows the DesktopOS semantic palette.
 
-    let content: ReactNode = text;
+    let content: ReactNode = guardContactText(text, Boolean(link));
     if (annotations.code === true) {
       content = (
         <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-[0.9em] text-primary">
@@ -304,7 +327,7 @@ function renderText(items: unknown): ReactNode {
           href={link}
           target={link.startsWith("http") ? "_blank" : undefined}
           rel={link.startsWith("http") ? "noreferrer noopener" : undefined}
-          className="text-primary underline decoration-primary/35 underline-offset-4 transition-colors hover:decoration-primary"
+          className="rdr-link"
         >
           {content}
         </a>
@@ -314,7 +337,10 @@ function renderText(items: unknown): ReactNode {
     return (
       <span
         className={colorClass}
-        key={typeof item.plain_text === "string" ? `${index}-${text}` : index}
+        // Index keys: runs only change with the content, and keeping the text
+        // out of the key keeps guarded strings (the contact address) out of
+        // the RSC payload.
+        key={index}
       >
         {content}
       </span>
@@ -533,34 +559,14 @@ function renderBlock(
         );
       }
       const highlighted = highlights.get(block.id);
-      const surface = highlighted?.background ?? "#282c34";
       return (
-        <figure
+        <NotionCodeBlock
           key={block.id}
-          className="group overflow-hidden rounded-xl border border-border"
-          style={{ backgroundColor: surface }}
-        >
-          <figcaption className="flex items-center justify-between gap-3 border-b border-white/10 px-4 py-2">
-            <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-zinc-400">
-              {highlighted?.language ?? language}
-            </span>
-            <CopyCodeButton code={code} />
-          </figcaption>
-          {highlighted ? (
-            <ShikiCode highlighted={highlighted} />
-          ) : (
-            <pre
-              className="overflow-x-auto p-4 text-[13px] leading-6"
-              style={{ backgroundColor: surface, color: "#abb2bf" }}
-            >
-              <code
-                className={`language-${language.toLowerCase().replace(/[^a-z0-9_-]/g, "-")}`}
-              >
-                {code}
-              </code>
-            </pre>
-          )}
-        </figure>
+          code={code}
+          language={highlighted?.language ?? language}
+          title={captionText(data) || undefined}
+          lines={highlighted?.lines ?? null}
+        />
       );
     }
     case "equation": {
@@ -633,18 +639,17 @@ function renderBlock(
         );
       }
       return (
-        <a
+        <ContentCardLink
           key={block.id}
           href={src}
-          target="_blank"
-          rel="noreferrer noopener"
           className="flex items-center justify-between gap-4 rounded-xl border border-border bg-card px-4 py-3 text-sm text-foreground transition-colors hover:bg-muted/60"
         >
           <span className="min-w-0 truncate font-medium">{name}</span>
-          <span className="shrink-0 font-mono text-[10px] uppercase tracking-widest text-primary">
+          <span className="flex shrink-0 items-center gap-1.5 font-mono text-[10px] uppercase tracking-widest text-primary">
             {block.type === "pdf" ? "Open PDF" : "Open file"}
+            <ArrowSwap direction="up-right" />
           </span>
-        </a>
+        </ContentCardLink>
       );
     }
     case "video":
@@ -700,11 +705,9 @@ function renderBlock(
         );
       }
       return (
-        <a
+        <ContentCardLink
           key={block.id}
           href={url}
-          target="_blank"
-          rel="noreferrer noopener"
           className="my-5 flex items-center justify-between gap-4 rounded-xl border border-border bg-card px-4 py-4 transition-colors hover:bg-muted/60"
         >
           <span className="min-w-0">
@@ -715,10 +718,8 @@ function renderBlock(
               {title}
             </span>
           </span>
-          <span aria-hidden="true" className="shrink-0 text-primary">
-            ↗
-          </span>
-        </a>
+          <ArrowSwap direction="up-right" className="shrink-0 text-primary" />
+        </ContentCardLink>
       );
     }
     case "child_page": {

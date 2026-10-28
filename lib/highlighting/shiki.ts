@@ -18,21 +18,36 @@ import {
  * surface, no client-side highlighter bundle).
  */
 
-/** Shiki theme used for every code block. Matches the dark code surfaces. */
-export const CODE_THEME = "one-dark-pro";
+/**
+ * Light and dark Shiki themes. Every token carries both colours (`color` and
+ * `dark`), and the code block swaps to the dark one under `.dark`, so code
+ * follows the workspace appearance instead of sitting on a fixed dark surface.
+ * The GitHub "default" pair keeps comments readable on the muted surface.
+ */
+export const CODE_THEMES = {
+  light: "github-light-default",
+  dark: "github-dark-default",
+} as const;
 
 /** Language used when a block does not name a supported grammar. */
 export const FALLBACK_LANGUAGE = "plaintext";
 
+/** One coloured run of text. Plain data, so it can cross to client components. */
+export type CodeToken = {
+  content: string;
+  /** Light theme colour. */
+  color?: string;
+  /** Dark theme colour. */
+  dark?: string;
+  italic?: boolean;
+  bold?: boolean;
+};
+
 export type HighlightedCode = {
   /** Language actually used for the render (after alias resolution). */
   language: string;
-  /** Theme background colour for the block surface. */
-  background: string;
-  /** Theme foreground colour for uncoloured text. */
-  foreground: string;
-  /** One entry per source line, each holding the coloured spans of that line. */
-  lines: ThemedToken[][];
+  /** One entry per source line, each holding the coloured runs of that line. */
+  lines: CodeToken[][];
 };
 
 /**
@@ -83,7 +98,7 @@ let highlighterPromise: Promise<Highlighter> | null = null;
 function getHighlighter(): Promise<Highlighter> {
   if (!highlighterPromise) {
     highlighterPromise = createHighlighter({
-      themes: [CODE_THEME],
+      themes: [CODE_THEMES.light, CODE_THEMES.dark],
       // Languages are loaded on demand by `resolveLanguage`.
       langs: [],
     });
@@ -120,6 +135,19 @@ async function resolveLanguage(
   }
 }
 
+/** Reduces a dual-theme Shiki token to the few fields the renderer needs. */
+function toCodeToken(token: ThemedToken): CodeToken {
+  const style = token.htmlStyle ?? {};
+  const out: CodeToken = { content: token.content };
+  const color = style.color ?? token.color;
+  if (color) out.color = color;
+  if (style["--shiki-dark"]) out.dark = style["--shiki-dark"];
+  const fontStyle = token.fontStyle ?? 0;
+  if (style["font-style"] === "italic" || fontStyle & 1) out.italic = true;
+  if (style["font-weight"] === "bold" || fontStyle & 2) out.bold = true;
+  return out;
+}
+
 /** Trims a leading/trailing blank line but keeps inner indentation intact. */
 function normalizeSource(code: string): string {
   return code.replace(/^\n+/, "").replace(/\s+$/, "");
@@ -144,14 +172,12 @@ export async function highlightCode(
 
     const result: TokensResult = highlighter.codeToTokens(source, {
       lang,
-      theme: CODE_THEME,
+      themes: CODE_THEMES,
     });
 
     return {
       language: resolved ? lang : FALLBACK_LANGUAGE,
-      background: result.bg ?? "#282c34",
-      foreground: result.fg ?? "#abb2bf",
-      lines: result.tokens,
+      lines: result.tokens.map((line) => line.map(toCodeToken)),
     };
   } catch (error) {
     console.error("Shiki highlighting failed:", error);

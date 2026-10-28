@@ -19,7 +19,7 @@
     "format:check": "pnpm exec prettier --check ."
   },
   "dependencies": {
-    "@animate-ui/react": "^2.0.0",
+    "@animate-ui/react": "^2.4.1",
     "@base-ui/react": "^1.8.0",
     "@floating-ui/react": "^0.27.20",
     "@hugeicons/core-free-icons": "^4.3.5",

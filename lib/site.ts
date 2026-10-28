@@ -12,8 +12,19 @@ export function getSiteUrl(): string {
   }
 }
 
-/** Public contact address (corrections, enquiries). */
-export const CONTACT_EMAIL = "prasad.madhuranga@pm.me";
+/**
+ * Where every "email me" style link points. The address itself is only shown
+ * on the contact page, after a Turnstile check (see lib/contact/email.ts), so
+ * it never ships in page HTML or client bundles.
+ */
+export const CONTACT_PATH = "/contact";
+
+/** Contact page link, optionally pre-filling the form's subject. */
+export function contactHref(subject?: string): string {
+  return subject
+    ? `${CONTACT_PATH}?subject=${encodeURIComponent(subject.slice(0, 120))}`
+    : CONTACT_PATH;
+}
 
 export const SITE_NAME = "Prasad M. — Desktop Workspace";
 export const SITE_DESCRIPTION =

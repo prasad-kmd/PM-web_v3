@@ -110,15 +110,12 @@ export function Spotlight({
         onSelect: () => window.open("https://github.com/prasad-kmd", "_blank"),
       },
       {
-        id: "act-email",
+        id: "act-contact",
         category: "Actions",
-        title: "Copy Email Address",
-        subtitle: "prasad.madhuranga@pm.me",
+        title: "Contact Prasad",
+        subtitle: "Send a message or get the email address",
         icon: <HugeiconsIcon icon={Mail01Icon} strokeWidth={2} aria-hidden="true" size={16} />,
-        onSelect: () => {
-          navigator.clipboard?.writeText("prasad.madhuranga@pm.me");
-          toast.success("Copied email to clipboard");
-        },
+        onSelect: () => onOpenApp("contact"),
       },
     ],
     [onOpenApp, setWallpaper, theme, toggleTheme],

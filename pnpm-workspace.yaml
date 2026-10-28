@@ -1,3 +1,4 @@
 minimumReleaseAgeExclude:
   - framer-motion@14.4.0
   - motion-dom@14.4.0
+  - '@animate-ui/react@2.4.1'

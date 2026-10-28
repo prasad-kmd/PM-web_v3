@@ -15,6 +15,12 @@ Name, email, subject and message are required; phone and one PDF, PNG, JPEG or T
 
 A best-effort limit of three submissions per minute per IP is held **in memory per server instance**. It is not a distributed rate limiter, is lost on restart and depends on trustworthy proxy IP headers. Configure host/platform-level rate limiting or a shared store for stronger production protection. No Telegram secret is sent to the client. The form is a contact channel, not authentication.
 
+### Email address
+
+The email address appears **only on the contact page**, under “Prefer email?”. Visitors click **Show email address**, Turnstile runs (invisible unless Cloudflare needs an interaction) and the page fetches the address from `POST /api/contact/email`. That route verifies the token, applies its own rate limit (5 per minute per IP, separate from the form's 3) and returns the address with `Cache-Control: no-store`. The address lives in the server-only `lib/contact/email.ts` (override it with `CONTACT_EMAIL`), so it never appears in page HTML, RSS, `llms.txt` or client JavaScript.
+
+Everywhere else links to the contact page instead: the resume, Spotlight (“Contact Prasad”), Notepad and the AI-assisted dialog. The dialog's “Send a correction” opens `/contact?subject=Correction: …` with the subject filled in. `contactHref(subject)` in `lib/site.ts` builds these links. If a Notion entry links to or mentions the address, the renderer turns it into a link to the contact page.
+
 ## Discovery and routing
 
 `/sitemap.xml`, `/robots.txt`, `/llms.txt`, `/feed.xml`, and the compatible `/rss.xml` derive their content from published collections. Robots generally allow crawlers, disallow utility/private API paths, and explicitly allow public OG and Notion-image routes. `/api/og` generates 1200×630 per-page images (Node runtime; fonts and wallpapers are read from `public/og/` and traced into the function via `outputFileTracingIncludes`). The default design is **Editorial split**; set `OG_STYLE=window` (or pass `?style=window`) to switch to the **Desktop window** design. Entry covers are only accepted as same-origin `/api/notion-image?…` paths (3 s timeout, PNG/JPEG ≤ 4 MB) and fall back to the type's wallpaper. It does not use `og-custom`.

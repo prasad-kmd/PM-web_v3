@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import {
   contactLinks,
   education,
@@ -41,20 +42,22 @@ export function ResumeApp({ onNavigateHome }: { onNavigateHome?: () => void }) {
               className="resume-contact-links"
               aria-label="Contact and social links"
             >
-              {contactLinks.map((link) => (
-                <a
-                  key={link.label}
-                  href={link.href}
-                  target={
-                    link.href.startsWith("mailto:") ? undefined : "_blank"
-                  }
-                  rel={
-                    link.href.startsWith("mailto:") ? undefined : "noreferrer"
-                  }
-                >
-                  {link.label} <span aria-hidden="true">↗</span>
-                </a>
-              ))}
+              {contactLinks.map((link) =>
+                link.href.startsWith("/") ? (
+                  <Link key={link.label} href={link.href}>
+                    {link.label} <span aria-hidden="true">→</span>
+                  </Link>
+                ) : (
+                  <a
+                    key={link.label}
+                    href={link.href}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    {link.label} <span aria-hidden="true">↗</span>
+                  </a>
+                ),
+              )}
             </div>
           </div>
         </header>
@@ -202,9 +205,9 @@ export function ResumeApp({ onNavigateHome }: { onNavigateHome?: () => void }) {
             <p className="resume-section-index">Get in touch</p>
             <h2>Let’s build something together.</h2>
           </div>
-          <a href="mailto:prasad.madhuranga@pm.me">
-            Contact Prasad <span aria-hidden="true">↗</span>
-          </a>
+          <Link href="/contact">
+            Contact Prasad <span aria-hidden="true">→</span>
+          </Link>
         </footer>
       </div>
     </div>

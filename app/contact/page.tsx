@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { WindowBreadcrumb } from "@/components/system/WindowBreadcrumb";
 import { ContactForm } from "./ContactForm";
+import { EmailReveal } from "./EmailReveal";
 import { getSiteUrl } from "@/lib/site";
 import { OG_IMAGE_SIZE, ogImageUrl } from "@/lib/content-metadata";
 
@@ -49,9 +50,7 @@ export default function ContactPage() {
               You can also reach me directly. I’ll get back to you as soon as I
               can.
             </p>
-            <a href="mailto:prasad.madhuranga@pm.me">
-              prasad.madhuranga@pm.me ↗
-            </a>
+            <EmailReveal siteKey={key} />
             <div className="contact-aside-divider" />
             <p>Based in Kandy, Sri Lanka.</p>
           </aside>

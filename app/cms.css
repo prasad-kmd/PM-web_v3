@@ -334,3 +334,63 @@
 .route-frozen-surface {
   pointer-events: none;
 }
+/* Email reveal (contact page aside). */
+.contact-reveal {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  margin-top: 12px;
+}
+.contact-reveal-note {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.contact-aside .contact-reveal-note.is-error {
+  color: var(--destructive);
+}
+.contact-reveal-spinner {
+  width: 12px;
+  height: 12px;
+  flex: none;
+  border: 1.5px solid var(--border);
+  border-top-color: var(--foreground);
+  border-radius: 999px;
+  animation: contact-reveal-spin 0.7s linear infinite;
+}
+@keyframes contact-reveal-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.contact-reveal-result {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  margin-top: 12px;
+  padding: 10px 10px 6px;
+  border-radius: 8px;
+  background: var(--muted);
+  animation: contact-reveal-in 0.45s cubic-bezier(0.215, 0.61, 0.355, 1);
+}
+.contact-aside .contact-reveal-result a {
+  max-width: 100%;
+  margin-top: 0;
+  font-size: 12px;
+  font-weight: 500;
+}
+@keyframes contact-reveal-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+    filter: blur(4px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .contact-reveal-result,
+  .contact-reveal-spinner {
+    animation: none;
+  }
+}

@@ -8,7 +8,7 @@ import { WorkspaceTooltip } from "@/components/ui/tooltip";
 export function NotepadApp() {
   const copyLinks = () => {
     navigator.clipboard?.writeText(
-      "https://github.com/prasad-kmd\nprasad.madhuranga@protonmail.com",
+      `https://github.com/prasad-kmd\n${window.location.origin}/contact`,
     );
     toast.success("Copied links to clipboard");
   };
@@ -58,7 +58,7 @@ export function NotepadApp() {
   field:    ["Civil Engineering", "Site QA/QC", "Quantity Surveying"],
   stack:    ["Next.js 16", "TypeScript", "Tailwind v4", "Motion", "PWA"],
   github:   "https://github.com/prasad-kmd",
-  email:    "prasad.madhuranga@protonmail.com"
+  contact:  "/contact"
 };`}</pre>
           </section>
 

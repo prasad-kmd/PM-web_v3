@@ -20,23 +20,31 @@ export function isBlockedContent(email: string, values: string[]) {
     return false;
   }
 }
-const hits = new Map<string, number[]>();
-/** Best-effort, per-instance limit; this is not a distributed abuse control. */
-export function contactLimit(ip: string) {
-  const now = Date.now(),
-    windowMs = 60_000;
-  if (hits.size >= 512)
-    for (const [key, times] of hits)
-      if (times.every((time) => now - time >= windowMs)) hits.delete(key);
-  // Bound the table even if forwarded IP headers are spoofed or a botnet floods it.
-  if (hits.size >= 2048 && !hits.has(ip)) return 60;
-  const recent = (hits.get(ip) || []).filter((time) => now - time < windowMs);
-  if (recent.length >= 3)
-    return Math.max(1, Math.ceil((recent[0] + windowMs - now) / 1000));
-  recent.push(now);
-  hits.set(ip, recent);
-  return 0;
+/**
+ * Best-effort, per-instance sliding-window limiter; this is not a distributed
+ * abuse control. Returns 0 when allowed, otherwise the seconds to wait.
+ */
+function createLimiter(max: number, windowMs = 60_000) {
+  const hits = new Map<string, number[]>();
+  return (ip: string) => {
+    const now = Date.now();
+    if (hits.size >= 512)
+      for (const [key, times] of hits)
+        if (times.every((time) => now - time >= windowMs)) hits.delete(key);
+    // Bound the table even if forwarded IP headers are spoofed or a botnet floods it.
+    if (hits.size >= 2048 && !hits.has(ip)) return 60;
+    const recent = (hits.get(ip) || []).filter((time) => now - time < windowMs);
+    if (recent.length >= max)
+      return Math.max(1, Math.ceil((recent[0] + windowMs - now) / 1000));
+    recent.push(now);
+    hits.set(ip, recent);
+    return 0;
+  };
 }
+/** Contact form submissions: 3 per minute per IP. */
+export const contactLimit = createLimiter(3);
+/** Email reveals: 5 per minute per IP, separate from the form's budget. */
+export const emailRevealLimit = createLimiter(5);
 export async function verifyTurnstile(token: string) {
   const secret =
     process.env.TURNSTILE_SECRET_KEY?.trim() ||

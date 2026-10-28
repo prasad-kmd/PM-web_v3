@@ -103,7 +103,7 @@ export async function POST(request: NextRequest) {
     (process.env.NODE_ENV === "production" && !process.env.TURNSTILE_SECRET_KEY)
   )
     return reply(
-      "Contact form is not configured. Please use a direct contact link.",
+      "Contact form is not configured. Please use the email address on the contact page.",
       503,
     );
   const ip = (

@@ -1327,3 +1327,191 @@
 .lib-archive-more {
   color: var(--muted-foreground);
 }
+
+/* ==========================================================================
+   Content pages, round 5: link sweep, button press + arrow swap, Animate UI
+   code block surface, tabs rail.
+   ========================================================================== */
+
+/* Links in article prose. A faint hairline stays put; on hover a solid
+   underline draws in from the left, and on leave it exits to the right.
+   `box-decoration-break: clone` keeps both lines on wrapped links. Sanitised
+   markdown (tabs, alerts, quiz explanations) gets the same treatment. */
+.rdr-link,
+.notion-markdown a {
+  --link-ease: cubic-bezier(0.215, 0.61, 0.355, 1);
+  color: var(--foreground);
+  text-decoration: none;
+  background-image:
+    linear-gradient(currentColor, currentColor),
+    linear-gradient(
+      color-mix(in oklch, currentColor 28%, transparent),
+      color-mix(in oklch, currentColor 28%, transparent)
+    );
+  background-repeat: no-repeat;
+  background-size:
+    0% 1.5px,
+    100% 1px;
+  background-position:
+    100% 100%,
+    0 100%;
+  padding-bottom: 2px;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+  transition: background-size 0.45s var(--link-ease);
+}
+
+/* `.cms-reader a` underlines every link; these draw their own line. */
+.cms-reader :is(.rdr-link, .rdr-button, .rdr-card-link),
+.cms-reader .notion-markdown a {
+  text-decoration: none;
+}
+
+.rdr-link:hover,
+.rdr-link:focus-visible,
+.notion-markdown a:hover,
+.notion-markdown a:focus-visible {
+  background-size:
+    100% 1.5px,
+    100% 1px;
+  background-position:
+    0 100%,
+    0 100%;
+}
+
+.rdr-link:focus-visible,
+.notion-markdown a:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+  border-radius: 3px;
+}
+
+/* Arrow swap: the arrow slides out and a fresh one slides in from the other
+   side while its button or card is hovered or focused. */
+.rdr-arrow-swap {
+  --swap-ease: cubic-bezier(0.215, 0.61, 0.355, 1);
+  --swap-out: translateX(115%);
+  --swap-in: translateX(-115%);
+  position: relative;
+  display: inline-block;
+  flex: none;
+  width: 1rem;
+  height: 1rem;
+  overflow: hidden;
+}
+
+.rdr-arrow-swap[data-direction="up-right"] {
+  --swap-out: translate(115%, -115%);
+  --swap-in: translate(-115%, 115%);
+}
+
+.rdr-arrow-swap svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  transition:
+    transform 0.4s var(--swap-ease),
+    opacity 0.3s ease,
+    filter 0.3s ease;
+}
+
+.rdr-arrow-swap svg + svg {
+  transform: var(--swap-in);
+  opacity: 0;
+  filter: blur(2px);
+}
+
+:is(a, button):is(:hover, :focus-visible) .rdr-arrow-swap svg:first-child {
+  transform: var(--swap-out);
+  opacity: 0;
+  filter: blur(2px);
+}
+
+:is(a, button):is(:hover, :focus-visible) .rdr-arrow-swap svg + svg {
+  transform: none;
+  opacity: 1;
+  filter: none;
+}
+
+/* `[button]` shortcode. The spring scale comes from Animate UI's press
+   primitive (a Motion transform), so only colours transition here. */
+.rdr-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.625rem;
+  min-height: 2.75rem;
+  padding: 0.75rem 1.125rem;
+  border-radius: 0.75rem;
+  background: var(--primary);
+  color: var(--primary-foreground);
+  font-size: 0.875rem;
+  font-weight: 500;
+  line-height: 1.2;
+  text-decoration: none;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    background-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.rdr-button:hover {
+  background: color-mix(in oklch, var(--primary) 88%, var(--background));
+}
+
+.rdr-button[data-variant="secondary"] {
+  background: var(--muted);
+  color: var(--foreground);
+  box-shadow: inset 0 0 0 1px var(--border);
+}
+
+.rdr-button[data-variant="secondary"]:hover {
+  background: color-mix(in oklch, var(--muted) 70%, var(--foreground) 6%);
+}
+
+.rdr-button:focus-visible,
+.rdr-card-link:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+.rdr-card-link {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Code block: Shiki gives every token a light and a dark colour; the block
+   shows the one matching the workspace appearance. */
+.notion-code [data-slot="code-block-line-content"] > span {
+  color: var(--code-light);
+}
+
+.dark .notion-code [data-slot="code-block-line-content"] > span {
+  color: var(--code-dark, var(--code-light));
+}
+
+.code-block-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in oklch, var(--foreground) 18%, transparent)
+    transparent;
+}
+
+/* Tabs: the trigger rail scrolls sideways when titles overflow the column. */
+.rdr-tabs-rail {
+  max-width: 100%;
+  overflow-x: auto;
+  padding: 1px;
+  scrollbar-width: none;
+}
+
+.rdr-tabs-rail::-webkit-scrollbar {
+  display: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rdr-link,
+  .notion-markdown a,
+  .rdr-arrow-swap svg,
+  .rdr-button {
+    transition: none;
+  }
+}
