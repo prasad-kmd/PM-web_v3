@@ -640,7 +640,7 @@ function CollectionBrowserView({
             </nav>
           ) : null}
           <span className="lib-grow" />
-          <span className="lib-synced">Synced from Notion</span>
+          <span className="lib-synced">Index up to date</span>
         </footer>
       </div>
     </div>

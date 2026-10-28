@@ -1515,3 +1515,722 @@
     transition: none;
   }
 }
+
+/* ---------------------------------------------------------------------------
+   Comments (C1 · in-window discussion sheet)
+   The sheet is drawn inside the reader window — no body portal — so it keeps
+   working in the frozen route snapshot the desktop leaves behind other windows.
+   `.dsn-layer` is a zero-height sticky element, giving the scrim and the panel a
+   containing block that is exactly the window's visible height.
+--------------------------------------------------------------------------- */
+.dsn-layer {
+  position: sticky;
+  z-index: 40;
+  top: 0;
+  height: 0;
+}
+
+.dsn-scrim {
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+  height: var(--rdr-viewport, 100dvh);
+  border: 0;
+  background: color-mix(in oklab, oklch(0 0 0) 52%, transparent);
+  cursor: default;
+}
+
+.dsn-sheet {
+  position: absolute;
+  top: 0;
+  right: 0;
+  display: flex;
+  width: min(400px, 100%);
+  height: var(--rdr-viewport, 100dvh);
+  flex-direction: column;
+  border-left: 1px solid var(--border);
+  background: var(--card);
+  box-shadow: -18px 0 42px -28px oklch(0 0 0 / 65%);
+  outline: none;
+}
+
+.dsn-sheet-head {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  border-bottom: 1px solid var(--border);
+  padding: 11px 13px;
+}
+
+.dsn-sheet-head > svg {
+  flex: 0 0 auto;
+  color: var(--muted-foreground);
+}
+
+.dsn-sheet-title {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+}
+
+.dsn-sheet-sub {
+  margin: 1px 0 0;
+  color: var(--muted-foreground);
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+}
+
+.dsn-sheet-tools {
+  display: flex;
+  gap: 3px;
+  margin-left: auto;
+}
+
+.dsn-sheet-tools button {
+  display: grid;
+  width: 22px;
+  height: 22px;
+  place-items: center;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--background);
+  color: var(--foreground);
+  cursor: pointer;
+  transition: background-color 130ms ease;
+}
+
+.dsn-sheet-tools button:hover:not(:disabled) {
+  background: var(--accent);
+}
+
+.dsn-sheet-tools button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.dsn-sheet-scroll {
+  min-height: 0;
+  flex: 1;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 10px 13px 14px;
+  scrollbar-width: thin;
+}
+
+/* --- One comment --------------------------------------------------------- */
+.dsn-comment {
+  display: grid;
+  grid-template-columns: 30px minmax(0, 1fr);
+  gap: 9px;
+  border-bottom: 1px solid color-mix(in oklab, var(--border) 65%, transparent);
+  padding: 11px 0;
+  scroll-margin-top: 60px;
+}
+
+.dsn-comment:last-of-type {
+  border-bottom: 0;
+}
+
+.dsn-avatar {
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  background: hsl(var(--dsn-hue, 210) 30% 50% / 16%);
+  color: var(--foreground);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1;
+}
+
+.dsn-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.dsn-comment-body {
+  min-width: 0;
+}
+
+.dsn-comment-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 5px;
+}
+
+.dsn-comment-head strong {
+  font-size: 11.5px;
+  font-weight: 600;
+}
+
+.dsn-comment-head strong a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.dsn-comment-head strong a:hover {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.dsn-tag {
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--background);
+  color: var(--muted-foreground);
+  font-size: 9px;
+  letter-spacing: 0.02em;
+  padding: 1px 5px;
+  text-transform: uppercase;
+}
+
+.dsn-tag[data-tone="owner"] {
+  border-color: color-mix(in oklab, var(--foreground) 30%, var(--border));
+  color: var(--foreground);
+  font-weight: 600;
+}
+
+.dsn-comment-head time {
+  margin-left: auto;
+  color: var(--muted-foreground);
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+}
+
+.dsn-comment-text {
+  margin: 5px 0 0;
+  color: var(--foreground);
+  font-size: 11.5px;
+  line-height: 1.55;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+.dsn-comment-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 6px;
+  opacity: 0;
+  transition: opacity 140ms ease;
+}
+
+.dsn-comment:hover .dsn-comment-actions,
+.dsn-comment:focus-within .dsn-comment-actions {
+  opacity: 1;
+}
+
+.dsn-comment-actions button,
+.dsn-comment-actions a {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border: 0;
+  background: none;
+  color: var(--muted-foreground);
+  cursor: pointer;
+  font-size: 10px;
+  padding: 0;
+  text-decoration: none;
+}
+
+.dsn-comment-actions button:hover,
+.dsn-comment-actions a:hover {
+  color: var(--foreground);
+}
+
+/* --- States ------------------------------------------------------------- */
+.dsn-skeletons {
+  display: grid;
+  gap: 9px;
+  padding: 6px 0;
+}
+
+.dsn-skeletons > span:not(.sr-only) {
+  display: block;
+  height: 54px;
+  border-radius: 8px;
+  background: linear-gradient(
+    100deg,
+    var(--muted),
+    color-mix(in oklab, var(--muted) 45%, var(--card)),
+    var(--muted)
+  );
+  background-size: 220% 100%;
+  animation: dsn-shimmer 1500ms linear infinite;
+}
+
+@keyframes dsn-shimmer {
+  to {
+    background-position: -220% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dsn-skeletons > span:not(.sr-only) {
+    animation: none;
+  }
+}
+
+.dsn-empty {
+  display: grid;
+  justify-items: center;
+  gap: 5px;
+  padding: 26px 8px;
+  text-align: center;
+}
+
+.dsn-empty-tile {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  place-items: center;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--background);
+  color: var(--muted-foreground);
+}
+
+.dsn-empty strong {
+  font-size: 11.5px;
+  font-weight: 600;
+}
+
+.dsn-empty > span:last-of-type {
+  max-width: 30ch;
+  color: var(--muted-foreground);
+  font-size: 10.5px;
+  line-height: 1.5;
+}
+
+.dsn-retry,
+.dsn-more {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: var(--background);
+  color: var(--foreground);
+  cursor: pointer;
+  font-size: 10.5px;
+  font-weight: 500;
+  padding: 5px 9px;
+  transition: background-color 130ms ease;
+}
+
+.dsn-more {
+  width: 100%;
+  margin-top: 8px;
+}
+
+.dsn-retry:hover,
+.dsn-more:hover:not(:disabled) {
+  background: var(--accent);
+}
+
+/* --- Composer ----------------------------------------------------------- */
+.dsn-composer {
+  border-top: 1px solid var(--border);
+  background: var(--background);
+  padding: 10px 13px 12px;
+}
+
+.dsn-ident {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--card);
+  margin-bottom: 8px;
+  padding: 6px 8px;
+}
+
+.dsn-ident-copy {
+  min-width: 0;
+}
+
+.dsn-ident-copy strong {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.dsn-ident-copy span {
+  display: block;
+  overflow: hidden;
+  color: var(--muted-foreground);
+  font-size: 9.5px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dsn-ident-actions {
+  display: flex;
+  gap: 2px;
+  margin-left: auto;
+}
+
+.dsn-ident-actions button {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  border: 0;
+  border-radius: 5px;
+  background: none;
+  color: var(--muted-foreground);
+  cursor: pointer;
+  font-size: 9.5px;
+  padding: 3px 5px;
+}
+
+.dsn-ident-actions button:hover {
+  background: var(--accent);
+  color: var(--foreground);
+}
+
+.dsn-fields {
+  display: grid;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.dsn-fields-note {
+  margin: 0 0 2px;
+  color: var(--muted-foreground);
+  font-size: 9.5px;
+  line-height: 1.45;
+}
+
+.dsn-field-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 6px;
+}
+
+.dsn-field-row.is-single {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.dsn-field-row label {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.dsn-field-row label span {
+  color: var(--muted-foreground);
+  font-size: 9px;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.dsn-field-row input {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--card);
+  color: var(--foreground);
+  font: inherit;
+  font-size: 11px;
+  padding: 5px 7px;
+}
+
+.dsn-field-row input:focus-visible {
+  border-color: var(--ring);
+  outline: 2px solid color-mix(in oklab, var(--ring) 40%, transparent);
+  outline-offset: -1px;
+}
+
+.dsn-fields-more {
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: var(--card);
+  padding: 6px 8px;
+}
+
+.dsn-fields-more > summary {
+  color: var(--muted-foreground);
+  cursor: pointer;
+  font-size: 9.5px;
+  list-style: none;
+}
+
+.dsn-fields-more > summary::-webkit-details-marker {
+  display: none;
+}
+
+.dsn-fields-more > summary::after {
+  content: "+";
+  margin-left: 4px;
+}
+
+.dsn-fields-more[open] > summary::after {
+  content: "–";
+}
+
+.dsn-fields-more[open] > summary {
+  margin-bottom: 6px;
+}
+
+.dsn-fields-done {
+  justify-self: start;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--card);
+  color: var(--foreground);
+  cursor: pointer;
+  font-size: 10px;
+  font-weight: 500;
+  padding: 4px 8px;
+}
+
+.dsn-textarea {
+  display: block;
+}
+
+.dsn-textarea textarea {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--card);
+  color: var(--foreground);
+  font: inherit;
+  font-size: 11.5px;
+  line-height: 1.5;
+  padding: 8px 9px;
+  resize: vertical;
+}
+
+.dsn-textarea textarea:focus-visible {
+  border-color: var(--ring);
+  outline: 2px solid color-mix(in oklab, var(--ring) 40%, transparent);
+  outline-offset: -1px;
+}
+
+/* Everything is off-screen but still parsable — a bot fills it, a person can't. */
+.dsn-honeypot {
+  position: absolute;
+  left: -9999px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+
+.dsn-composer-foot {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 7px;
+}
+
+.dsn-turnstile {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--muted-foreground);
+  font-size: 9.5px;
+}
+
+.dsn-turnstile[data-state="ok"] {
+  color: var(--foreground);
+}
+
+.dsn-count {
+  margin-left: auto;
+  color: var(--muted-foreground);
+  font-size: 9.5px;
+  font-variant-numeric: tabular-nums;
+}
+
+.dsn-post {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: var(--foreground);
+  color: var(--background);
+  cursor: pointer;
+  font-size: 10.5px;
+  font-weight: 600;
+  padding: 6px 10px;
+  transition: opacity 130ms ease;
+}
+
+.dsn-post:disabled {
+  cursor: default;
+  opacity: 0.4;
+}
+
+.dsn-turnstile-widget {
+  margin-top: 8px;
+  transform-origin: left top;
+}
+
+.dsn-error {
+  margin: 8px 0 0;
+  border: 1px solid
+    color-mix(in oklab, var(--destructive, #e5484d) 45%, var(--border));
+  border-radius: 7px;
+  background: color-mix(in oklab, var(--destructive, #e5484d) 10%, var(--card));
+  color: var(--foreground);
+  font-size: 10.5px;
+  line-height: 1.5;
+  padding: 6px 8px;
+}
+
+/* Toolbar entry to the discussion. Its own class, not `.rdr-outline-toggle`:
+   the outline button is hidden below 900px of window width (the rail becomes a
+   dock), but the discussion has to stay reachable at every size. */
+.rdr-comments-toggle[aria-pressed="true"] {
+  background: var(--accent);
+}
+
+.rdr-comments-label {
+  display: inline;
+}
+
+@container window-body (max-width: 520px) {
+  .rdr-comments-label {
+    display: none;
+  }
+}
+
+/* Count chip beside the toolbar label, once the feed has loaded. */
+.rdr-comments-count {
+  display: inline-flex;
+  min-width: 15px;
+  height: 15px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--background);
+  color: var(--muted-foreground);
+  font-size: 9px;
+  font-variant-numeric: tabular-nums;
+  padding: 0 4px;
+}
+
+/* --- Trigger card ------------------------------------------------------- */
+.dsn-trigger {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 11px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: color-mix(in oklab, var(--muted) 32%, var(--card));
+  margin: 26px 0 22px;
+  padding: 13px 15px;
+}
+
+.dsn-trigger-tile {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--card);
+  color: var(--foreground);
+}
+
+.dsn-trigger-copy {
+  min-width: 0;
+  flex: 1;
+}
+
+.dsn-trigger-copy strong {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.dsn-trigger-copy span {
+  display: block;
+  margin-top: 2px;
+  color: var(--muted-foreground);
+  font-size: 10.5px;
+  line-height: 1.45;
+}
+
+.dsn-faces {
+  display: flex;
+  flex: 0 0 auto;
+}
+
+.dsn-faces .dsn-avatar + .dsn-avatar {
+  margin-left: -7px;
+}
+
+.dsn-faces .dsn-avatar {
+  box-shadow: 0 0 0 2px var(--card);
+}
+
+.dsn-trigger-open {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 5px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--foreground);
+  color: var(--background);
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 7px 11px;
+  transition: opacity 130ms ease;
+}
+
+.dsn-trigger-open:hover {
+  opacity: 0.88;
+}
+
+/* Narrow readers: the sheet becomes a bottom drawer, the trigger stacks. */
+@media (max-width: 767px) {
+  .dsn-sheet {
+    top: 0;
+    right: 0;
+    bottom: auto;
+    left: 0;
+    width: 100%;
+    /* Percentages resolve against the zero-height layer, so the window height
+       has to come from the variable ReaderProvider publishes. */
+    height: calc(var(--rdr-viewport, 100dvh) * 0.78);
+    margin-top: calc(var(--rdr-viewport, 100dvh) * 0.22);
+    border-top: 1px solid var(--border);
+    border-left: 0;
+    border-radius: 12px 12px 0 0;
+    box-shadow: 0 -18px 42px -28px oklch(0 0 0 / 65%);
+  }
+
+  .dsn-trigger {
+    gap: 9px;
+    padding: 12px 13px;
+  }
+
+  .dsn-trigger-copy {
+    flex-basis: calc(100% - 46px);
+  }
+
+  .dsn-trigger-open {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .dsn-field-row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

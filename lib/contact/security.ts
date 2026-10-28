@@ -24,7 +24,7 @@ export function isBlockedContent(email: string, values: string[]) {
  * Best-effort, per-instance sliding-window limiter; this is not a distributed
  * abuse control. Returns 0 when allowed, otherwise the seconds to wait.
  */
-function createLimiter(max: number, windowMs = 60_000) {
+export function createLimiter(max: number, windowMs = 60_000) {
   const hits = new Map<string, number[]>();
   return (ip: string) => {
     const now = Date.now();

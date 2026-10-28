@@ -3,6 +3,8 @@ export const COOKIE_WALLPAPER = "pm-desktop-wallpaper";
 export const COOKIE_WALLPAPER_INTENSITY = "pm-wallpaper-intensity";
 export const COOKIE_SLIDESHOW_ENABLED = "pm-wallpaper-slideshow";
 export const COOKIE_SLIDESHOW_INTERVAL = "pm-wallpaper-interval";
+/** Guest comment identity (name, email, handles) — see components/comments. */
+export const COOKIE_COMMENTER = "pm_commenter";
 
 const ONE_YEAR_SECONDS = 60 * 60 * 24 * 365;
 

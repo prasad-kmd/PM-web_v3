@@ -590,7 +590,7 @@ function renderBlock(
     }
     case "image": {
       const src = assetUrl(block, "image", context);
-      const alt = captionText(data) || "Image in Notion document";
+      const alt = captionText(data) || "Image in this entry";
       if (!src) return null;
       return (
         <figure key={block.id} className="space-y-2">

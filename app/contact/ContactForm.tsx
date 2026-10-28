@@ -238,8 +238,8 @@ export function ContactForm({ siteKey }: { siteKey: string }) {
       </div>
       <div className="contact-security">
         <p>
-          Your email is used to reply. This form is protected by Turnstile and
-          delivers your message privately through Telegram.
+          Your email is used only to reply. This form is protected by an
+          automated spam check and delivers your message privately.
         </p>
         {siteKey ? (
           <Turnstile

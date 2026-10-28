@@ -392,10 +392,18 @@ function ReadingOptions() {
   );
 }
 
-export function ReaderToolbarActions({ item }: { item: ContentItem }) {
+export function ReaderToolbarActions({
+  item,
+  leading,
+}: {
+  item: ContentItem;
+  /** Rendered before the outline toggle — the discussion button lives here. */
+  leading?: ReactNode;
+}) {
   const { outline, toggleOutline, headings } = useReader();
   return (
     <>
+      {leading}
       {headings.length ? (
         <WorkspaceTooltip
           label={outline ? "Hide outline" : "Show outline"}

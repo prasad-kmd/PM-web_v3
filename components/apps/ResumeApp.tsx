@@ -1,6 +1,25 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useState } from "react";
+import {
+  ArrowRight01Icon,
+  ArrowUpRight01Icon,
+  Bookmark01Icon,
+  Briefcase01Icon,
+  Clock01Icon,
+  FileDownloadIcon,
+  Folder01Icon,
+  Github01Icon,
+  Link01Icon,
+  Location01Icon,
+  Mail01Icon,
+  RefreshIcon,
+} from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { BeamCard } from "@/components/ui/beam-card";
+import { WindowBreadcrumb } from "@/components/system/WindowBreadcrumb";
+import type { LatestItem } from "@/lib/latest-types";
 import {
   contactLinks,
   education,
@@ -9,8 +28,15 @@ import {
   languages,
   personalDetails,
   resumeProfile,
+  selectedProjects,
 } from "@/lib/resume-data";
-import { WindowBreadcrumb } from "@/components/system/WindowBreadcrumb";
+
+type ProjectState = {
+  status: "loading" | "ready" | "error";
+  items: LatestItem[];
+  /** `curated` = the static fallback in lib/resume-data, not Notion. */
+  source: "live" | "curated";
+};
 
 const profileStats = [
   { label: "Workplaces", value: experience.length },
@@ -19,7 +45,60 @@ const profileStats = [
   { label: "Languages", value: languages.length },
 ];
 
+const pad = (value: number) => String(value).padStart(2, "0");
+
+/**
+ * Résumé (R1 · Beacon).
+ *
+ * Layout notes:
+ * - One scrollbar. `.resume-app` fills the window, `.window-body` stops scrolling
+ *   while it is mounted (`:has()` in globals.css), and `.resume-scroll` is the
+ *   only scroller. The aside is `position: sticky` inside it.
+ * - Projects come from `GET /api/latest?types=projects` (the same projection the
+ *   desktop widget uses). Until that resolves — or if Notion is not configured —
+ *   `selectedProjects` renders and the section says which one is on screen.
+ */
 export function ResumeApp({ onNavigateHome }: { onNavigateHome?: () => void }) {
+  const [projects, setProjects] = useState<ProjectState>({
+    status: "loading",
+    items: [],
+    source: "curated",
+  });
+
+  useEffect(() => {
+    const controller = new AbortController();
+    fetch("/api/latest?types=projects&limit=4", {
+      signal: controller.signal,
+      cache: "no-store",
+    })
+      .then((response) => (response.ok ? response.json() : Promise.reject()))
+      .then((data: { items?: LatestItem[]; error?: string | null }) => {
+        if (controller.signal.aborted) return;
+        const items = data.items ?? [];
+        if (items.length) {
+          setProjects({ status: "ready", items, source: "live" });
+          return;
+        }
+        setProjects({
+          status: data.error === "unavailable" ? "error" : "ready",
+          items: selectedProjects,
+          source: "curated",
+        });
+      })
+      .catch(() => {
+        if (controller.signal.aborted) return;
+        setProjects({
+          status: "error",
+          items: selectedProjects,
+          source: "curated",
+        });
+      });
+    return () => controller.abort();
+  }, []);
+
+  const shown = projects.items.length ? projects.items : selectedProjects;
+  const isLoading = projects.status === "loading";
+
   return (
     <div className="resume-app">
       <WindowBreadcrumb
@@ -27,17 +106,37 @@ export function ResumeApp({ onNavigateHome }: { onNavigateHome?: () => void }) {
         onHomeClick={onNavigateHome}
       />
 
-      <div className="resume-content">
-        <header className="resume-hero">
-          <div className="resume-monogram" aria-hidden="true">
-            PM
-          </div>
-          <div className="resume-identity">
-            <p className="resume-eyebrow">{resumeProfile.role}</p>
-            <h1>{resumeProfile.name}</h1>
-            <p className="resume-status">{resumeProfile.status}</p>
-            <p className="resume-tagline">{resumeProfile.tagline}</p>
+      <div className="resume-scroll">
+        <div className="resume-sheet">
+          <BeamCard className="resume-hero" intro>
+            <div className="resume-hero-top">
+              <div className="resume-monogram" aria-hidden="true">
+                PM
+              </div>
+              <div className="resume-identity">
+                <p className="resume-eyebrow">{resumeProfile.role}</p>
+                <h1>{resumeProfile.name}</h1>
+                <p className="resume-status">{resumeProfile.status}</p>
+                <p className="resume-tagline">{resumeProfile.tagline}</p>
+                <p className="resume-location">
+                  <HugeiconsIcon
+                    icon={Location01Icon}
+                    strokeWidth={2}
+                    size={13}
+                    aria-hidden
+                  />
+                  {resumeProfile.location} · {resumeProfile.timezone}
+                  <span className="resume-sep" aria-hidden="true" />
+                  <span className="resume-availability">
+                    <span aria-hidden="true" />
+                    {resumeProfile.availability}
+                  </span>
+                </p>
+              </div>
+            </div>
+
             <p className="resume-summary">{resumeProfile.summary}</p>
+
             <div
               className="resume-contact-links"
               aria-label="Contact and social links"
@@ -45,7 +144,21 @@ export function ResumeApp({ onNavigateHome }: { onNavigateHome?: () => void }) {
               {contactLinks.map((link) =>
                 link.href.startsWith("/") ? (
                   <Link key={link.label} href={link.href}>
-                    {link.label} <span aria-hidden="true">→</span>
+                    {link.label === "Contact" ? (
+                      <HugeiconsIcon
+                        icon={Mail01Icon}
+                        strokeWidth={2}
+                        size={13}
+                        aria-hidden
+                      />
+                    ) : null}
+                    {link.label}
+                    <HugeiconsIcon
+                      icon={ArrowRight01Icon}
+                      strokeWidth={2}
+                      size={12}
+                      aria-hidden
+                    />
                   </Link>
                 ) : (
                   <a
@@ -54,161 +167,334 @@ export function ResumeApp({ onNavigateHome }: { onNavigateHome?: () => void }) {
                     target="_blank"
                     rel="noreferrer"
                   >
-                    {link.label} <span aria-hidden="true">↗</span>
+                    {link.label === "GitHub" ? (
+                      <HugeiconsIcon
+                        icon={Github01Icon}
+                        strokeWidth={2}
+                        size={13}
+                        aria-hidden
+                      />
+                    ) : link.label === "LinkedIn" ? (
+                      <HugeiconsIcon
+                        icon={Link01Icon}
+                        strokeWidth={2}
+                        size={13}
+                        aria-hidden
+                      />
+                    ) : null}
+                    {link.label}
+                    <HugeiconsIcon
+                      icon={ArrowUpRight01Icon}
+                      strokeWidth={2}
+                      size={12}
+                      aria-hidden
+                    />
                   </a>
                 ),
               )}
             </div>
-          </div>
-        </header>
 
-        <dl className="resume-stat-grid" aria-label="Profile overview">
-          {profileStats.map((stat) => (
-            <div className="resume-stat" key={stat.label}>
-              <dt>{stat.label}</dt>
-              <dd>{String(stat.value).padStart(2, "0")}</dd>
-            </div>
-          ))}
-        </dl>
-
-        <div className="resume-columns">
-          <div className="resume-primary-column">
-            <section
-              className="resume-section"
-              id="resume-projects"
-              aria-labelledby="projects-heading"
-            >
-              <div className="resume-section-heading">
-                <div>
-                  <p className="resume-section-index">01 / Selected work</p>
-                  <h2 id="projects-heading">Projects</h2>
+            <dl className="resume-stat-grid" aria-label="Profile overview">
+              {profileStats.map((stat) => (
+                <div className="resume-stat" key={stat.label}>
+                  <dt>{stat.label}</dt>
+                  <dd>{pad(stat.value)}</dd>
                 </div>
-                <span className="resume-section-count">00</span>
-              </div>
-              <div className="resume-project-empty">
-                <p>Project case studies are being curated.</p>
-                <span>
-                  No project summaries are published here until their details
-                  and outcomes have been verified.
-                </span>
-              </div>
-            </section>
+              ))}
+            </dl>
+          </BeamCard>
 
-            <section
-              className="resume-section"
-              id="resume-experience"
-              aria-labelledby="experience-heading"
-            >
-              <div className="resume-section-heading">
-                <div>
-                  <p className="resume-section-index">02 / Work history</p>
-                  <h2 id="experience-heading">Experience</h2>
-                </div>
-              </div>
-              <div className="resume-timeline">
-                {experience.map((entry) => (
-                  <article
-                    className="resume-experience"
-                    key={`${entry.org}-${entry.role}`}
-                  >
-                    <time>{entry.period}</time>
-                    <h3>{entry.role}</h3>
-                    <p className="resume-experience-org">
-                      {entry.org} · {entry.location}
-                    </p>
-                    <p className="resume-experience-summary">{entry.summary}</p>
-                    <ul>
-                      {entry.points.map((point) => (
-                        <li key={point}>{point}</li>
-                      ))}
-                    </ul>
-                  </article>
-                ))}
-              </div>
-            </section>
-          </div>
-
-          <aside className="resume-aside">
-            <section
-              className="resume-section resume-aside-section"
-              id="resume-details"
-              aria-labelledby="details-heading"
-            >
-              <p className="resume-section-index">03 / At a glance</p>
-              <h2 id="details-heading">Personal details</h2>
-              <dl className="resume-details-list">
-                {personalDetails.map((detail) => (
-                  <div key={detail.label}>
-                    <dt>{detail.label}</dt>
-                    <dd>{detail.value}</dd>
+          <div className="resume-columns">
+            <div className="resume-primary-column">
+              <section
+                className="resume-section"
+                id="resume-projects"
+                aria-labelledby="projects-heading"
+              >
+                <div className="resume-section-heading">
+                  <div>
+                    <p className="resume-section-index">01 / Selected work</p>
+                    <h2 id="projects-heading">Projects</h2>
                   </div>
-                ))}
-              </dl>
-            </section>
+                  <span
+                    className="resume-section-count"
+                    aria-label={`${shown.length} projects`}
+                  >
+                    {pad(shown.length)}
+                  </span>
+                </div>
 
-            <section
-              className="resume-section resume-aside-section"
-              id="resume-education"
-              aria-labelledby="education-heading"
-            >
-              <p className="resume-section-index">04 / Learning</p>
-              <h2 id="education-heading">Education</h2>
-              <ol className="resume-education-list">
-                {education.map((entry) => (
-                  <li key={entry.credential}>
-                    <h3>{entry.credential}</h3>
-                    <p>{entry.institution}</p>
-                    <span>
-                      {entry.location} · {entry.period}
-                    </span>
-                    <small>{entry.note}</small>
-                  </li>
-                ))}
-              </ol>
-            </section>
+                <p className="resume-section-source">
+                  {isLoading ? (
+                    <>
+                      <HugeiconsIcon
+                        icon={RefreshIcon}
+                        strokeWidth={2}
+                        size={12}
+                        className="resume-spin"
+                        aria-hidden
+                      />
+                      Loading projects…
+                    </>
+                  ) : projects.source === "live" ? (
+                    <>
+                      <HugeiconsIcon
+                        icon={Folder01Icon}
+                        strokeWidth={2}
+                        size={12}
+                        aria-hidden
+                      />
+                      Newest published projects, straight from the index
+                    </>
+                  ) : (
+                    <>
+                      <HugeiconsIcon
+                        icon={Bookmark01Icon}
+                        strokeWidth={2}
+                        size={12}
+                        aria-hidden
+                      />
+                      Curated selection — the Projects collection is not
+                      connected in this environment
+                    </>
+                  )}
+                </p>
 
-            <section
-              className="resume-section resume-aside-section"
-              id="resume-interests"
-              aria-labelledby="interests-heading"
-            >
-              <p className="resume-section-index">05 / Areas of interest</p>
-              <h2 id="interests-heading">Interests</h2>
-              <ul className="resume-interest-list">
-                {interests.map((interest) => (
-                  <li key={interest}>{interest}</li>
-                ))}
-              </ul>
-            </section>
+                <div className="resume-projects">
+                  {isLoading
+                    ? [0, 1].map((index) => (
+                        <div
+                          className="resume-project is-skeleton"
+                          key={index}
+                          aria-hidden="true"
+                        >
+                          <span
+                            className="resume-skeleton-line"
+                            style={{ width: "46%" }}
+                          />
+                          <span
+                            className="resume-skeleton-line"
+                            style={{ width: "78%" }}
+                          />
+                          <span
+                            className="resume-skeleton-line"
+                            style={{ width: "62%" }}
+                          />
+                        </div>
+                      ))
+                    : shown.map((project) => (
+                        <BeamCard
+                          className="resume-project"
+                          key={`${project.type}-${project.id}`}
+                        >
+                          <div className="resume-project-main">
+                            <h3>
+                              <Link href={project.href}>{project.title}</Link>
+                            </h3>
+                            <p className="resume-project-meta">
+                              <span className="resume-chip">
+                                {project.category || project.typeLabel}
+                              </span>
+                              {project.dateLabel ? (
+                                <span className="resume-project-time">
+                                  <HugeiconsIcon
+                                    icon={Clock01Icon}
+                                    strokeWidth={2}
+                                    size={12}
+                                    aria-hidden
+                                  />
+                                  {project.dateLabel}
+                                </span>
+                              ) : null}
+                              {project.readTime ? (
+                                <span className="resume-project-time">
+                                  {project.readTime} min read
+                                </span>
+                              ) : null}
+                            </p>
+                            {project.summary ? (
+                              <p className="resume-project-summary">
+                                {project.summary}
+                              </p>
+                            ) : null}
+                          </div>
+                          <Link
+                            className="resume-project-open"
+                            href={project.href}
+                            aria-label={`Open ${project.title}`}
+                          >
+                            <HugeiconsIcon
+                              icon={ArrowUpRight01Icon}
+                              strokeWidth={2}
+                              size={14}
+                              aria-hidden
+                            />
+                          </Link>
+                        </BeamCard>
+                      ))}
+                </div>
 
-            <section
-              className="resume-section resume-aside-section"
-              id="resume-languages"
-              aria-labelledby="languages-heading"
-            >
-              <p className="resume-section-index">06 / Communication</p>
-              <h2 id="languages-heading">Languages</h2>
-              <ul className="resume-language-list">
-                {languages.map((language) => (
-                  <li key={language.name}>
-                    <span>{language.name}</span>
-                    <span>{language.level}</span>
-                  </li>
-                ))}
-              </ul>
-            </section>
-          </aside>
-        </div>
+                {projects.source === "live" ? (
+                  <Link className="resume-more" href="/projects">
+                    All projects
+                    <HugeiconsIcon
+                      icon={ArrowRight01Icon}
+                      strokeWidth={2}
+                      size={13}
+                      aria-hidden
+                    />
+                  </Link>
+                ) : null}
+              </section>
 
-        <footer className="resume-footer" id="resume-contact">
-          <div>
-            <p className="resume-section-index">Get in touch</p>
-            <h2>Let’s build something together.</h2>
+              <section
+                className="resume-section"
+                id="resume-experience"
+                aria-labelledby="experience-heading"
+              >
+                <div className="resume-section-heading">
+                  <div>
+                    <p className="resume-section-index">02 / Work history</p>
+                    <h2 id="experience-heading">Experience</h2>
+                  </div>
+                  <span className="resume-section-count">
+                    {pad(experience.length)}
+                  </span>
+                </div>
+                <div className="resume-timeline">
+                  {experience.map((entry) => (
+                    <BeamCard
+                      className="resume-experience"
+                      key={`${entry.org}-${entry.role}`}
+                    >
+                      <div className="resume-experience-head">
+                        <time>{entry.period}</time>
+                        <h3>{entry.role}</h3>
+                      </div>
+                      <p className="resume-experience-org">
+                        <HugeiconsIcon
+                          icon={Briefcase01Icon}
+                          strokeWidth={2}
+                          size={12}
+                          aria-hidden
+                        />
+                        {entry.org} · {entry.location}
+                      </p>
+                      <p className="resume-experience-summary">
+                        {entry.summary}
+                      </p>
+                      <ul>
+                        {entry.points.map((point) => (
+                          <li key={point}>{point}</li>
+                        ))}
+                      </ul>
+                    </BeamCard>
+                  ))}
+                </div>
+              </section>
+            </div>
+
+            <aside className="resume-aside" aria-label="Resume details">
+              <BeamCard
+                as="section"
+                className="resume-aside-section"
+                id="resume-details"
+              >
+                <p className="resume-section-index">03 / At a glance</p>
+                <h2>Personal details</h2>
+                <dl className="resume-details-list">
+                  {personalDetails.map((detail) => (
+                    <div key={detail.label}>
+                      <dt>{detail.label}</dt>
+                      <dd>{detail.value}</dd>
+                    </div>
+                  ))}
+                </dl>
+              </BeamCard>
+
+              <BeamCard
+                as="section"
+                className="resume-aside-section"
+                id="resume-education"
+              >
+                <p className="resume-section-index">04 / Learning</p>
+                <h2>Education</h2>
+                <ol className="resume-education-list">
+                  {education.map((entry) => (
+                    <li key={entry.credential}>
+                      <h3>{entry.credential}</h3>
+                      <p>{entry.institution}</p>
+                      <span>
+                        {entry.location} · {entry.period}
+                      </span>
+                      <small>{entry.note}</small>
+                    </li>
+                  ))}
+                </ol>
+              </BeamCard>
+
+              <BeamCard
+                as="section"
+                className="resume-aside-section"
+                id="resume-interests"
+              >
+                <p className="resume-section-index">05 / Areas of interest</p>
+                <h2>Interests</h2>
+                <ul className="resume-interest-list">
+                  {interests.map((interest) => (
+                    <li key={interest}>{interest}</li>
+                  ))}
+                </ul>
+              </BeamCard>
+
+              <BeamCard
+                as="section"
+                className="resume-aside-section"
+                id="resume-languages"
+              >
+                <p className="resume-section-index">06 / Communication</p>
+                <h2>Languages</h2>
+                <ul className="resume-language-list">
+                  {languages.map((language) => (
+                    <li key={language.name}>
+                      <span>{language.name}</span>
+                      <span>{language.level}</span>
+                    </li>
+                  ))}
+                </ul>
+              </BeamCard>
+
+              {/* A real file, not `window.print()`: the PDF is generated from
+                  lib/resume-data.ts by /api/resume/pdf, so it can be edited and
+                  re-issued without touching the app. */}
+              <a className="resume-print" href="/api/resume/pdf" download>
+                <HugeiconsIcon
+                  icon={FileDownloadIcon}
+                  strokeWidth={2}
+                  size={13}
+                  aria-hidden
+                />
+                Download PDF
+              </a>
+            </aside>
           </div>
-          <Link href="/contact">
-            Contact Prasad <span aria-hidden="true">→</span>
-          </Link>
-        </footer>
+
+          <BeamCard className="resume-footer" id="resume-contact">
+            <div>
+              <p className="resume-section-index">Get in touch</p>
+              <h2>Let’s build something together.</h2>
+            </div>
+            <Link href="/contact">
+              Contact Prasad
+              <HugeiconsIcon
+                icon={ArrowRight01Icon}
+                strokeWidth={2}
+                size={13}
+                aria-hidden
+              />
+            </Link>
+          </BeamCard>
+        </div>
       </div>
     </div>
   );

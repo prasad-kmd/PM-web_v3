@@ -1,14 +1,20 @@
 "use client";
 
 import Image from "next/image";
-import { useId } from "react";
+import { useEffect, useId, useMemo, useState } from "react";
 import {
+  Alert02Icon,
   ArrowRight01Icon,
+  ArrowUpRight01Icon,
+  Delete02Icon,
+  Folder01Icon,
   InformationCircleIcon,
+  Link01Icon,
   Moon02Icon,
   PaintBoardIcon,
   RepeatIcon,
   SunMediumIcon,
+  UserAccountIcon,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
@@ -33,6 +39,16 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { useAppearance } from "@/lib/appearance";
+import { BUILD_INFO, STACK_INFO } from "@/lib/build-info";
+import {
+  COOKIE_COMMENTER,
+  COOKIE_SLIDESHOW_ENABLED,
+  COOKIE_SLIDESHOW_INTERVAL,
+  COOKIE_THEME,
+  COOKIE_WALLPAPER,
+  COOKIE_WALLPAPER_INTENSITY,
+  getClientCookie,
+} from "@/lib/cookies";
 import type { Theme } from "@/lib/registry";
 import {
   SLIDESHOW_INTERVAL_OPTIONS,
@@ -66,6 +82,470 @@ const SLIDESHOW_SELECT_ITEMS = SLIDESHOW_INTERVAL_OPTIONS.map((option) => ({
   value: String(option.value),
   label: option.label,
 }));
+
+const COLLECTION_LABELS: Record<string, string> = {
+  projects: "Projects",
+  blog: "Blog",
+  articles: "Articles",
+  tutorials: "Tutorials",
+  glossary: "Glossary",
+  news: "News",
+};
+
+type SystemInfo = {
+  build: {
+    version: string;
+    commit: string;
+    builtAt: string;
+    environment: string;
+  };
+  collections: Array<{ type: string; configured: boolean }>;
+  integrations: {
+    notion: boolean;
+    turnstile: boolean;
+    telegram: boolean;
+    canonicalUrl: boolean;
+  };
+};
+
+const KEYBOARD_GROUPS = [
+  {
+    title: "Desktop",
+    rows: [
+      { keys: ["Enter"], label: "Open the selected shortcut" },
+      {
+        keys: ["⌘", "click"],
+        label: "Add or remove a shortcut from the selection",
+      },
+      {
+        keys: ["Esc"],
+        label: "Clear the shortcut selection, close an overlay",
+      },
+      { keys: ["Right-click"], label: "Open the desktop or shortcut menu" },
+    ],
+  },
+  {
+    title: "Windows",
+    rows: [
+      {
+        keys: ["Double-click"],
+        label: "Maximize or restore from the titlebar",
+      },
+      { keys: ["Drag → edge"], label: "Snap to the left, right or a corner" },
+      { keys: ["Esc"], label: "Close the focused menu, popover or flyout" },
+    ],
+  },
+  {
+    title: "Reader",
+    rows: [
+      { keys: ["j"], label: "Next entry in the collection" },
+      { keys: ["k"], label: "Previous entry in the collection" },
+      { keys: ["o"], label: "Toggle the outline rail" },
+      { keys: ["/"], label: "Focus the search field in a collection" },
+    ],
+  },
+] as const;
+
+const COOKIE_TABLE = [
+  { name: COOKIE_THEME, purpose: "Light or dark appearance" },
+  { name: COOKIE_WALLPAPER, purpose: "Selected desktop wallpaper" },
+  { name: COOKIE_WALLPAPER_INTENSITY, purpose: "Wallpaper visibility" },
+  { name: COOKIE_SLIDESHOW_ENABLED, purpose: "Automatic wallpaper slideshow" },
+  { name: COOKIE_SLIDESHOW_INTERVAL, purpose: "Slideshow timing" },
+  { name: COOKIE_COMMENTER, purpose: "Comment display name and handles" },
+] as const;
+
+function StatePill({ on, labels }: { on: boolean; labels: [string, string] }) {
+  return (
+    <span className={`settings-state ${on ? "is-on" : "is-off"}`}>
+      {on ? labels[0] : labels[1]}
+    </span>
+  );
+}
+
+function AboutTab() {
+  const {
+    theme,
+    wallpaper,
+    wallpaperIntensity,
+    slideshowEnabled,
+    slideshowInterval,
+  } = useAppearance();
+  const [system, setSystem] = useState<SystemInfo | null>(null);
+  const [failed, setFailed] = useState(false);
+  const [commenter, setCommenter] = useState<string | null>(null);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    fetch("/api/system", { signal: controller.signal, cache: "no-store" })
+      .then((response) => (response.ok ? response.json() : Promise.reject()))
+      .then((data: SystemInfo) => setSystem(data))
+      .catch(() => {
+        if (!controller.signal.aborted) setFailed(true);
+      });
+    return () => controller.abort();
+  }, []);
+
+  useEffect(() => {
+    const raw = getClientCookie(COOKIE_COMMENTER);
+    if (!raw) return;
+    try {
+      const parsed = JSON.parse(decodeURIComponent(raw)) as { n?: string };
+      if (parsed?.n) setCommenter(parsed.n);
+    } catch {
+      setCommenter(null);
+    }
+  }, []);
+
+  const wallpaperMeta = useMemo(
+    () => WALLPAPERS.find((option) => option.id === wallpaper),
+    [wallpaper],
+  );
+  const intensityMeta = useMemo(
+    () =>
+      WALLPAPER_INTENSITY_OPTIONS.find(
+        (option) => option.id === wallpaperIntensity,
+      ) ?? WALLPAPER_INTENSITY_OPTIONS[1],
+    [wallpaperIntensity],
+  );
+
+  const configuredCount =
+    system?.collections.filter((entry) => entry.configured).length ?? 0;
+
+  const version = system?.build.version || BUILD_INFO.version;
+  const environment = system?.build.environment || BUILD_INFO.environment;
+  const commit = system?.build.commit || BUILD_INFO.commit;
+
+  function resetDevice() {
+    if (typeof document === "undefined") return;
+    for (const cookie of COOKIE_TABLE) {
+      document.cookie = `${encodeURIComponent(cookie.name)}=; path=/; max-age=0; SameSite=Lax`;
+    }
+    try {
+      window.localStorage.clear();
+    } catch {
+      // Optional mirror only.
+    }
+    window.location.reload();
+  }
+
+  return (
+    <>
+      <section className="settings-section" aria-labelledby="about-heading">
+        <h2 id="about-heading" className="settings-heading">
+          About this workspace
+        </h2>
+        <p className="settings-description">
+          A personal portfolio presented as a persistent desktop workspace.
+          Nothing here is tracked; preferences live in this browser only.
+        </p>
+
+        <div className="settings-card settings-about-hero">
+          <div className="settings-about-mark" aria-hidden="true">
+            PM
+          </div>
+          <div>
+            <div className="settings-about-name">Prasad Madhuranga</div>
+            <div className="settings-about-line">
+              Mechanical + Mechatronics Engineer
+            </div>
+            <div className="settings-about-line">
+              Kandy, Sri Lanka · UTC +05:30
+            </div>
+            <span className="settings-about-status">
+              <span aria-hidden="true" />
+              Open to collaboration
+            </span>
+          </div>
+        </div>
+
+        <div className="settings-group">
+          <div className="settings-group-header">
+            <p className="settings-group-title">Build</p>
+            <span className="settings-group-count">{version}</span>
+          </div>
+          <div className="settings-card">
+            <div className="settings-list-row">
+              <span className="settings-list-key">Version</span>
+              <span className="settings-list-value">PM Web v3 · {version}</span>
+            </div>
+            <div className="settings-list-row">
+              <span className="settings-list-key">Revision</span>
+              <span className="settings-list-value">
+                {commit ? (
+                  <span className="mono">{commit}</span>
+                ) : (
+                  "Not stamped in this build"
+                )}
+              </span>
+            </div>
+            <div className="settings-list-row">
+              <span className="settings-list-key">Environment</span>
+              <span className="settings-list-value">{environment}</span>
+            </div>
+            <div className="settings-list-row">
+              <span className="settings-list-key">Interface</span>
+              <span className="settings-list-value">
+                Animate UI · Coss UI · Base UI
+              </span>
+            </div>
+            <div className="settings-list-row">
+              <span className="settings-list-key">Preferences</span>
+              <span className="settings-list-value">
+                Saved in browser cookies
+              </span>
+            </div>
+          </div>
+          <p className="settings-about-note">
+            {STACK_INFO.map((entry) => `${entry.label} ${entry.value}`).join(
+              " · ",
+            )}
+          </p>
+        </div>
+
+        <div className="settings-group">
+          <div className="settings-group-header">
+            <p className="settings-group-title">Data sources</p>
+            <span className="settings-group-count">
+              {system
+                ? `${configuredCount} of ${system.collections.length} connected`
+                : failed
+                  ? "unavailable"
+                  : "checking…"}
+            </span>
+          </div>
+          <div className="settings-card">
+            {(system?.collections ?? []).map((collection) => (
+              <div className="settings-list-row" key={collection.type}>
+                <span className="settings-list-key">
+                  <HugeiconsIcon
+                    icon={Folder01Icon}
+                    strokeWidth={2}
+                    size={13}
+                    aria-hidden
+                  />{" "}
+                  {COLLECTION_LABELS[collection.type] ?? collection.type}
+                </span>
+                <span className="settings-list-value">
+                  <StatePill
+                    on={collection.configured}
+                    labels={["Published", "Not connected"]}
+                  />
+                </span>
+              </div>
+            ))}
+            {!system && !failed ? (
+              <div className="settings-list-row">
+                <span className="settings-list-key">
+                  Reading configuration…
+                </span>
+              </div>
+            ) : null}
+            {failed ? (
+              <div className="settings-list-row">
+                <span className="settings-list-key">
+                  <HugeiconsIcon
+                    icon={Alert02Icon}
+                    strokeWidth={2}
+                    size={13}
+                    aria-hidden
+                  />{" "}
+                  System details are unavailable in this environment.
+                </span>
+              </div>
+            ) : null}
+            {system ? (
+              <>
+                <div className="settings-list-row">
+                  <span className="settings-list-key">Content index</span>
+                  <span className="settings-list-value">
+                    <StatePill
+                      on={system.integrations.notion}
+                      labels={["Configured", "Not configured"]}
+                    />
+                  </span>
+                </div>
+                <div className="settings-list-row">
+                  <span className="settings-list-key">Spam protection</span>
+                  <span className="settings-list-value">
+                    <StatePill
+                      on={system.integrations.turnstile}
+                      labels={["Configured", "Not configured"]}
+                    />
+                  </span>
+                </div>
+                <div className="settings-list-row">
+                  <span className="settings-list-key">Message delivery</span>
+                  <span className="settings-list-value">
+                    <StatePill
+                      on={system.integrations.telegram}
+                      labels={["Configured", "Not configured"]}
+                    />
+                  </span>
+                </div>
+              </>
+            ) : null}
+          </div>
+          <p className="settings-about-note">
+            Only presence is reported — the route never returns a token, an id
+            or any part of a value.
+          </p>
+        </div>
+
+        <div className="settings-group">
+          <p className="settings-group-title">This device</p>
+          <dl className="settings-about-tiles">
+            <div className="settings-about-tile">
+              <dt>Theme</dt>
+              <dd>{theme === "dark" ? "Dark" : "Light"}</dd>
+            </div>
+            <div className="settings-about-tile">
+              <dt>Wallpaper</dt>
+              <dd>{wallpaperMeta?.label ?? "Custom"}</dd>
+            </div>
+            <div className="settings-about-tile">
+              <dt>Visibility</dt>
+              <dd>{intensityMeta.label}</dd>
+            </div>
+            <div className="settings-about-tile">
+              <dt>Slideshow</dt>
+              <dd>{slideshowEnabled ? `${slideshowInterval}s` : "Off"}</dd>
+            </div>
+          </dl>
+          <div className="settings-card" style={{ marginTop: 10 }}>
+            <div className="settings-list-row">
+              <span className="settings-list-key">
+                <HugeiconsIcon
+                  icon={UserAccountIcon}
+                  strokeWidth={2}
+                  size={13}
+                  aria-hidden
+                />{" "}
+                Comment identity
+              </span>
+              <span className="settings-list-value">
+                {commenter ?? "Not set"}
+              </span>
+            </div>
+            <div className="settings-list-row">
+              <span className="settings-list-key">
+                <HugeiconsIcon
+                  icon={Link01Icon}
+                  strokeWidth={2}
+                  size={13}
+                  aria-hidden
+                />{" "}
+                Storage
+              </span>
+              <span className="settings-list-value">Cookies only</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="settings-group">
+          <p className="settings-group-title">Keyboard</p>
+          <div className="settings-card">
+            {KEYBOARD_GROUPS.map((group) => (
+              <div key={group.title}>
+                <div className="settings-list-row">
+                  <span className="settings-list-key">{group.title}</span>
+                </div>
+                {group.rows.map((row) => (
+                  <div className="settings-list-row" key={row.label}>
+                    <span className="settings-list-key">{row.label}</span>
+                    <span className="settings-list-value">
+                      <span
+                        style={{
+                          display: "inline-flex",
+                          gap: 3,
+                          alignItems: "center",
+                        }}
+                      >
+                        {row.keys.map((key) => (
+                          <kbd className="settings-kbd" key={key}>
+                            {key}
+                          </kbd>
+                        ))}
+                      </span>
+                    </span>
+                  </div>
+                ))}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="settings-group">
+          <p className="settings-group-title">Privacy &amp; storage</p>
+          <div className="settings-card">
+            {COOKIE_TABLE.map((row) => (
+              <div className="settings-list-row" key={row.name}>
+                <span className="settings-list-key mono">{row.name}</span>
+                <span className="settings-list-value">{row.purpose}</span>
+              </div>
+            ))}
+          </div>
+          <p className="settings-about-note">
+            Comments, when enabled, are stored alongside the entry they belong
+            to — there is no separate account and no profile to maintain.
+          </p>
+          <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
+            <button
+              type="button"
+              className="settings-danger-btn"
+              onClick={resetDevice}
+            >
+              <HugeiconsIcon icon={Delete02Icon} strokeWidth={2} size={13} />
+              Reset preferences on this device
+            </button>
+          </div>
+        </div>
+
+        <div className="settings-group">
+          <p className="settings-group-title">Credits &amp; licences</p>
+          <div className="settings-card">
+            <div className="settings-list-row">
+              <span className="settings-list-key">Interface</span>
+              <span className="settings-list-value">
+                Animate UI · Coss UI · Base UI
+              </span>
+            </div>
+            <div className="settings-list-row">
+              <span className="settings-list-key">Icons</span>
+              <span className="settings-list-value">Hugeicons</span>
+            </div>
+            <div className="settings-list-row">
+              <span className="settings-list-key">Type</span>
+              <span className="settings-list-value">Outfit (SIL OFL)</span>
+            </div>
+            <div className="settings-list-row">
+              <span className="settings-list-key">Source</span>
+              <a
+                className="settings-list-value"
+                href="https://github.com/prasad-kmd/PM-Web_V3"
+                target="_blank"
+                rel="noreferrer"
+                style={{ display: "inline-flex", alignItems: "center", gap: 4 }}
+              >
+                github.com/prasad-kmd/PM-Web_V3
+                <HugeiconsIcon
+                  icon={ArrowUpRight01Icon}
+                  strokeWidth={2}
+                  size={12}
+                  aria-hidden
+                />
+              </a>
+            </div>
+          </div>
+          <p className="settings-about-note">
+            Content and code are published under CC BY-NC-ND 4.0 unless noted in
+            the third-party notices.
+          </p>
+        </div>
+      </section>
+    </>
+  );
+}
 
 export function SettingsApp() {
   const {
@@ -115,6 +595,9 @@ export function SettingsApp() {
             ))}
           </TabsList>
         </TabsHighlight>
+        <p className="settings-sidebar-label" style={{ marginTop: 14 }}>
+          Preferences are saved after each change.
+        </p>
       </aside>
 
       <TabsContents className="settings-tabs-contents">
@@ -322,51 +805,7 @@ export function SettingsApp() {
         </TabsContent>
 
         <TabsContent value="about" className="settings-tab-content">
-          <section className="settings-section" aria-labelledby="about-heading">
-            <h2 id="about-heading" className="settings-heading">
-              About this workspace
-            </h2>
-            <p className="settings-description">
-              A personal portfolio presented as a persistent desktop workspace.
-            </p>
-
-            <div className="settings-card settings-about">
-              <div className="settings-about-mark">PM</div>
-              <div>
-                <strong className="settings-option-title">
-                  Prasad Madhuranga
-                </strong>
-                <span className="settings-option-description">
-                  Mechanical + Mechatronics Engineer
-                </span>
-                <span className="settings-option-description">
-                  Kandy, Sri Lanka · UTC +05:30
-                </span>
-              </div>
-            </div>
-
-            <div className="settings-group">
-              <p className="settings-group-title">System details</p>
-              <div className="settings-card">
-                <div className="settings-spec-row">
-                  <span className="settings-spec-label">Environment</span>
-                  <span>PM Web v3 · Desktop Workspace</span>
-                </div>
-                <div className="settings-spec-row">
-                  <span className="settings-spec-label">Framework</span>
-                  <span>Next.js 16</span>
-                </div>
-                <div className="settings-spec-row">
-                  <span className="settings-spec-label">Interface</span>
-                  <span>Animate UI + Coss UI + Base UI</span>
-                </div>
-                <div className="settings-spec-row">
-                  <span className="settings-spec-label">Preferences</span>
-                  <span>Saved in browser cookies</span>
-                </div>
-              </div>
-            </div>
-          </section>
+          <AboutTab />
         </TabsContent>
       </TabsContents>
     </Tabs>

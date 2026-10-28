@@ -872,6 +872,14 @@ input:focus-visible {
   overscroll-behavior: contain;
 }
 
+/* Settings owns its layout: its panes scroll, the window body does not. */
+.window-body:has(> .settings-app),
+.route-content-surface:has(.settings-app),
+.window-body:has(> .resume-app),
+.route-content-surface:has(.resume-app) {
+  overflow: hidden;
+}
+
 .resize-handle {
   position: absolute;
   z-index: 10;
@@ -936,29 +944,49 @@ input:focus-visible {
 }
 
 /* App interiors */
+
+/* Settings is a two-pane application pinned to the window.
+   Overview of the fix (v4 / PR-1):
+   - `.window-body` used to be the scroller, so the app sidebar scrolled away
+     with the tab content. The app is now `height: 100%` and the window body
+     stops scrolling while Settings is mounted (`overflow: hidden`), which
+     makes each pane its own scroll container.
+   - `.settings-tabs-contents` carries an inline animated height from
+     Animate UI's TabsContents; `height: 100% !important` overrides it so the
+     pane can fill the window. The x-slide between panels and the highlight
+     glide are untouched.
+   - Content is centred with a bounded reading width instead of hugging the
+     left edge. */
 .settings-app {
   display: flex;
-  min-height: 100%;
+  height: 100%;
+  min-height: 0;
   flex-direction: column;
 }
 
 .settings-app > .settings-layout {
   min-height: 0;
   flex: 1;
+  overflow: hidden;
 }
 
 .settings-layout {
   display: flex;
-  min-height: 100%;
+  height: 100%;
+  min-height: 0;
   background: var(--card);
 }
 
 .settings-sidebar {
   width: 184px;
   flex: 0 0 auto;
+  align-self: stretch;
+  overflow-y: auto;
+  overscroll-behavior: contain;
   border-right: 1px solid var(--border);
   background: var(--background);
   padding: 14px 10px;
+  scrollbar-width: thin;
 }
 
 .settings-sidebar-label {
@@ -1008,15 +1036,37 @@ input:focus-visible {
 .settings-tabs-contents {
   min-width: 0;
   flex: 1;
-  align-self: flex-start;
+  align-self: stretch;
+  height: 100% !important;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* TabsContents renders a sliding flex row and one wrapper per panel, all with
+   auto height. Giving every level a definite height is what turns the panel
+   itself into the scroll container. */
+.settings-tabs-contents > div,
+.settings-tabs-contents > div > div {
+  height: 100% !important;
+  min-height: 0;
 }
 
 .settings-tab-content {
+  display: grid;
+  height: 100% !important;
+  min-height: 0;
+  align-content: start;
+  justify-items: center;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  overscroll-behavior: contain;
   padding: 26px 28px 32px;
+  scrollbar-width: thin;
 }
 
 .settings-section {
-  max-width: 560px;
+  width: 100%;
+  max-width: 660px;
 }
 
 .settings-heading {
@@ -1173,26 +1223,6 @@ input:focus-visible {
   color: color-mix(in oklab, var(--accent-foreground) 64%, transparent);
 }
 
-.settings-about {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 14px;
-}
-
-.settings-about-mark {
-  display: grid;
-  width: 40px;
-  height: 40px;
-  place-items: center;
-  border-radius: 8px;
-  background: var(--primary);
-  color: var(--primary-foreground);
-  font-size: 13px;
-  font-weight: 700;
-  letter-spacing: -0.04em;
-}
-
 .settings-spec-row {
   display: flex;
   justify-content: space-between;
@@ -1210,40 +1240,394 @@ input:focus-visible {
   color: var(--muted-foreground);
 }
 
-/* Resume app — profile, stats, projects, experience, and details in a portfolio layout. */
+/* Settings → About: identity, system, data sources, this device, keyboard,
+   privacy and credits. Cards follow the same 10px / hairline / semantic rules
+   as the rest of the workspace. */
+.settings-about-hero {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px;
+}
+
+.settings-about-mark {
+  display: grid;
+  width: 48px;
+  height: 48px;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 10px;
+  background: var(--primary);
+  color: var(--primary-foreground);
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -0.04em;
+}
+
+.settings-about-name {
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.settings-about-line {
+  margin-top: 2px;
+  color: var(--muted-foreground);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.settings-about-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 7px;
+  color: var(--muted-foreground);
+  font-size: 11.5px;
+}
+
+.settings-about-status > span {
+  width: 6px;
+  height: 6px;
+  flex: 0 0 auto;
+  border-radius: 999px;
+  background: var(--foreground);
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--foreground) 14%, transparent);
+}
+
+.settings-about-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.settings-about-tiles {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--border);
+}
+
+.settings-about-tile {
+  background: var(--card);
+  padding: 10px 12px;
+}
+
+.settings-about-tile dt {
+  margin: 0;
+  color: var(--muted-foreground);
+  font-size: 10.5px;
+}
+
+.settings-about-tile dd {
+  margin: 3px 0 0;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  font-variant-numeric: tabular-nums;
+}
+
+.settings-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.settings-list-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-bottom: 1px solid var(--border);
+  font-size: 12px;
+  padding: 9px 12px;
+}
+
+.settings-list-row:last-child {
+  border-bottom: 0;
+}
+
+.settings-list-row .settings-list-key {
+  display: inline-flex;
+  min-width: 0;
+  align-items: center;
+  gap: 6px;
+  color: var(--muted-foreground);
+}
+
+.settings-list-row .settings-list-value {
+  margin-left: auto;
+  overflow: hidden;
+  font-weight: 500;
+  text-align: right;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.settings-state {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.settings-state::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--muted-foreground);
+}
+
+.settings-state.is-on::before {
+  background: var(--foreground);
+}
+
+.settings-state.is-off::before {
+  background: transparent;
+  border: 1px solid var(--muted-foreground);
+}
+
+.settings-kbd {
+  display: inline-flex;
+  min-width: 20px;
+  height: 20px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  padding: 0 5px;
+}
+
+.settings-about-note {
+  margin: 8px 0 0;
+  color: var(--muted-foreground);
+  font-size: 11.5px;
+  line-height: 1.5;
+}
+
+.settings-danger-btn {
+  display: inline-flex;
+  height: 30px;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid color-mix(in oklab, var(--destructive) 40%, var(--border));
+  border-radius: 6px;
+  background: transparent;
+  color: var(--destructive);
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 0 10px;
+  transition: background-color 140ms ease;
+}
+
+.settings-danger-btn:hover {
+  background: color-mix(in oklab, var(--destructive) 10%, transparent);
+}
+
+@media (max-width: 640px) {
+  .settings-about-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .settings-about-tiles {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Beam card — v2's pointer gradient border, re-cut in monochrome.
+
+   v2 painted the palette on a masked 2px ring and kept the card face opaque on
+   top, so the light only ever touched the edge. This keeps that structure:
+   a single masked ring above the card, no tinted wash inside it, and the angle
+   driven by the pointer through a short rAF lerp (0.22/frame).
+
+   `--beam-angle` is a registered custom property so the one-off arrival sweep
+   can interpolate it; the pointer path writes it directly each frame.
+--------------------------------------------------------------------------- */
+@property --beam-angle {
+  syntax: "<angle>";
+  /* Must inherit: the angle is set on the card and read by its ::before. */
+  inherits: true;
+  initial-value: 160deg;
+}
+
+.beam {
+  --beam-angle: 160deg;
+  position: relative;
+  isolation: isolate;
+  border-radius: 10px;
+}
+
+.beam::before {
+  /* Ring, not a wash: the mask keeps only the 2px border band, so nothing is
+     ever painted over the card face. */
+  position: absolute;
+  z-index: 2;
+  inset: -1px;
+  padding: 2px;
+  border-radius: inherit;
+  /* The band is centred on 0deg of the gradient (stops wrap past 360), so the
+     angle the component writes lands exactly opposite the pointer. */
+  background: conic-gradient(
+    from var(--beam-angle),
+    transparent 296deg,
+    color-mix(in oklab, var(--foreground) 40%, transparent) 336deg,
+    color-mix(in oklab, var(--foreground) 90%, transparent) 350deg,
+    var(--foreground) 360deg,
+    var(--foreground) 360deg,
+    color-mix(in oklab, var(--foreground) 90%, transparent) 370deg,
+    color-mix(in oklab, var(--foreground) 40%, transparent) 384deg,
+    transparent 40deg
+  );
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  mask-composite: exclude;
+  content: "";
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 220ms ease;
+}
+
+.beam[data-lit]::before {
+  opacity: 1;
+}
+
+/* Arrival: the band travels once around the card, then leaves. */
+@keyframes beam-turn {
+  from {
+    --beam-angle: -60deg;
+  }
+  to {
+    --beam-angle: 420deg;
+  }
+}
+
+@keyframes beam-flash {
+  0% {
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  78% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+.beam[data-intro]::before {
+  animation:
+    beam-turn 1700ms cubic-bezier(0.22, 0.61, 0.36, 1) both,
+    beam-flash 1700ms cubic-bezier(0.22, 0.61, 0.36, 1) both;
+}
+
+/* Browsers without mask-composite get a still hairline instead of a mask bug. */
+@supports not (mask-composite: exclude) {
+  .beam::before {
+    background: none;
+    -webkit-mask: none;
+    mask: none;
+    box-shadow: inset 0 0 0 1px
+      color-mix(in oklab, var(--foreground) 35%, var(--border));
+    opacity: 0.6;
+  }
+  .beam[data-intro]::before {
+    animation: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .beam::before {
+    transition: none;
+  }
+  .beam[data-intro]::before {
+    animation: none;
+    opacity: 0.5;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Resume app (R1 · Beacon)
+   One scroll container (`.resume-scroll`), a sticky right rail, and a reading
+   column that never exceeds 720px. The window body is locked by the `:has()`
+   rule above, so the app chrome does not move with the paper.
+--------------------------------------------------------------------------- */
 .resume-app {
-  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
   background: var(--card);
 }
 
-.resume-content {
-  width: 100%;
-  max-width: 1180px;
-  margin: 0 auto;
-  padding: 24px 28px 32px;
+.resume-scroll {
+  min-height: 0;
+  flex: 1;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scroll-padding-top: 18px;
 }
 
+.resume-sheet {
+  width: 100%;
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 20px 26px 34px;
+}
+
+/* --- Hero ---------------------------------------------------------------- */
 .resume-hero {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background:
+    radial-gradient(
+      120% 140% at 12% 0%,
+      color-mix(in oklab, var(--foreground) 5%, transparent) 0%,
+      transparent 62%
+    ),
+    var(--background);
+  padding: 22px 24px 20px;
+}
+
+.resume-hero-top {
   display: grid;
-  grid-template-columns: 82px minmax(0, 1fr);
-  align-items: start;
-  gap: 20px;
-  border-bottom: 1px solid var(--border);
-  padding-bottom: 22px;
+  grid-template-columns: 76px minmax(0, 1fr);
+  align-items: center;
+  gap: 18px;
 }
 
 .resume-monogram {
   display: grid;
-  width: 82px;
-  height: 82px;
+  width: 76px;
+  height: 76px;
   place-items: center;
   border: 1px solid var(--border);
   border-radius: 50%;
-  background: var(--background);
+  background: var(--card);
   color: var(--foreground);
-  font-size: 22px;
+  font-size: 21px;
   font-weight: 600;
   letter-spacing: -0.05em;
+  box-shadow: inset 0 1px 0 color-mix(in oklab, #fff 8%, transparent);
 }
 
 .resume-identity {
@@ -1256,75 +1640,119 @@ input:focus-visible {
   color: var(--muted-foreground);
   font-size: 10px;
   font-weight: 500;
-  letter-spacing: 0.075em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 
 .resume-identity h1 {
   margin: 4px 0 0;
-  font-size: clamp(25px, 4vw, 34px);
+  font-size: clamp(24px, 3.4vw, 33px);
   font-weight: 600;
   letter-spacing: -0.045em;
-  line-height: 1.08;
+  line-height: 1.06;
   text-wrap: balance;
 }
 
 .resume-status {
-  margin: 6px 0 0;
+  max-width: 54ch;
+  margin: 5px 0 0;
   color: var(--muted-foreground);
-  font-size: 12px;
+  font-size: 11.5px;
+  line-height: 1.45;
 }
 
 .resume-tagline {
-  margin: 10px 0 0;
+  margin: 9px 0 0;
   color: var(--foreground);
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 500;
   letter-spacing: -0.02em;
+  line-height: 1.3;
+}
+
+.resume-location {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin: 9px 0 0;
+  color: var(--muted-foreground);
+  font-size: 11px;
+}
+
+.resume-sep {
+  width: 1px;
+  height: 10px;
+  background: var(--border);
+}
+
+.resume-availability {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--foreground);
+  font-weight: 500;
+}
+
+.resume-availability > span:first-child {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--foreground);
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--foreground) 12%, transparent);
 }
 
 .resume-summary {
-  max-width: 720px;
-  margin: 7px 0 0;
+  max-width: 72ch;
+  margin: 16px 0 0;
   color: var(--muted-foreground);
   font-size: 12px;
-  line-height: 1.6;
+  line-height: 1.62;
 }
 
 .resume-contact-links {
   display: flex;
   flex-wrap: wrap;
-  gap: 7px 15px;
-  margin-top: 13px;
+  gap: 6px;
+  margin-top: 14px;
 }
 
-.resume-contact-links a,
-.resume-footer > a {
+.resume-contact-links a {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: var(--card);
   color: var(--foreground);
   font-size: 11px;
   font-weight: 500;
+  padding: 5px 9px;
   text-decoration: none;
+  transition:
+    background-color 140ms ease,
+    border-color 140ms ease,
+    transform 140ms ease;
 }
 
-.resume-contact-links a:hover,
-.resume-footer > a:hover {
-  text-decoration: underline;
-  text-underline-offset: 3px;
+.resume-contact-links a:hover {
+  border-color: color-mix(in oklab, var(--foreground) 26%, var(--border));
+  background: var(--accent);
 }
 
 .resume-stat-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  margin: 20px 0 0;
+  margin: 18px 0 0;
   border: 1px solid var(--border);
-  border-radius: 10px;
-  background: var(--background);
+  border-radius: 9px;
+  background: var(--card);
   overflow: hidden;
 }
 
 .resume-stat {
   min-width: 0;
-  padding: 12px 15px;
+  padding: 10px 14px;
 }
 
 .resume-stat + .resume-stat {
@@ -1333,24 +1761,27 @@ input:focus-visible {
 
 .resume-stat dt {
   color: var(--muted-foreground);
-  font-size: 10px;
+  font-size: 9.5px;
+  letter-spacing: 0.03em;
   line-height: 1.35;
+  text-transform: uppercase;
 }
 
 .resume-stat dd {
-  margin: 4px 0 0;
-  font-size: 21px;
+  margin: 3px 0 0;
+  font-size: 20px;
   font-weight: 500;
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.04em;
 }
 
+/* --- Columns ------------------------------------------------------------- */
 .resume-columns {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(230px, 0.62fr);
+  grid-template-columns: minmax(0, 1fr) minmax(248px, 0.5fr);
   align-items: start;
-  gap: 28px;
-  margin-top: 30px;
+  gap: 26px;
+  margin-top: 26px;
 }
 
 .resume-primary-column,
@@ -1358,8 +1789,14 @@ input:focus-visible {
   min-width: 0;
 }
 
+.resume-aside {
+  position: sticky;
+  top: 0;
+  align-self: start;
+}
+
 .resume-section {
-  margin: 0 0 27px;
+  margin-bottom: 26px;
 }
 
 .resume-section-heading {
@@ -1367,15 +1804,16 @@ input:focus-visible {
   align-items: end;
   justify-content: space-between;
   gap: 12px;
-  margin-bottom: 12px;
+  margin-bottom: 8px;
 }
 
 .resume-section h2,
+.resume-aside-section h2,
 .resume-footer h2 {
   margin: 4px 0 0;
-  font-size: 19px;
+  font-size: 18px;
   font-weight: 600;
-  letter-spacing: -0.025em;
+  letter-spacing: -0.028em;
   line-height: 1.2;
 }
 
@@ -1386,56 +1824,216 @@ input:focus-visible {
   font-variant-numeric: tabular-nums;
 }
 
-.resume-project-empty {
+.resume-section-source {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 11px;
+  color: var(--muted-foreground);
+  font-size: 10.5px;
+  line-height: 1.4;
+}
+
+.resume-spin {
+  animation: resume-spin 1200ms linear infinite;
+}
+
+@keyframes resume-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .resume-spin {
+    animation: none;
+  }
+}
+
+/* --- Projects (feed-driven) ---------------------------------------------- */
+.resume-projects {
+  display: grid;
+  gap: 8px;
+}
+
+.resume-project {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
   border: 1px solid var(--border);
   border-radius: 10px;
   background: var(--background);
-  padding: 17px 18px;
+  padding: 13px 15px;
+  transition: background-color 160ms ease;
 }
 
-.resume-project-empty p {
+.resume-project:hover {
+  background: color-mix(in oklab, var(--accent) 55%, var(--background));
+}
+
+.resume-project-main {
+  min-width: 0;
+}
+
+.resume-project h3 {
   margin: 0;
-  color: var(--foreground);
-  font-size: 12px;
-  font-weight: 500;
+  font-size: 12.5px;
+  font-weight: 550;
+  letter-spacing: -0.012em;
+  line-height: 1.35;
 }
 
-.resume-project-empty span {
-  display: block;
-  max-width: 560px;
-  margin-top: 5px;
+.resume-project h3 a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.resume-project h3 a:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.resume-project-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 5px 9px;
+  margin: 6px 0 0;
+}
+
+.resume-chip {
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  background: var(--card);
+  color: var(--foreground);
+  font-size: 9.5px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  padding: 2px 6px;
+  text-transform: uppercase;
+}
+
+.resume-project-time {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+}
+
+.resume-project-summary {
+  max-width: 66ch;
+  margin: 7px 0 0;
   color: var(--muted-foreground);
   font-size: 11px;
   line-height: 1.5;
 }
 
+.resume-project-open {
+  display: grid;
+  flex: 0 0 auto;
+  width: 26px;
+  height: 26px;
+  place-items: center;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: var(--card);
+  color: var(--muted-foreground);
+  transition:
+    color 140ms ease,
+    border-color 140ms ease,
+    background-color 140ms ease;
+}
+
+.resume-project:hover .resume-project-open {
+  border-color: color-mix(in oklab, var(--foreground) 24%, var(--border));
+  color: var(--foreground);
+}
+
+.resume-project.is-skeleton {
+  display: grid;
+  gap: 8px;
+}
+
+.resume-skeleton-line {
+  display: block;
+  height: 9px;
+  border-radius: 5px;
+  background: linear-gradient(
+    90deg,
+    var(--muted) 0%,
+    color-mix(in oklab, var(--muted) 55%, var(--border)) 50%,
+    var(--muted) 100%
+  );
+  background-size: 220% 100%;
+  animation: resume-shimmer 1400ms ease-in-out infinite;
+}
+
+@keyframes resume-shimmer {
+  to {
+    background-position: -220% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .resume-skeleton-line {
+    animation: none;
+  }
+}
+
+.resume-more {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 10px;
+  color: var(--foreground);
+  font-size: 11px;
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.resume-more:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* --- Experience ---------------------------------------------------------- */
 .resume-timeline {
   display: grid;
-  gap: 20px;
+  gap: 14px;
   border-left: 1px solid var(--border);
-  margin: 14px 0 0 5px;
-  padding-left: 19px;
+  margin: 12px 0 0 5px;
+  padding-left: 18px;
 }
 
 .resume-experience {
   position: relative;
 }
 
-.resume-experience::before {
+.resume-experience::after {
   position: absolute;
-  top: 3px;
-  left: -24px;
-  width: 8px;
-  height: 8px;
+  top: 4px;
+  left: -23px;
+  z-index: 1;
+  width: 7px;
+  height: 7px;
   border: 1px solid var(--muted-foreground);
   border-radius: 50%;
   background: var(--card);
   content: "";
 }
 
-.resume-experience > time {
-  display: block;
-  margin-bottom: 4px;
+.resume-experience-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 10px;
+}
+
+.resume-experience-head time {
   color: var(--muted-foreground);
   font-family: var(--font-mono);
   font-size: 10px;
@@ -1445,48 +2043,54 @@ input:focus-visible {
 .resume-experience h3,
 .resume-education-list h3 {
   margin: 0;
-  font-size: 13px;
+  font-size: 12.5px;
   font-weight: 550;
   line-height: 1.35;
 }
 
 .resume-experience-org {
-  margin: 3px 0 0;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin: 4px 0 0;
   color: var(--muted-foreground);
   font-size: 11px;
 }
 
 .resume-experience-summary {
+  max-width: 68ch;
   margin: 6px 0 0;
   color: var(--foreground);
-  font-size: 11px;
+  font-size: 11.5px;
   line-height: 1.5;
 }
 
 .resume-experience ul {
   display: grid;
-  gap: 4px;
-  margin: 7px 0 0;
-  padding-left: 16px;
+  gap: 3px;
+  max-width: 68ch;
+  margin: 6px 0 0;
+  padding-left: 15px;
   color: var(--muted-foreground);
   font-size: 11px;
-  line-height: 1.45;
+  line-height: 1.5;
 }
 
+/* --- Aside --------------------------------------------------------------- */
 .resume-aside-section {
   border: 1px solid var(--border);
   border-radius: 10px;
   background: var(--background);
-  margin-bottom: 13px;
-  padding: 14px;
+  margin-bottom: 10px;
+  padding: 13px 14px;
 }
 
 .resume-aside-section h2 {
-  font-size: 15px;
+  font-size: 14px;
 }
 
 .resume-details-list {
-  margin: 10px 0 0;
+  margin: 9px 0 0;
 }
 
 .resume-details-list div,
@@ -1495,12 +2099,13 @@ input:focus-visible {
   justify-content: space-between;
   gap: 12px;
   border-bottom: 1px solid var(--border);
-  padding: 7px 0;
+  padding: 6px 0;
 }
 
 .resume-details-list div:last-child,
 .resume-language-list li:last-child {
   border-bottom: 0;
+  padding-bottom: 0;
 }
 
 .resume-details-list dt,
@@ -1520,20 +2125,21 @@ input:focus-visible {
 
 .resume-education-list {
   display: grid;
-  gap: 12px;
-  margin: 10px 0 0;
+  gap: 10px;
+  margin: 9px 0 0;
   padding: 0;
   list-style: none;
 }
 
 .resume-education-list li + li {
   border-top: 1px solid var(--border);
-  padding-top: 11px;
+  padding-top: 10px;
 }
 
 .resume-education-list h3 {
   font-size: 11px;
 }
+
 .resume-education-list p,
 .resume-education-list span,
 .resume-education-list small {
@@ -1544,38 +2150,145 @@ input:focus-visible {
   line-height: 1.45;
 }
 
+.resume-education-list small {
+  font-style: normal;
+  opacity: 0.85;
+}
+
 .resume-interest-list {
   display: grid;
-  gap: 6px;
-  margin: 10px 0 0;
-  padding-left: 16px;
+  gap: 5px;
+  margin: 9px 0 0;
+  padding-left: 14px;
   color: var(--muted-foreground);
-  font-size: 10px;
+  font-size: 10.5px;
   line-height: 1.45;
 }
 
 .resume-language-list {
-  margin: 7px 0 0;
+  margin: 6px 0 0;
   padding: 0;
   list-style: none;
 }
 
+.resume-print {
+  display: inline-flex;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--card);
+  color: var(--foreground);
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 500;
+  padding: 7px 10px;
+  text-decoration: none;
+  transition: background-color 140ms ease;
+}
+
+.resume-print:hover {
+  background: var(--accent);
+}
+
+/* --- Footer -------------------------------------------------------------- */
 .resume-footer {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  border-top: 1px solid var(--border);
+  border: 1px solid var(--border);
+  border-radius: 10px;
   background: var(--background);
-  margin-top: 6px;
-  padding: 17px 18px;
+  margin-top: 4px;
+  padding: 16px 18px;
 }
 
 .resume-footer h2 {
   font-size: 16px;
 }
+
 .resume-footer > a {
+  display: inline-flex;
   flex: 0 0 auto;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--card);
+  color: var(--foreground);
+  font-size: 11px;
+  font-weight: 500;
+  padding: 7px 11px;
+  text-decoration: none;
+  transition: background-color 140ms ease;
+}
+
+.resume-footer > a:hover {
+  background: var(--accent);
+}
+
+/* --- Narrow container ---------------------------------------------------- */
+@container window-body (max-width: 720px) {
+  .resume-sheet {
+    padding: 16px 16px 28px;
+  }
+  .resume-columns {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 8px;
+  }
+  .resume-aside {
+    position: static;
+  }
+  .resume-hero-top {
+    grid-template-columns: 56px minmax(0, 1fr);
+    gap: 13px;
+  }
+  .resume-monogram {
+    width: 56px;
+    height: 56px;
+    font-size: 16px;
+  }
+  .resume-stat-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .resume-stat:nth-child(3) {
+    border-left: 0;
+  }
+  .resume-stat:nth-child(n + 3) {
+    border-top: 1px solid var(--border);
+  }
+  .resume-footer {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+@container window-body (max-width: 460px) {
+  .resume-section h2 {
+    font-size: 16px;
+  }
+  .resume-stat-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .resume-stat + .resume-stat {
+    border-left: 0;
+    border-top: 1px solid var(--border);
+  }
+}
+
+@media print {
+  .resume-scroll {
+    overflow: visible;
+  }
+  .resume-aside {
+    position: static;
+  }
+  .resume-print {
+    display: none;
+  }
 }
 
 .wallpaper-options {
@@ -1750,8 +2463,11 @@ input:focus-visible {
   .settings-sidebar {
     display: flex;
     width: 100%;
+    flex: 0 0 auto;
+    align-self: stretch;
     gap: 4px;
     overflow-x: auto;
+    overflow-y: hidden;
     border-right: 0;
     border-bottom: 1px solid var(--border);
     padding: 8px;
@@ -1773,6 +2489,7 @@ input:focus-visible {
   .settings-tabs-contents {
     width: 100%;
     align-self: stretch;
+    height: 100% !important;
   }
 
   .settings-tab-content {
@@ -1787,25 +2504,9 @@ input:focus-visible {
     padding: 12px;
   }
 
-  .resume-content {
-    padding: 18px 20px 24px;
-  }
-
   .resume-columns {
     grid-template-columns: minmax(0, 1fr);
     gap: 2px;
-  }
-
-  .resume-aside {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    align-items: start;
-    gap: 12px;
-  }
-
-  .resume-aside-section {
-    margin-bottom: 0;
-    padding: 12px;
   }
 }
 
@@ -1824,43 +2525,6 @@ input:focus-visible {
     width: 100%;
   }
 
-  .resume-content {
-    padding: 16px 14px 20px;
-  }
-  .resume-hero {
-    grid-template-columns: 52px minmax(0, 1fr);
-    gap: 12px;
-  }
-
-  .resume-monogram {
-    width: 52px;
-    height: 52px;
-    font-size: 14px;
-  }
-
-  .resume-identity h1 {
-    font-size: 22px;
-  }
-  .resume-tagline {
-    font-size: 14px;
-  }
-  .resume-stat-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-  .resume-stat:nth-child(3) {
-    border-top: 1px solid var(--border);
-    border-left: 0;
-  }
-  .resume-stat:nth-child(4) {
-    border-top: 1px solid var(--border);
-  }
-  .resume-aside {
-    grid-template-columns: minmax(0, 1fr);
-  }
-  .resume-footer {
-    align-items: flex-start;
-    flex-direction: column;
-  }
   .wallpaper-options {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }

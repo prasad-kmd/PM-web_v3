@@ -24,6 +24,10 @@ import { collectLinks } from "@/lib/inline-links";
 import { entryOgImagePath } from "@/lib/og/url";
 import { WindowBreadcrumb } from "@/components/system/WindowBreadcrumb";
 import { AiAssistedDialog } from "./AiAssistedDialog";
+import { DiscussionProvider } from "@/components/comments/DiscussionContext";
+import { DiscussionSheet } from "@/components/comments/DiscussionSheet";
+import { DiscussionToolbarButton } from "@/components/comments/DiscussionToolbarButton";
+import { DiscussionTrigger } from "@/components/comments/DiscussionTrigger";
 import { NotionBlocks } from "./NotionBlocks";
 import {
   ReaderBody,
@@ -180,187 +184,208 @@ export async function ContentDetailPage({
     )
     .slice(0, 3);
 
+  // Same fallback as the contact form: Cloudflare's always-passing test key in
+  // development, nothing in production until the real key is set.
+  const turnstileSiteKey =
+    process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY?.trim() ||
+    (process.env.NODE_ENV !== "production" ? "1x00000000000000000000AA" : "");
+
   return (
     <main className="cms-app rdr-app">
       <JsonLd type={type} item={item} />
-      <ReaderProvider
-        headings={headings}
-        nextHref={next ? entryHref(type, next.slug) : null}
-        prevHref={prev ? entryHref(type, prev.slug) : null}
-      >
-        <WindowBreadcrumb
-          items={[
-            { label: meta.label, href: `/${type}` },
-            { label: item.title },
-          ]}
-          actions={<ReaderToolbarActions item={item} />}
-        />
-        <ReaderProgress />
-        <ReaderLayout>
-          <article className="rdr-doc">
-            <header className="rdr-head">
-              <p className="rdr-chip">
-                <span>
-                  {feed ? meta.label : item.categories[0] || meta.singular}
-                </span>
-                {item.aiAssisted ? (
-                  <AiAssistedDialog contentTitle={item.title} />
+      <DiscussionProvider pageId={item.id} title={item.title}>
+        {/* The sheet lives at the top of the app so its sticky layer can pin to
+            the window while the article scrolls underneath it. */}
+        <DiscussionSheet siteKey={turnstileSiteKey} />
+        <ReaderProvider
+          headings={headings}
+          nextHref={next ? entryHref(type, next.slug) : null}
+          prevHref={prev ? entryHref(type, prev.slug) : null}
+        >
+          <WindowBreadcrumb
+            items={[
+              { label: meta.label, href: `/${type}` },
+              { label: item.title },
+            ]}
+            actions={
+              <ReaderToolbarActions
+                item={item}
+                leading={<DiscussionToolbarButton />}
+              />
+            }
+          />
+          <ReaderProgress />
+          <ReaderLayout>
+            <article className="rdr-doc">
+              <header className="rdr-head">
+                <p className="rdr-chip">
+                  <span>
+                    {feed ? meta.label : item.categories[0] || meta.singular}
+                  </span>
+                  {item.aiAssisted ? (
+                    <AiAssistedDialog contentTitle={item.title} />
+                  ) : null}
+                </p>
+                <h1>{item.title}</h1>
+                {item.description ? (
+                  <p className="rdr-deck">{item.description}</p>
                 ) : null}
-              </p>
-              <h1>{item.title}</h1>
-              {item.description ? (
-                <p className="rdr-deck">{item.description}</p>
+                <div className="rdr-meta">
+                  {item.author?.name ? (
+                    <span className="rdr-byline">
+                      {item.author.avatar ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={item.author.avatar} alt="" />
+                      ) : null}
+                      {item.author.name}
+                    </span>
+                  ) : null}
+                  {date && item.date ? (
+                    <span>
+                      <HugeiconsIcon
+                        icon={Calendar03Icon}
+                        size={14}
+                        aria-hidden
+                      />
+                      <time dateTime={item.date}>{date}</time>
+                    </span>
+                  ) : null}
+                  <span>
+                    <HugeiconsIcon icon={Clock01Icon} size={14} aria-hidden />
+                    {readTime} min read
+                  </span>
+                </div>
+              </header>
+              {item.image ? (
+                <figure className="rdr-cover">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={item.image} alt="" />
+                </figure>
+              ) : (
+                /* No cover: the page's share image (same URL as og:image). */
+                <figure className="rdr-cover rdr-cover-og">
+                  <Image
+                    src={entryOgImagePath(item, type)}
+                    alt=""
+                    width={1200}
+                    height={630}
+                    sizes="(max-width: 760px) 100vw, 700px"
+                    preload
+                  />
+                </figure>
+              )}
+              {result.error ? (
+                <div className="cms-notice" role="status">
+                  Some content blocks could not be loaded. Please try again
+                  later.
+                </div>
               ) : null}
-              <div className="rdr-meta">
-                {item.author?.name ? (
-                  <span className="rdr-byline">
+              {result.blocks.length ? (
+                <ReaderBody>
+                  <NotionBlocks
+                    blocks={result.blocks}
+                    type={type}
+                    pageId={item.id}
+                  />
+                </ReaderBody>
+              ) : !result.error ? (
+                <p className="cms-status">
+                  This entry does not have body content yet.
+                </p>
+              ) : null}
+
+              {storyLinks.length ? (
+                <section className="rdr-sources" aria-labelledby="rdr-sources">
+                  <h2 id="rdr-sources">Links in this story</h2>
+                  <ul>
+                    {storyLinks.map((link) => (
+                      <li key={link.href}>
+                        <a
+                          href={link.href}
+                          target="_blank"
+                          rel="noreferrer noopener"
+                        >
+                          <HugeiconsIcon
+                            icon={ArrowUpRight01Icon}
+                            size={14}
+                            aria-hidden
+                          />
+                          <span>
+                            <strong>{link.label}</strong>
+                            {link.host ? <span>{link.host}</span> : null}
+                          </span>
+                        </a>
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              ) : null}
+
+              <DiscussionTrigger />
+
+              <footer className="rdr-end">
+                {topics.length ? (
+                  <ul className="rdr-topics" aria-label="Topics">
+                    {topics.map((topic) => (
+                      <li key={topic}>{topic}</li>
+                    ))}
+                  </ul>
+                ) : null}
+                {item.author ? (
+                  <div className="rdr-author">
                     {item.author.avatar ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img src={item.author.avatar} alt="" />
                     ) : null}
-                    {item.author.name}
-                  </span>
+                    <div>
+                      <strong>{item.author.name}</strong>
+                      {item.author.role ? (
+                        <span>{item.author.role}</span>
+                      ) : null}
+                      {item.author.biography ? (
+                        <p>{item.author.biography}</p>
+                      ) : null}
+                    </div>
+                  </div>
                 ) : null}
-                {date && item.date ? (
-                  <span>
+                {item.aiAssisted ? (
+                  <AiAssistedDialog contentTitle={item.title} variant="note" />
+                ) : null}
+                {next ? (
+                  <Link className="rdr-next" href={entryHref(type, next.slug)}>
+                    <span className="rdr-next-label">Next in {meta.label}</span>
+                    <strong>{next.title}</strong>
                     <HugeiconsIcon
-                      icon={Calendar03Icon}
-                      size={14}
+                      icon={ArrowRight01Icon}
+                      size={16}
                       aria-hidden
                     />
-                    <time dateTime={item.date}>{date}</time>
-                  </span>
+                  </Link>
                 ) : null}
-                <span>
-                  <HugeiconsIcon icon={Clock01Icon} size={14} aria-hidden />
-                  {readTime} min read
-                </span>
-              </div>
-            </header>
-            {item.image ? (
-              <figure className="rdr-cover">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={item.image} alt="" />
-              </figure>
-            ) : (
-              /* No cover: the page's share image (same URL as og:image). */
-              <figure className="rdr-cover rdr-cover-og">
-                <Image
-                  src={entryOgImagePath(item, type)}
-                  alt=""
-                  width={1200}
-                  height={630}
-                  sizes="(max-width: 760px) 100vw, 700px"
-                  preload
-                />
-              </figure>
-            )}
-            {result.error ? (
-              <div className="cms-notice" role="status">
-                Some content blocks could not be loaded. Please try again later.
-              </div>
-            ) : null}
-            {result.blocks.length ? (
-              <ReaderBody>
-                <NotionBlocks
-                  blocks={result.blocks}
-                  type={type}
-                  pageId={item.id}
-                />
-              </ReaderBody>
-            ) : !result.error ? (
-              <p className="cms-status">
-                This entry does not have body content yet.
-              </p>
-            ) : null}
-
-            {storyLinks.length ? (
-              <section className="rdr-sources" aria-labelledby="rdr-sources">
-                <h2 id="rdr-sources">Links in this story</h2>
-                <ul>
-                  {storyLinks.map((link) => (
-                    <li key={link.href}>
-                      <a
-                        href={link.href}
-                        target="_blank"
-                        rel="noreferrer noopener"
-                      >
-                        <HugeiconsIcon
-                          icon={ArrowUpRight01Icon}
-                          size={14}
-                          aria-hidden
-                        />
-                        <span>
-                          <strong>{link.label}</strong>
-                          {link.host ? <span>{link.host}</span> : null}
-                        </span>
-                      </a>
-                    </li>
-                  ))}
-                </ul>
-              </section>
-            ) : null}
-
-            <footer className="rdr-end">
-              {topics.length ? (
-                <ul className="rdr-topics" aria-label="Topics">
-                  {topics.map((topic) => (
-                    <li key={topic}>{topic}</li>
-                  ))}
-                </ul>
-              ) : null}
-              {item.author ? (
-                <div className="rdr-author">
-                  {item.author.avatar ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={item.author.avatar} alt="" />
-                  ) : null}
-                  <div>
-                    <strong>{item.author.name}</strong>
-                    {item.author.role ? <span>{item.author.role}</span> : null}
-                    {item.author.biography ? (
-                      <p>{item.author.biography}</p>
-                    ) : null}
-                  </div>
-                </div>
-              ) : null}
-              {item.aiAssisted ? (
-                <AiAssistedDialog contentTitle={item.title} variant="note" />
-              ) : null}
-              {next ? (
-                <Link className="rdr-next" href={entryHref(type, next.slug)}>
-                  <span className="rdr-next-label">Next in {meta.label}</span>
-                  <strong>{next.title}</strong>
-                  <HugeiconsIcon
-                    icon={ArrowRight01Icon}
-                    size={16}
-                    aria-hidden
-                  />
-                </Link>
-              ) : null}
-              {related.length ? (
-                <nav className="rdr-related" aria-label="Related entries">
-                  <h2>Related</h2>
-                  {related.map(({ item: other }) => (
-                    <Link key={other.id} href={entryHref(type, other.slug)}>
-                      {other.title}
-                    </Link>
-                  ))}
-                </nav>
-              ) : null}
-            </footer>
-          </article>
-          <aside className="rdr-toc" aria-label="On this page">
-            <ReaderOutline />
-          </aside>
-        </ReaderLayout>
-        <ReaderFooter
-          collectionLabel={meta.label}
-          hasNext={Boolean(next)}
-          hasPrev={Boolean(prev)}
-        />
-        <ReaderSections />
-      </ReaderProvider>
+                {related.length ? (
+                  <nav className="rdr-related" aria-label="Related entries">
+                    <h2>Related</h2>
+                    {related.map(({ item: other }) => (
+                      <Link key={other.id} href={entryHref(type, other.slug)}>
+                        {other.title}
+                      </Link>
+                    ))}
+                  </nav>
+                ) : null}
+              </footer>
+            </article>
+            <aside className="rdr-toc" aria-label="On this page">
+              <ReaderOutline />
+            </aside>
+          </ReaderLayout>
+          <ReaderFooter
+            collectionLabel={meta.label}
+            hasNext={Boolean(next)}
+            hasPrev={Boolean(prev)}
+          />
+          <ReaderSections />
+        </ReaderProvider>
+      </DiscussionProvider>
     </main>
   );
 }
