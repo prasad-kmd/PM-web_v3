@@ -1,11 +1,13 @@
 # Border glow
 
 The résumé's card edges use React Bits' **BorderGlow** — the component v2's
-`components/portfolio/PointerGradientBorder.tsx` was built from. This is the
-port, in this repo's monochrome tokens.
+`components/portfolio/PointerGradientBorder.tsx` was built from. Layering is
+BorderGlow's; the palette is v2's.
 
 - Component: `components/ui/beam-card.tsx` (`BeamCard`)
 - Styles: `app/globals.css`, the `Beam card` block
+- Palettes: `--beam-palette` — monochrome by default, v2's spectrum with
+  `<BeamCard tone="spectrum">` (the résumé hero)
 
 The point of this document is fidelity: if the numbers below look arbitrary,
 they are not — each one comes from the original component and is named after it.
@@ -52,19 +54,30 @@ opacity: calc(
 so nothing shows while the pointer is in the middle of the card, and the layer
 is fully on at the perimeter.
 
-The shadow ladder is verbatim:
+v2's band is a conic with a transparent middle and two lit shoulders, and the
+pointer's bearing is the conic's start:
 
 ```css
-0 0 1px 0   rgb(var(--glow-rgb) / 60%);
-0 0 3px 0   rgb(var(--glow-rgb) / 50%);
-0 0 6px 0   rgb(var(--glow-rgb) / 40%);
-0 0 15px 0  rgb(var(--glow-rgb) / 30%);
-0 0 25px 2px rgb(var(--glow-rgb) / 20%);
-0 0 50px 2px rgb(var(--glow-rgb) / 10%);
+conic-gradient(
+  from calc(var(--cursor-angle) + var(--beam-spin)),
+  transparent 20%,
+  rgb(49 134 255 / 13%) 34%,
+  rgb(147 120 255 / 19%) 37%,
+  rgb(249 107 214 / 50%) 39%,
+  rgb(252 65 61 / 73%) 41%,
+  #fc413d 48%, #ff6b2b 50%, #fec700 52%, #ffdb0f 56%,
+  #88de42 58%, #0ebc5f 61%, #2eaab2 70%,
+  rgb(49 134 255 / 73%) 73%,
+  transparent 95%
+)
 ```
 
-Seven blurs at seven alphas is what makes the bloom read as light rather than as
-a border with a drop shadow.
+`--beam-spin` is `180deg`, and it matters: v2's palette is authored with its
+brightest stop at the conic's **50% mark** (the point opposite the start), while
+`--cursor-angle` points straight at the pointer. The half turn reconciles the
+two, so the hot part of the band lands under the pointer rather than behind it.
+The monochrome default is built the same way — transparent 25%, a shoulder at
+41%, a bright stop at 50%, a shoulder at 59%, transparent 75%.
 
 ---
 

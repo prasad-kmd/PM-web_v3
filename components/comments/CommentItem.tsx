@@ -4,7 +4,10 @@ import { useState } from "react";
 import {
   CheckmarkCircle02Icon,
   Copy01Icon,
+  Github01Icon,
+  Linkedin01Icon,
   Link01Icon,
+  NewTwitterIcon,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import type { CommentView } from "@/lib/comments/types";
@@ -37,15 +40,24 @@ function relativeTime(value: string): string {
   return formatter.format(stamp);
 }
 
-function badge(comment: CommentView): { label: string; tone: string } | null {
+type Badge = {
+  /** Accessible name and tooltip: the platform is never spelled out visually. */
+  label: string;
+  tone: string;
+  /** Platform marks render as a glyph; owner/legacy badges stay as words. */
+  icon?: typeof Github01Icon;
+};
+
+function badge(comment: CommentView): Badge | null {
   if (comment.role === "owner") return { label: "Owner", tone: "owner" };
   if (comment.isExternal) return { label: "Direct note", tone: "muted" };
   if (comment.isLegacy) return { label: "Earlier comment", tone: "muted" };
   if (comment.source === "github")
-    return { label: "via GitHub", tone: "muted" };
-  if (comment.source === "twitter") return { label: "via X", tone: "muted" };
+    return { label: "via GitHub", tone: "muted", icon: Github01Icon };
+  if (comment.source === "twitter")
+    return { label: "via X", tone: "muted", icon: NewTwitterIcon };
   if (comment.source === "linkedin")
-    return { label: "via LinkedIn", tone: "muted" };
+    return { label: "via LinkedIn", tone: "muted", icon: Linkedin01Icon };
   return null;
 }
 
@@ -88,9 +100,26 @@ export function CommentItem({ comment }: { comment: CommentView }) {
             )}
           </strong>
           {tag ? (
-            <span className="dsn-tag" data-tone={tag.tone}>
-              {tag.label}
-            </span>
+            tag.icon ? (
+              <span
+                className="dsn-tag dsn-tag-icon"
+                data-tone={tag.tone}
+                role="img"
+                aria-label={tag.label}
+                title={tag.label}
+              >
+                <HugeiconsIcon
+                  icon={tag.icon}
+                  strokeWidth={1.8}
+                  size={11}
+                  aria-hidden
+                />
+              </span>
+            ) : (
+              <span className="dsn-tag" data-tone={tag.tone}>
+                {tag.label}
+              </span>
+            )
           ) : null}
           <time
             dateTime={comment.createdAt}

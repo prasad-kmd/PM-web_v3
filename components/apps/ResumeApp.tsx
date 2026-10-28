@@ -11,7 +11,8 @@ import {
   FileDownloadIcon,
   Folder01Icon,
   Github01Icon,
-  Link01Icon,
+  Linkedin01Icon,
+  NewTwitterIcon,
   Location01Icon,
   Mail01Icon,
   RefreshIcon,
@@ -129,11 +130,16 @@ export function ResumeApp({ onNavigateHome }: { onNavigateHome?: () => void }) {
 
       <div className="resume-scroll">
         <div className="resume-sheet">
-          <BeamCard className="resume-hero" intro>
+          <BeamCard className="resume-hero" tone="spectrum" intro>
             <div className="resume-hero-top">
-              <div className="resume-monogram" aria-hidden="true">
-                PM
-              </div>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                className="resume-portrait"
+                src="/images/profile-placeholder.jpg"
+                alt="Portrait of Prasad Madhuranga"
+                width={76}
+                height={76}
+              />
               <div className="resume-identity">
                 <p className="resume-eyebrow">{resumeProfile.role}</p>
                 <h1>{resumeProfile.name}</h1>
@@ -221,9 +227,16 @@ export function ResumeApp({ onNavigateHome }: { onNavigateHome?: () => void }) {
                         size={13}
                         aria-hidden
                       />
+                    ) : link.label === "Twitter" ? (
+                      <HugeiconsIcon
+                        icon={NewTwitterIcon}
+                        strokeWidth={2}
+                        size={13}
+                        aria-hidden
+                      />
                     ) : link.label === "LinkedIn" ? (
                       <HugeiconsIcon
-                        icon={Link01Icon}
+                        icon={Linkedin01Icon}
                         strokeWidth={2}
                         size={13}
                         aria-hidden

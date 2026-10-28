@@ -241,9 +241,14 @@ function AboutTab() {
         </p>
 
         <div className="settings-card settings-about-hero">
-          <div className="settings-about-mark" aria-hidden="true">
-            PM
-          </div>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            className="settings-about-mark"
+            src="/images/profile-placeholder.jpg"
+            alt="Portrait of Prasad Madhuranga"
+            width={48}
+            height={48}
+          />
           <div>
             <div className="settings-about-name">Prasad Madhuranga</div>
             <div className="settings-about-line">

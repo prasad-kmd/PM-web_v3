@@ -227,77 +227,84 @@ export function Desktop({ children }: { children?: ReactNode }) {
   }, [pathname, syncToRoute]);
 
   return (
-    <div className="desktop-root" data-wallpaper-intensity={wallpaperIntensity}>
-      <div className="desktop-background-layer" aria-hidden>
-        <AnimatePresence initial={false}>
-          <motion.img
-            key={currentWallpaper.id}
-            className="desktop-background"
-            src={currentWallpaper.src}
-            alt=""
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={
-              shouldReduceMotion ? { duration: 0 } : WALLPAPER_CROSSFADE
-            }
-          />
-        </AnimatePresence>
-      </div>
-      <div className="desktop-background-scrim" aria-hidden />
+    <>
+      <div
+        className="desktop-root"
+        data-wallpaper-intensity={wallpaperIntensity}
+      >
+        <div className="desktop-background-layer" aria-hidden>
+          <AnimatePresence initial={false}>
+            <motion.img
+              key={currentWallpaper.id}
+              className="desktop-background"
+              src={currentWallpaper.src}
+              alt=""
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={
+                shouldReduceMotion ? { duration: 0 } : WALLPAPER_CROSSFADE
+              }
+            />
+          </AnimatePresence>
+        </div>
+        <div className="desktop-background-scrim" aria-hidden />
 
-      <MenuBar onOpenApp={openApp} onCloseAll={manager.closeAll} />
+        <MenuBar onOpenApp={openApp} onCloseAll={manager.closeAll} />
 
-      <ContextMenu>
-        <ContextMenuTrigger
-          className="work-area"
-          ref={workRef}
-          onContextMenu={(event) => {
-            event.preventDefault();
-            captureContextTarget(event);
-          }}
-        >
-          <ProfileWidget />
-          <DesktopIcons onOpen={openApp} />
-          {usesRouteContent(routeApp) && !hydrated ? (
-            <section
-              className="route-server-window"
-              aria-label={`${APP_REGISTRY[routeApp].title} window`}
-            >
-              <div className="window route-server-surface">
-                <div className="window-titlebar">
-                  <span className="window-title">
-                    {APP_REGISTRY[routeApp].title}
-                  </span>
+        <ContextMenu>
+          <ContextMenuTrigger
+            className="work-area"
+            ref={workRef}
+            onContextMenu={(event) => {
+              event.preventDefault();
+              captureContextTarget(event);
+            }}
+          >
+            <ProfileWidget />
+            <DesktopIcons onOpen={openApp} />
+            {usesRouteContent(routeApp) && !hydrated ? (
+              <section
+                className="route-server-window"
+                aria-label={`${APP_REGISTRY[routeApp].title} window`}
+              >
+                <div className="window route-server-surface">
+                  <div className="window-titlebar">
+                    <span className="window-title">
+                      {APP_REGISTRY[routeApp].title}
+                    </span>
+                  </div>
+                  <div className="window-body">{children}</div>
                 </div>
-                <div className="window-body">{children}</div>
-              </div>
-            </section>
-          ) : null}
-          {!routeApp && pathname && pathname !== "/" ? (
-            <div className="route-unknown">{children}</div>
-          ) : null}
-          <WindowsLayer
-            windows={manager.windows}
-            area={area}
-            manager={manager}
-            isMobile={isMobileWindowMode}
-            routeApp={routeApp}
-            routeContent={children}
-            snapshots={snapshots}
-            captureSnapshot={captureSnapshot}
-            hydrated={hydrated}
+              </section>
+            ) : null}
+            {!routeApp && pathname && pathname !== "/" ? (
+              <div className="route-unknown">{children}</div>
+            ) : null}
+            <WindowsLayer
+              windows={manager.windows}
+              area={area}
+              manager={manager}
+              isMobile={isMobileWindowMode}
+              routeApp={routeApp}
+              routeContent={children}
+              snapshots={snapshots}
+              captureSnapshot={captureSnapshot}
+              hydrated={hydrated}
+            />
+          </ContextMenuTrigger>
+          <DesktopContextMenuContent
+            onOpenSettings={() => openApp("settings")}
+            onOpenResume={() => openApp("resume")}
+            targetLink={contextTarget.link}
+            targetImage={contextTarget.image}
           />
-        </ContextMenuTrigger>
-        <DesktopContextMenuContent
-          onOpenSettings={() => openApp("settings")}
-          onOpenResume={() => openApp("resume")}
-          targetLink={contextTarget.link}
-          targetImage={contextTarget.image}
-        />
-      </ContextMenu>
-
+        </ContextMenu>
+      </div>
+      {/* Outside `.desktop-root` on purpose: that div opens a stacking context
+          (`isolation: isolate`), and windows are portalled to <body> above it,
+          so a toaster inside would paint underneath an open window. */}
       <Toaster position="bottom-right" closeButton />
-    </div>
+    </>
   );
 }

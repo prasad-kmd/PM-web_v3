@@ -120,6 +120,7 @@ export function BeamCard({
   className = "",
   style,
   intro = false,
+  tone = "mono",
   as: Tag = "article",
   ...rest
 }: {
@@ -128,6 +129,11 @@ export function BeamCard({
   style?: CSSProperties;
   /** Play BorderGlow's one-off arrival sweep the first time the card paints. */
   intro?: boolean;
+  /**
+   * `mono` keeps DESIGN.md's monochrome foreground band. `spectrum` swaps in
+   * v2's seven-colour conic, as used on the portfolio header.
+   */
+  tone?: "mono" | "spectrum";
   as?: "article" | "div" | "section" | "aside";
 } & Omit<HTMLAttributes<HTMLElement>, "style" | "className" | "children">) {
   const ref = useRef<HTMLElement | null>(null);
@@ -219,7 +225,7 @@ export function BeamCard({
   return (
     <Tag
       ref={ref as never}
-      className={`beam ${className}`.trim()}
+      className={`beam${tone === "spectrum" ? " beam-spectrum" : ""} ${className}`.trim()}
       style={style}
       data-beam
       onPointerMove={move}
@@ -228,7 +234,9 @@ export function BeamCard({
       onPointerDown={move}
       {...rest}
     >
-      <span className="beam-edge" aria-hidden="true" />
+      <span className="beam-edge" aria-hidden="true">
+        <span className="beam-bloom" />
+      </span>
       {children}
     </Tag>
   );

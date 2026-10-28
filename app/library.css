@@ -1690,6 +1690,22 @@
   text-transform: uppercase;
 }
 
+/* Platform marks: a glyph in the same chip, no text. */
+.dsn-tag-icon {
+  display: inline-grid;
+  width: 18px;
+  height: 16px;
+  place-items: center;
+  padding: 0;
+  color: var(--muted-foreground);
+  line-height: 1;
+}
+
+.dsn-tag-icon:hover {
+  border-color: color-mix(in oklab, var(--foreground) 28%, var(--border));
+  color: var(--foreground);
+}
+
 .dsn-tag[data-tone="owner"] {
   border-color: color-mix(in oklab, var(--foreground) 30%, var(--border));
   color: var(--foreground);
