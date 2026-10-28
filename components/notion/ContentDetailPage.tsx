@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import {
   ArrowRight01Icon,
@@ -20,6 +21,7 @@ import {
 import { getSiteUrl } from "@/lib/site";
 import { isFeedType } from "@/lib/content-listing";
 import { collectLinks } from "@/lib/inline-links";
+import { entryOgImagePath } from "@/lib/og/url";
 import { WindowBreadcrumb } from "@/components/system/WindowBreadcrumb";
 import { AiAssistedDialog } from "./AiAssistedDialog";
 import { NotionBlocks } from "./NotionBlocks";
@@ -240,7 +242,19 @@ export async function ContentDetailPage({
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={item.image} alt="" />
               </figure>
-            ) : null}
+            ) : (
+              /* No cover: the page's share image (same URL as og:image). */
+              <figure className="rdr-cover rdr-cover-og">
+                <Image
+                  src={entryOgImagePath(item, type)}
+                  alt=""
+                  width={1200}
+                  height={630}
+                  sizes="(max-width: 760px) 100vw, 700px"
+                  preload
+                />
+              </figure>
+            )}
             {result.error ? (
               <div className="cms-notice" role="status">
                 Some content blocks could not be loaded. Please try again later.

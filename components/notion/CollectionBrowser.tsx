@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import {
@@ -57,6 +58,7 @@ import {
   type ListingSort,
   type ListingView,
 } from "@/lib/content-listing";
+import { entryOgImagePath } from "@/lib/og/url";
 import { COLLECTION_ICONS } from "./collection-icons";
 import { NewsFeed } from "./NewsFeed";
 
@@ -498,7 +500,7 @@ function CollectionBrowserView({
               </div>
             ) : null}
             <ul className="lib-items" aria-label={`${meta.label} entries`}>
-              {listing.items.map((item) => {
+              {listing.items.map((item, index) => {
                 const date = formatContentDate(item.date);
                 const cat = item.categories[0] || meta.singular;
                 return (
@@ -512,11 +514,33 @@ function CollectionBrowserView({
                           // eslint-disable-next-line @next/next/no-img-element
                           <img src={item.thumbnail} alt="" loading="lazy" />
                         ) : (
-                          <HugeiconsIcon
-                            icon={COLLECTION_ICONS[type]}
-                            size={22}
-                            strokeWidth={1.5}
-                          />
+                          <>
+                            <HugeiconsIcon
+                              icon={COLLECTION_ICONS[type]}
+                              size={22}
+                              strokeWidth={1.5}
+                            />
+                            {/* No thumbnail: the entry's share image, resized. */}
+                            <Image
+                              className="lib-media-og"
+                              src={entryOgImagePath(item, type)}
+                              alt=""
+                              fill
+                              // The first row is usually above the fold.
+                              loading={index < 4 ? "eager" : "lazy"}
+                              sizes={
+                                view === "list"
+                                  ? "40px"
+                                  : "(max-width: 560px) 50vw, 320px"
+                              }
+                              onLoad={(event) =>
+                                event.currentTarget.setAttribute(
+                                  "data-loaded",
+                                  "",
+                                )
+                              }
+                            />
+                          </>
                         )}
                       </span>
                       <span className="lib-copy">

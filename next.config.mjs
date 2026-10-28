@@ -83,6 +83,10 @@ const nextConfig = {
       { protocol: "https", hostname: "images.unsplash.com" },
     ],
     formats: ["image/webp", "image/avif"],
+    // Next 16 rejects query strings on local images unless listed here. The
+    // share-image route is allowed with any query (listing thumbnails and
+    // reader covers fall back to it); every other local path stays query-free.
+    localPatterns: [{ pathname: "/api/og" }, { pathname: "**", search: "" }],
     dangerouslyAllowSVG: true, // For LQIP shimmers
     contentDispositionType: "attachment", // Security for downloads
     /**

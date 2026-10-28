@@ -17,13 +17,13 @@ import {
 import {
   Bookmark01Icon,
   BookmarkCheck01Icon,
+  Cancel01Icon,
   Link01Icon,
-  SidebarRightIcon,
   TextFontIcon,
   Tick02Icon,
 } from "@hugeicons/core-free-icons";
-import { HugeiconsIcon } from "@hugeicons/react";
 import { Button } from "@/components/ui/button";
+import { MorphIcon, OutlineGlyph } from "@/components/ui/morph-icon";
 import {
   Popover,
   PopoverPopup,
@@ -36,6 +36,7 @@ import {
   type ScrollProgressSection,
 } from "@/components/ui/scroll-progress";
 import { Switch } from "@/components/ui/switch";
+import { WorkspaceTooltip } from "@/components/ui/tooltip";
 import { useContentBookmarks } from "./ContentBookmarksProvider";
 import type { ContentItem } from "@/lib/notion-cms";
 
@@ -91,7 +92,9 @@ function isTypingTarget(target: EventTarget | null) {
     target instanceof HTMLElement &&
     Boolean(
       target.closest(
-        "input, textarea, select, [contenteditable=true], [role=menu], [role=listbox], [role=dialog]",
+        // `.window` is itself role="dialog" (the DesktopOS window shell), so
+        // only real dialogs/popovers inside or above it count.
+        "input, textarea, select, [contenteditable=true], [role=menu], [role=listbox], [role=dialog]:not(.window), [role=alertdialog]",
       ),
     )
   );
@@ -234,57 +237,61 @@ export function BookmarkToggle({ item }: { item: ContentItem }) {
   const { isBookmarked, toggleBookmark, ready } = useContentBookmarks();
   const saved = isBookmarked(item.type, item.slug);
   return (
-    <Button
-      type="button"
-      variant="ghost"
-      size="icon-sm"
-      aria-pressed={saved}
-      aria-label={saved ? "Remove from saved" : "Save entry"}
-      title={saved ? "Saved" : "Save"}
-      disabled={!ready}
-      onClick={() =>
-        toggleBookmark({
-          type: item.type,
-          slug: item.slug,
-          title: item.title,
-          date: item.date,
-          description: item.description,
-          image: item.thumbnail,
-        })
-      }
-    >
-      <HugeiconsIcon
-        icon={saved ? BookmarkCheck01Icon : Bookmark01Icon}
-        strokeWidth={1.8}
-      />
-    </Button>
+    <WorkspaceTooltip label={saved ? "Remove from saved" : "Save"} align="end">
+      <Button
+        type="button"
+        variant="ghost"
+        size="icon-sm"
+        className="rdr-tool"
+        aria-pressed={saved}
+        aria-label={saved ? "Remove from saved" : "Save entry"}
+        disabled={!ready}
+        onClick={() =>
+          toggleBookmark({
+            type: item.type,
+            slug: item.slug,
+            title: item.title,
+            date: item.date,
+            description: item.description,
+            image: item.thumbnail,
+          })
+        }
+      >
+        <MorphIcon
+          icon={saved ? BookmarkCheck01Icon : Bookmark01Icon}
+          iconKey={saved ? "saved" : "save"}
+        />
+      </Button>
+    </WorkspaceTooltip>
   );
 }
 
 export function ShareButton() {
   const [copied, setCopied] = useState(false);
   return (
-    <Button
-      type="button"
-      variant="ghost"
-      size="icon-sm"
-      aria-label={copied ? "Link copied" : "Copy link"}
-      title={copied ? "Link copied" : "Copy link"}
-      onClick={async () => {
-        try {
-          await navigator.clipboard.writeText(window.location.href);
-          setCopied(true);
-          setTimeout(() => setCopied(false), 1800);
-        } catch {
-          setCopied(false);
-        }
-      }}
-    >
-      <HugeiconsIcon
-        icon={copied ? Tick02Icon : Link01Icon}
-        strokeWidth={1.8}
-      />
-    </Button>
+    <WorkspaceTooltip label={copied ? "Link copied" : "Copy link"} align="end">
+      <Button
+        type="button"
+        variant="ghost"
+        size="icon-sm"
+        className="rdr-tool"
+        aria-label={copied ? "Link copied" : "Copy link"}
+        onClick={async () => {
+          try {
+            await navigator.clipboard.writeText(window.location.href);
+            setCopied(true);
+            setTimeout(() => setCopied(false), 1800);
+          } catch {
+            setCopied(false);
+          }
+        }}
+      >
+        <MorphIcon
+          icon={copied ? Tick02Icon : Link01Icon}
+          iconKey={copied ? "copied" : "copy"}
+        />
+      </Button>
+    </WorkspaceTooltip>
   );
 }
 
@@ -320,21 +327,27 @@ function Segmented<T extends string | number>({
 
 function ReadingOptions() {
   const { prefs, setPrefs } = useReader();
+  const [open, setOpen] = useState(false);
   return (
-    <Popover>
-      <PopoverTrigger
-        render={
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon-sm"
-            aria-label="Reading options"
-            title="Reading options"
+    <Popover open={open} onOpenChange={setOpen}>
+      <WorkspaceTooltip label="Reading options" align="end">
+        <PopoverTrigger
+          render={
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-sm"
+              className="rdr-tool"
+              aria-label="Reading options"
+            />
+          }
+        >
+          <MorphIcon
+            icon={open ? Cancel01Icon : TextFontIcon}
+            iconKey={open ? "close" : "options"}
           />
-        }
-      >
-        <HugeiconsIcon icon={TextFontIcon} strokeWidth={1.8} />
-      </PopoverTrigger>
+        </PopoverTrigger>
+      </WorkspaceTooltip>
       <PopoverPopup className="rdr-options" align="end">
         <PopoverTitle className="rdr-options-title">
           Reading options
@@ -384,18 +397,24 @@ export function ReaderToolbarActions({ item }: { item: ContentItem }) {
   return (
     <>
       {headings.length ? (
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          className="rdr-outline-toggle"
-          aria-pressed={outline}
-          onClick={toggleOutline}
-          title="Toggle outline (O)"
+        <WorkspaceTooltip
+          label={outline ? "Hide outline" : "Show outline"}
+          shortcut="O"
+          align="end"
         >
-          <HugeiconsIcon icon={SidebarRightIcon} strokeWidth={1.8} />
-          Outline
-        </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="rdr-outline-toggle rdr-tool"
+            aria-pressed={outline}
+            aria-keyshortcuts="O"
+            onClick={toggleOutline}
+          >
+            <OutlineGlyph open={outline} />
+            Outline
+          </Button>
+        </WorkspaceTooltip>
       ) : null}
       <BookmarkToggle item={item} />
       <ShareButton />

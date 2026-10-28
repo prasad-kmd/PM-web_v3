@@ -344,6 +344,19 @@
   height: 100%;
   object-fit: cover;
 }
+/* Share-image fallback: fades in over the collection icon once loaded. The
+   OG card is ~1.9:1, so pin it left to keep the headline when the tile crops. */
+.lib-media {
+  position: relative;
+}
+.lib-media .lib-media-og {
+  object-position: left center;
+  opacity: 0;
+  transition: opacity 240ms ease;
+}
+.lib-media .lib-media-og[data-loaded] {
+  opacity: 1;
+}
 .lib-copy {
   display: flex;
   min-width: 0;
@@ -631,6 +644,34 @@
 .rdr-outline-toggle[aria-pressed="true"] {
   background: var(--accent);
 }
+/* Reader toolbar buttons: state colours ease instead of snapping, a light
+   press, and MorphIcon / OutlineGlyph cross-fade the icon itself. */
+.rdr-tool {
+  transition:
+    background-color 180ms ease,
+    color 180ms ease,
+    box-shadow 180ms ease,
+    transform 120ms ease;
+}
+.rdr-tool:active:not(:disabled) {
+  transform: scale(0.94);
+}
+.morph-icon {
+  display: inline-grid;
+  place-items: center;
+}
+.morph-icon > * {
+  display: inline-flex;
+  grid-area: 1 / 1;
+}
+.outline-glyph {
+  overflow: visible;
+}
+
+/* Outline open/close. The rail stays mounted (it keeps its scroll binding),
+   and the grid animates its second track 232px ↔ 0 together with the gap and
+   the max-width, so the article glides between the two layouts while the
+   rail fades and slides out. */
 .rdr-grid {
   display: grid;
   max-width: 1080px;
@@ -638,13 +679,25 @@
   gap: 48px;
   margin: 0 auto;
   padding: 40px 32px 32px;
+  transition:
+    max-width 340ms cubic-bezier(0.2, 0, 0, 1),
+    grid-template-columns 340ms cubic-bezier(0.2, 0, 0, 1),
+    column-gap 340ms cubic-bezier(0.2, 0, 0, 1);
 }
 .rdr-grid[data-outline="off"] {
   max-width: 780px;
-  grid-template-columns: minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr) 0px;
+  column-gap: 0px;
 }
 .rdr-grid[data-outline="off"] .rdr-toc {
-  display: none;
+  visibility: hidden;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateX(16px);
+  transition:
+    opacity 160ms ease,
+    transform 340ms cubic-bezier(0.2, 0, 0, 1),
+    visibility 0s linear 340ms;
 }
 .rdr-doc {
   width: 100%;
@@ -658,9 +711,19 @@
   /* --rdr-viewport = the window body's height (set by ReaderProvider):
      74px sticky offset + 34px status footer + 16px breathing room. */
   max-height: calc(var(--rdr-viewport, 100dvh) - 124px);
+  min-width: 0;
   align-self: start;
-  overflow: auto;
+  overflow-x: hidden;
+  overflow-y: auto;
   scrollbar-width: thin;
+  transition:
+    opacity 260ms ease 80ms,
+    transform 340ms cubic-bezier(0.2, 0, 0, 1),
+    visibility 0s;
+}
+/* Fixed width so the rail's text doesn't rewrap while its track animates. */
+.rdr-toc > * {
+  width: 232px;
 }
 .rdr-chip {
   display: flex;
@@ -731,6 +794,11 @@
   width: 100%;
   max-height: 420px;
   object-fit: cover;
+}
+.rdr-cover-og img {
+  height: auto;
+  max-height: none;
+  aspect-ratio: 1200 / 630;
 }
 .rdr-doc .cms-reader {
   margin-top: 28px;
@@ -1025,6 +1093,10 @@
   }
 }
 @media (prefers-reduced-motion: reduce) {
+  .rdr-grid,
+  .rdr-toc,
+  .rdr-grid[data-outline="off"] .rdr-toc,
+  .rdr-tool,
   .lib-media,
   .lib-source,
   .rdr-next {

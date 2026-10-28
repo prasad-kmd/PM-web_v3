@@ -1,44 +1,30 @@
 import type { Metadata } from "next";
 import {
   CONTENT_META,
-  formatContentDate,
   type ContentItem,
   type ContentType,
 } from "@/lib/notion-cms";
+import {
+  entryDescription,
+  entryOgImagePath,
+  ogImagePath,
+  type OgImageOptions,
+} from "@/lib/og/url";
 import { getSiteUrl } from "@/lib/site";
 
 /** Open Graph standard size; `/api/og` renders at exactly this size. */
 export const OG_IMAGE_SIZE = { width: 1200, height: 630 } as const;
 
-export type OgImageOptions = {
-  /** `detail` (an entry), `collection` (a listing) or `home` (site default). */
-  kind?: "detail" | "collection" | "home";
-  /** Short, already formatted date, e.g. "Oct 18, 2026". */
-  date?: string | null;
-  /** Reading time in minutes. */
-  read?: number | null;
-  /** Same-origin `/api/notion-image?…` cover; anything else is ignored. */
-  cover?: string | null;
-};
+export type { OgImageOptions };
 
+/** Absolute `/api/og` URL for `og:image` / `twitter:image`. */
 export function ogImageUrl(
   title: string,
   description = "",
   type = "default",
   options: OgImageOptions = {},
 ) {
-  const query = new URLSearchParams({
-    title: title.slice(0, 180),
-    description: description.slice(0, 260),
-    type,
-  });
-  if (options.kind) query.set("kind", options.kind);
-  if (options.date) query.set("date", options.date.slice(0, 40));
-  if (options.read && Number.isFinite(options.read))
-    query.set("read", String(Math.round(options.read)));
-  if (options.cover?.startsWith("/api/notion-image?"))
-    query.set("cover", options.cover);
-  return `${getSiteUrl()}/api/og?${query}`;
+  return `${getSiteUrl()}${ogImagePath(title, description, type, options)}`;
 }
 
 export function getContentMetadata(
@@ -48,15 +34,8 @@ export function getContentMetadata(
   const path = `/${type}/${encodeURIComponent(item.slug)}`;
   const url = new URL(path, getSiteUrl()).toString();
   const title = `${item.title} | ${CONTENT_META[type].label}`;
-  const description =
-    item.description ||
-    `${item.title} — ${CONTENT_META[type].label} by Prasad Madhuranga.`;
-  const image = ogImageUrl(item.title, description, type, {
-    kind: "detail",
-    date: formatContentDate(item.date),
-    read: item.readTime,
-    cover: item.image,
-  });
+  const description = entryDescription(item, type);
+  const image = `${getSiteUrl()}${entryOgImagePath(item, type)}`;
   return {
     title,
     description,
