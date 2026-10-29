@@ -171,6 +171,7 @@ function resolveSourceLabel(
   )
     .trim()
     .toLowerCase()
+    .replace(/:\d+$/, "")
     .replace(/^www\./, "");
 
   const candidates = [clientReferrer, request.headers.get("referer")];
@@ -180,6 +181,14 @@ function resolveSourceLabel(
       const parsed = new URL(candidate);
       const host = parsed.hostname.toLowerCase().replace(/^www\./, "");
       if (!host) continue;
+      if (
+        host === "localhost" ||
+        host === "127.0.0.1" ||
+        host.endsWith(".localhost") ||
+        host.endsWith(".local")
+      ) {
+        return "direct";
+      }
       if (selfHost && (host === selfHost || host.endsWith(`.${selfHost}`))) {
         return "direct";
       }
@@ -632,7 +641,18 @@ export async function getInsightsReport(options: {
       for (const [src, rawVal] of Object.entries(bucket.bySource)) {
         const val = safeInt(rawVal);
         if (val > 0) {
-          sourceTotals.set(src, (sourceTotals.get(src) ?? 0) + val);
+          const decoded = decodeRtdbKey(src).toLowerCase();
+          const canonicalSrc =
+            decoded === "localhost" ||
+            decoded === "127.0.0.1" ||
+            decoded.endsWith(".localhost") ||
+            decoded.endsWith(".local")
+              ? "direct"
+              : src;
+          sourceTotals.set(
+            canonicalSrc,
+            (sourceTotals.get(canonicalSrc) ?? 0) + val,
+          );
         }
       }
     }

@@ -1,5 +1,14 @@
 "use client";
 
+import {
+  Tabs,
+  TabsContent,
+  TabsContents,
+  TabsHighlight,
+  TabsHighlightItem,
+  TabsList,
+  TabsTrigger,
+} from "@animate-ui/react/primitives/tabs";
 import { useShouldReduceMotion } from "@animate-ui/react/utils/motion";
 import {
   ArrowDown01Icon,
@@ -22,7 +31,7 @@ import {
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Area,
   AreaChart,
@@ -175,124 +184,126 @@ function DailyReadershipChart({
   chartStyle: ChartStyle;
   reduceMotion: boolean;
 }) {
-  const commonMargin = { top: 10, right: 10, bottom: 2, left: -12 };
+  const commonMargin = { top: 8, right: 8, bottom: 2, left: -14 };
 
   return (
-    <div className="insights-chart-stage">
-      <ResponsiveContainer width="100%" height="100%">
-        {chartStyle === "area" ? (
-          <AreaChart data={series} margin={commonMargin}>
-            <defs>
-              <linearGradient
-                id="insightsReadsGradient"
-                x1="0"
-                y1="0"
-                x2="0"
-                y2="1"
-              >
-                <stop
-                  offset="0%"
-                  stopColor="var(--foreground)"
-                  stopOpacity={0.18}
-                />
-                <stop
-                  offset="95%"
-                  stopColor="var(--foreground)"
-                  stopOpacity={0.0}
-                />
-              </linearGradient>
-            </defs>
-            <CartesianGrid
-              vertical={false}
-              stroke="var(--border)"
-              strokeDasharray="3 3"
-            />
-            <XAxis
-              dataKey="label"
-              axisLine={false}
-              tickLine={false}
-              minTickGap={28}
-              tickMargin={8}
-              tick={{ fill: "var(--muted-foreground)", fontSize: 11 }}
-            />
-            <YAxis
-              axisLine={false}
-              tickLine={false}
-              width={40}
-              allowDecimals={false}
-              domain={[
-                0,
-                (dataMax: number) => Math.max(4, Math.ceil(dataMax * 1.15)),
-              ]}
-              tickFormatter={formatCompactAxis}
-              tick={{ fill: "var(--muted-foreground)", fontSize: 11 }}
-            />
-            <Tooltip
-              cursor={{
-                stroke: "var(--border)",
-                strokeWidth: 1,
-              }}
-              content={(props) => <DailyChartTooltip {...props} />}
-            />
-            <Area
-              type="monotone"
-              dataKey="total"
-              stroke="var(--foreground)"
-              strokeWidth={1.75}
-              fill="url(#insightsReadsGradient)"
-              isAnimationActive={!reduceMotion}
-              animationDuration={280}
-              activeDot={{
-                r: 4,
-                fill: "var(--foreground)",
-                stroke: "var(--card)",
-                strokeWidth: 2,
-              }}
-            />
-          </AreaChart>
-        ) : (
-          <BarChart data={series} margin={commonMargin}>
-            <CartesianGrid
-              vertical={false}
-              stroke="var(--border)"
-              strokeDasharray="3 3"
-            />
-            <XAxis
-              dataKey="label"
-              axisLine={false}
-              tickLine={false}
-              minTickGap={28}
-              tickMargin={8}
-              tick={{ fill: "var(--muted-foreground)", fontSize: 11 }}
-            />
-            <YAxis
-              axisLine={false}
-              tickLine={false}
-              width={40}
-              allowDecimals={false}
-              domain={[
-                0,
-                (dataMax: number) => Math.max(4, Math.ceil(dataMax * 1.15)),
-              ]}
-              tickFormatter={formatCompactAxis}
-              tick={{ fill: "var(--muted-foreground)", fontSize: 11 }}
-            />
-            <Tooltip
-              cursor={{ fill: "var(--accent)", opacity: 0.6 }}
-              content={(props) => <DailyChartTooltip {...props} />}
-            />
-            <Bar
-              dataKey="total"
-              fill="var(--foreground)"
-              fillOpacity={0.82}
-              radius={[4, 4, 0, 0]}
-              maxBarSize={26}
-              isAnimationActive={!reduceMotion}
-              animationDuration={260}
-            />
-          </BarChart>
-        )}
-      </ResponsiveContainer>
+    <div className="insights-chart-body">
+      <div className="insights-chart-stage">
+        <ResponsiveContainer width="100%" height={228}>
+          {chartStyle === "area" ? (
+            <AreaChart data={series} margin={commonMargin}>
+              <defs>
+                <linearGradient
+                  id="insightsReadsGradient"
+                  x1="0"
+                  y1="0"
+                  x2="0"
+                  y2="1"
+                >
+                  <stop
+                    offset="0%"
+                    stopColor="var(--foreground)"
+                    stopOpacity={0.18}
+                  />
+                  <stop
+                    offset="95%"
+                    stopColor="var(--foreground)"
+                    stopOpacity={0.0}
+                  />
+                </linearGradient>
+              </defs>
+              <CartesianGrid
+                vertical={false}
+                stroke="var(--border)"
+                strokeDasharray="3 3"
+              />
+              <XAxis
+                dataKey="label"
+                axisLine={false}
+                tickLine={false}
+                minTickGap={28}
+                tickMargin={8}
+                tick={{ fill: "var(--muted-foreground)", fontSize: 11 }}
+              />
+              <YAxis
+                axisLine={false}
+                tickLine={false}
+                width={38}
+                allowDecimals={false}
+                domain={[
+                  0,
+                  (dataMax: number) => Math.max(4, Math.ceil(dataMax * 1.15)),
+                ]}
+                tickFormatter={formatCompactAxis}
+                tick={{ fill: "var(--muted-foreground)", fontSize: 11 }}
+              />
+              <Tooltip
+                cursor={{
+                  stroke: "var(--border)",
+                  strokeWidth: 1,
+                }}
+                content={(props) => <DailyChartTooltip {...props} />}
+              />
+              <Area
+                type="monotone"
+                dataKey="total"
+                stroke="var(--foreground)"
+                strokeWidth={1.75}
+                fill="url(#insightsReadsGradient)"
+                isAnimationActive={!reduceMotion}
+                animationDuration={280}
+                activeDot={{
+                  r: 4,
+                  fill: "var(--foreground)",
+                  stroke: "var(--card)",
+                  strokeWidth: 2,
+                }}
+              />
+            </AreaChart>
+          ) : (
+            <BarChart data={series} margin={commonMargin}>
+              <CartesianGrid
+                vertical={false}
+                stroke="var(--border)"
+                strokeDasharray="3 3"
+              />
+              <XAxis
+                dataKey="label"
+                axisLine={false}
+                tickLine={false}
+                minTickGap={28}
+                tickMargin={8}
+                tick={{ fill: "var(--muted-foreground)", fontSize: 11 }}
+              />
+              <YAxis
+                axisLine={false}
+                tickLine={false}
+                width={38}
+                allowDecimals={false}
+                domain={[
+                  0,
+                  (dataMax: number) => Math.max(4, Math.ceil(dataMax * 1.15)),
+                ]}
+                tickFormatter={formatCompactAxis}
+                tick={{ fill: "var(--muted-foreground)", fontSize: 11 }}
+              />
+              <Tooltip
+                cursor={{ fill: "var(--accent)", opacity: 0.6 }}
+                content={(props) => <DailyChartTooltip {...props} />}
+              />
+              <Bar
+                dataKey="total"
+                fill="var(--foreground)"
+                fillOpacity={0.82}
+                radius={[4, 4, 0, 0]}
+                maxBarSize={26}
+                isAnimationActive={!reduceMotion}
+                animationDuration={260}
+              />
+            </BarChart>
+          )}
+        </ResponsiveContainer>
+      </div>
     </div>
   );
 }
@@ -300,6 +311,7 @@ function DailyReadershipChart({
 export function ContentInsightsApp() {
   const router = useRouter();
   const shouldReduceMotion = useShouldReduceMotion();
+  const scrollPaneRef = useRef<HTMLDivElement>(null);
 
   const [tab, setTab] = useState<InsightsTab>("overview");
   const [range, setRange] = useState<InsightsRange>("30d");
@@ -311,6 +323,13 @@ export function ContentInsightsApp() {
   const [report, setReport] = useState<InsightsReport | null>(null);
   const [booting, setBooting] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+
+  const handleTabChange = useCallback((nextValue: string) => {
+    setTab(nextValue as InsightsTab);
+    if (scrollPaneRef.current && scrollPaneRef.current.scrollTop > 0) {
+      scrollPaneRef.current.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  }, []);
 
   const loadReport = useCallback(
     async (
@@ -453,67 +472,83 @@ export function ContentInsightsApp() {
       ? Math.round((kpis.activeEntriesCount / kpis.publishedEntriesCount) * 100)
       : 0;
 
+  const sectionTabs = [
+    {
+      id: "overview",
+      label: "Overview",
+      icon: ChartLineData02Icon,
+    },
+    {
+      id: "entries",
+      label: report?.configured
+        ? `Entries (${report.topEntries.length})`
+        : "Entries",
+      icon: File02Icon,
+    },
+    {
+      id: "audience",
+      label: "Audience",
+      icon: Globe02Icon,
+    },
+  ] as const;
+
   return (
-    <div className="admin-studio-shell insights-studio-shell">
-      {/* 42px Studio Sub-Toolbar (matches InvoiceStudioApp & OgStudioApp) */}
+    <Tabs
+      value={tab}
+      onValueChange={handleTabChange}
+      className="admin-studio-shell insights-studio-shell"
+    >
+      {/* 42px Studio Sub-Toolbar with Animate UI Gliding Tab Highlights */}
       <header className="admin-studio-toolbar">
         <div className="admin-studio-toolbar-left">
-          <nav
-            className="admin-segmented-tabs"
-            aria-label="Content insights sections"
-          >
-            {(
-              [
-                {
-                  id: "overview",
-                  label: "Overview",
-                  icon: ChartLineData02Icon,
-                },
-                {
-                  id: "entries",
-                  label: report?.configured
-                    ? `Entries (${report.topEntries.length})`
-                    : "Entries",
-                  icon: File02Icon,
-                },
-                {
-                  id: "audience",
-                  label: "Audience",
-                  icon: Globe02Icon,
-                },
-              ] as const
-            ).map((item) => (
-              <button
-                key={item.id}
-                type="button"
-                onClick={() => setTab(item.id)}
-                className={`admin-segmented-tab${tab === item.id ? " is-active" : ""}`}
-              >
-                <HugeiconsIcon icon={item.icon} strokeWidth={2} size={13} />
-                <span>{item.label}</span>
-              </button>
-            ))}
-          </nav>
+          <TabsHighlight className="insights-tab-pill">
+            <TabsList
+              aria-label="Content insights sections"
+              className="admin-segmented-tabs"
+            >
+              {sectionTabs.map((item) => (
+                <TabsHighlightItem key={item.id} value={item.id}>
+                  <TabsTrigger
+                    value={item.id}
+                    className="admin-segmented-tab is-animated"
+                  >
+                    <HugeiconsIcon
+                      icon={item.icon}
+                      strokeWidth={2}
+                      size={13}
+                      aria-hidden
+                    />
+                    <span>{item.label}</span>
+                  </TabsTrigger>
+                </TabsHighlightItem>
+              ))}
+            </TabsList>
+          </TabsHighlight>
         </div>
 
         <div className="admin-studio-toolbar-right">
-          <div
-            className="admin-segmented-tabs"
-            role="group"
-            aria-label="Date range"
+          <Tabs
+            value={range}
+            onValueChange={(next) => setRange(next as InsightsRange)}
           >
-            {RANGE_OPTIONS.map((opt) => (
-              <button
-                key={opt.value}
-                type="button"
-                className={`admin-segmented-tab${range === opt.value ? " is-active" : ""}`}
-                aria-pressed={range === opt.value}
-                onClick={() => setRange(opt.value)}
+            <TabsHighlight className="insights-tab-pill">
+              <TabsList
+                aria-label="Date range"
+                className="admin-segmented-tabs"
               >
-                {opt.shortLabel}
-              </button>
-            ))}
-          </div>
+                {RANGE_OPTIONS.map((opt) => (
+                  <TabsHighlightItem key={opt.value} value={opt.value}>
+                    <TabsTrigger
+                      value={opt.value}
+                      className="admin-segmented-tab is-animated"
+                    >
+                      {opt.shortLabel}
+                    </TabsTrigger>
+                  </TabsHighlightItem>
+                ))}
+              </TabsList>
+            </TabsHighlight>
+          </Tabs>
 
           <span
             className={`invoice-sync-pill${report?.configured ? " is-cloud" : ""}`}
@@ -563,9 +598,9 @@ export function ContentInsightsApp() {
         </div>
       ) : null}
 
-      {/* Unconfigured Studio State */}
-      {!report?.configured ? (
-        <div className="insights-pane-scroll">
+      {/* Scrollable Studio Viewport */}
+      <div ref={scrollPaneRef} className="insights-pane-scroll">
+        {!report?.configured ? (
           <section className="insights-setup-state" role="status">
             <div className="insights-setup-glyph" aria-hidden>
               <HugeiconsIcon
@@ -595,660 +630,712 @@ export function ContentInsightsApp() {
               <span>Check status</span>
             </Button>
           </section>
-        </div>
-      ) : null}
-
-      {/* Tab 1: Overview */}
-      {report?.configured && tab === "overview" ? (
-        <div className="insights-pane-scroll">
-          {kpis ? (
-            <div className="insights-kpi-grid tabular-nums">
-              <div className="insights-kpi-card">
-                <div className="insights-kpi-top">
-                  <span className="insights-kpi-label">
-                    {range === "all" ? "Total reads" : rangeMeta.longLabel}
-                  </span>
-                  <HugeiconsIcon
-                    icon={ViewIcon}
-                    size={14}
-                    strokeWidth={1.8}
-                    className="insights-kpi-icon"
-                    aria-hidden
-                  />
-                </div>
-                <div className="insights-kpi-main">
-                  <strong className="insights-kpi-value">
-                    {numberFmt.format(kpis.periodReads)}
-                  </strong>
-                  {delta !== null ? (
-                    <span
-                      className={`insights-delta-pill${delta > 0 ? " is-up" : delta < 0 ? " is-down" : ""}`}
-                    >
-                      {delta !== 0 ? (
+        ) : (
+          <TabsContents className="insights-tabs-contents">
+            {/* Tab 1: Overview */}
+            <TabsContent value="overview" className="insights-tab-panel">
+              <div className="insights-tab-stack">
+                {kpis ? (
+                  <div className="insights-kpi-grid tabular-nums">
+                    <div className="insights-kpi-card">
+                      <div className="insights-kpi-top">
+                        <span className="insights-kpi-label">
+                          {range === "all"
+                            ? "Total reads"
+                            : rangeMeta.longLabel}
+                        </span>
                         <HugeiconsIcon
-                          icon={delta > 0 ? ArrowUp01Icon : ArrowDown01Icon}
-                          size={10.5}
-                          strokeWidth={2.2}
+                          icon={ViewIcon}
+                          size={14}
+                          strokeWidth={1.8}
+                          className="insights-kpi-icon"
                           aria-hidden
                         />
-                      ) : null}
-                      {delta > 0 ? `+${delta}%` : `${delta}%`}
-                    </span>
-                  ) : null}
-                </div>
-                <small className="insights-kpi-sub">
-                  {kpis.previousPeriodReads !== null
-                    ? `vs ${numberFmt.format(kpis.previousPeriodReads)} prior period`
-                    : "All recorded readership"}
-                </small>
-              </div>
-
-              <div className="insights-kpi-card">
-                <div className="insights-kpi-top">
-                  <span className="insights-kpi-label">Today · UTC+05:30</span>
-                  <HugeiconsIcon
-                    icon={Calendar03Icon}
-                    size={14}
-                    strokeWidth={1.8}
-                    className="insights-kpi-icon"
-                    aria-hidden
-                  />
-                </div>
-                <div className="insights-kpi-main">
-                  <strong className="insights-kpi-value">
-                    {numberFmt.format(kpis.todayReads)}
-                  </strong>
-                </div>
-                <small className="insights-kpi-sub">
-                  {seriesStats.peakPoint && seriesStats.peakPoint.total > 0
-                    ? `Peak ${numberFmt.format(seriesStats.peakPoint.total)} on ${seriesStats.peakPoint.label}`
-                    : "No peak day recorded in range"}
-                </small>
-              </div>
-
-              <div className="insights-kpi-card">
-                <div className="insights-kpi-top">
-                  <span className="insights-kpi-label">Daily average</span>
-                  <HugeiconsIcon
-                    icon={ChartBarLineIcon}
-                    size={14}
-                    strokeWidth={1.8}
-                    className="insights-kpi-icon"
-                    aria-hidden
-                  />
-                </div>
-                <div className="insights-kpi-main">
-                  <strong className="insights-kpi-value">
-                    {decimalFmt.format(seriesStats.avgPerDay)}
-                  </strong>
-                </div>
-                <small className="insights-kpi-sub">
-                  {seriesStats.activeDays} of {seriesStats.totalDays} active{" "}
-                  {seriesStats.totalDays === 1 ? "day" : "days"}
-                </small>
-              </div>
-
-              <div className="insights-kpi-card">
-                <div className="insights-kpi-top">
-                  <span className="insights-kpi-label">Catalog reach</span>
-                  <HugeiconsIcon
-                    icon={Layers01Icon}
-                    size={14}
-                    strokeWidth={1.8}
-                    className="insights-kpi-icon"
-                    aria-hidden
-                  />
-                </div>
-                <div className="insights-kpi-main">
-                  <strong className="insights-kpi-value">
-                    {numberFmt.format(kpis.activeEntriesCount)}
-                    <span className="insights-kpi-denom">
-                      /{numberFmt.format(kpis.publishedEntriesCount)}
-                    </span>
-                  </strong>
-                  {kpis.publishedEntriesCount > 0 ? (
-                    <span className="insights-delta-pill">{reachPercent}%</span>
-                  ) : null}
-                </div>
-                <small className="insights-kpi-sub">
-                  {numberFmt.format(kpis.totalAllTime)} cumulative all-time
-                  reads
-                </small>
-              </div>
-            </div>
-          ) : null}
-
-          {/* Main Recharts Readership Trend Card */}
-          <section className="invoice-section-card insights-card">
-            <div className="invoice-section-head insights-card-head">
-              <div>
-                <h3>Readership trend</h3>
-                <p>
-                  Deduplicated public content opens by calendar day
-                  (Asia/Colombo)
-                </p>
-              </div>
-
-              <div className="insights-card-controls">
-                <Select
-                  items={COLLECTION_SELECT_ITEMS}
-                  value={collection}
-                  onValueChange={(val) => {
-                    if (val) setCollection(val as InsightsCollectionFilter);
-                  }}
-                >
-                  <SelectTrigger
-                    className="h-7 min-w-36"
-                    aria-label="Filter collection"
-                  >
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectPopup>
-                    {COLLECTION_SELECT_ITEMS.map((item) => (
-                      <SelectItem key={item.value} value={item.value}>
-                        {item.label}
-                      </SelectItem>
-                    ))}
-                  </SelectPopup>
-                </Select>
-
-                <div
-                  className="admin-segmented-tabs"
-                  role="group"
-                  aria-label="Chart display style"
-                >
-                  <button
-                    type="button"
-                    className={`admin-segmented-tab${chartStyle === "area" ? " is-active" : ""}`}
-                    aria-pressed={chartStyle === "area"}
-                    onClick={() => setChartStyle("area")}
-                  >
-                    <HugeiconsIcon
-                      icon={ChartLineData02Icon}
-                      strokeWidth={2}
-                      size={12.5}
-                      aria-hidden
-                    />
-                    <span>Area</span>
-                  </button>
-                  <button
-                    type="button"
-                    className={`admin-segmented-tab${chartStyle === "bars" ? " is-active" : ""}`}
-                    aria-pressed={chartStyle === "bars"}
-                    onClick={() => setChartStyle("bars")}
-                  >
-                    <HugeiconsIcon
-                      icon={ChartHistogramIcon}
-                      strokeWidth={2}
-                      size={12.5}
-                      aria-hidden
-                    />
-                    <span>Bars</span>
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            <DailyReadershipChart
-              series={report.series}
-              chartStyle={chartStyle}
-              reduceMotion={Boolean(shouldReduceMotion)}
-            />
-          </section>
-
-          {/* Bottom Two-Column Overview Split */}
-          <div className="insights-overview-split">
-            <section className="invoice-section-card insights-card">
-              <div className="invoice-section-head">
-                <div>
-                  <h3>Collections</h3>
-                  <p>Share of reads across published collections</p>
-                </div>
-                {collection !== "all" ? (
-                  <Button
-                    type="button"
-                    size="xs"
-                    variant="ghost"
-                    onClick={() => setCollection("all")}
-                  >
-                    Show all
-                  </Button>
-                ) : null}
-              </div>
-
-              <div className="insights-col-list tabular-nums">
-                {report.byCollection.map((col) => {
-                  const isSelected = collection === col.type;
-                  return (
-                    <button
-                      key={col.type}
-                      type="button"
-                      className={`insights-col-row${isSelected ? " is-selected" : ""}`}
-                      onClick={() =>
-                        setCollection(isSelected ? "all" : col.type)
-                      }
-                    >
-                      <div className="insights-col-row-top">
-                        <span className="insights-col-name">
-                          {col.label}
-                          <small>{col.publishedCount} published</small>
-                        </span>
-                        <span className="insights-col-figures">
-                          <strong>{numberFmt.format(col.periodReads)}</strong>
-                          <small>{col.sharePercent}%</small>
-                        </span>
                       </div>
-                      <div className="insights-meter-track" aria-hidden>
-                        <span
-                          className="insights-meter-fill"
-                          style={{
-                            width: `${
-                              col.periodReads > 0
-                                ? Math.min(100, Math.max(2, col.sharePercent))
-                                : 0
-                            }%`,
-                          }}
+                      <div className="insights-kpi-main">
+                        <strong className="insights-kpi-value">
+                          {numberFmt.format(kpis.periodReads)}
+                        </strong>
+                        {delta !== null ? (
+                          <span
+                            className={`insights-delta-pill${delta > 0 ? " is-up" : delta < 0 ? " is-down" : ""}`}
+                          >
+                            {delta !== 0 ? (
+                              <HugeiconsIcon
+                                icon={
+                                  delta > 0 ? ArrowUp01Icon : ArrowDown01Icon
+                                }
+                                size={10.5}
+                                strokeWidth={2.2}
+                                aria-hidden
+                              />
+                            ) : null}
+                            {delta > 0 ? `+${delta}%` : `${delta}%`}
+                          </span>
+                        ) : null}
+                      </div>
+                      <small className="insights-kpi-sub">
+                        {kpis.previousPeriodReads !== null
+                          ? `vs ${numberFmt.format(kpis.previousPeriodReads)} prior period`
+                          : "All recorded readership"}
+                      </small>
+                    </div>
+
+                    <div className="insights-kpi-card">
+                      <div className="insights-kpi-top">
+                        <span className="insights-kpi-label">
+                          Today · UTC+05:30
+                        </span>
+                        <HugeiconsIcon
+                          icon={Calendar03Icon}
+                          size={14}
+                          strokeWidth={1.8}
+                          className="insights-kpi-icon"
+                          aria-hidden
                         />
                       </div>
-                    </button>
-                  );
-                })}
-              </div>
-            </section>
-
-            <section className="invoice-section-card insights-card">
-              <div className="invoice-section-head">
-                <div>
-                  <h3>Top entries</h3>
-                  <p>
-                    Most read content in {rangeMeta.longLabel.toLowerCase()}
-                  </p>
-                </div>
-                <Button
-                  type="button"
-                  size="xs"
-                  variant="outline"
-                  onClick={() => setTab("entries")}
-                >
-                  <span>All entries</span>
-                  <HugeiconsIcon
-                    icon={ArrowRight01Icon}
-                    strokeWidth={2}
-                    size={12}
-                    aria-hidden
-                  />
-                </Button>
-              </div>
-
-              {report.topEntries.length === 0 ? (
-                <div className="insights-empty-box">
-                  No public content reads recorded for this selection yet.
-                </div>
-              ) : (
-                <div className="insights-top-preview tabular-nums">
-                  {report.topEntries.slice(0, 6).map((entry, idx) => (
-                    <button
-                      key={`${entry.type}:${entry.slug}`}
-                      type="button"
-                      className="insights-preview-row"
-                      onClick={() => router.push(entry.href, { scroll: false })}
-                    >
-                      <span className="insights-preview-rank">{idx + 1}</span>
-                      <span className="insights-preview-copy">
-                        <strong className="insights-preview-title">
-                          {entry.title}
+                      <div className="insights-kpi-main">
+                        <strong className="insights-kpi-value">
+                          {numberFmt.format(kpis.todayReads)}
                         </strong>
-                        <small>{entry.collectionLabel}</small>
-                      </span>
-                      <span className="insights-preview-count">
-                        <strong>{numberFmt.format(entry.periodReads)}</strong>
-                        <small>reads</small>
-                      </span>
-                      <HugeiconsIcon
-                        icon={ArrowUpRight01Icon}
-                        size={13}
-                        strokeWidth={1.9}
-                        className="text-muted-foreground"
-                        aria-hidden
-                      />
-                    </button>
-                  ))}
-                </div>
-              )}
-            </section>
-          </div>
-        </div>
-      ) : null}
+                      </div>
+                      <small className="insights-kpi-sub">
+                        {seriesStats.peakPoint &&
+                        seriesStats.peakPoint.total > 0
+                          ? `Peak ${numberFmt.format(seriesStats.peakPoint.total)} on ${seriesStats.peakPoint.label}`
+                          : "No peak day recorded in range"}
+                      </small>
+                    </div>
 
-      {/* Tab 2: Full Filterable & Sortable Content Leaderboard */}
-      {report?.configured && tab === "entries" ? (
-        <div className="insights-pane-scroll">
-          <div className="invoice-filter-bar">
-            <div className="admin-chip-wrap">
-              <button
-                type="button"
-                onClick={() => setCollection("all")}
-                className={`admin-chip-btn${collection === "all" ? " is-active" : ""}`}
-              >
-                All
-              </button>
-              {CONTENT_TYPES.map((type: ContentType) => (
-                <button
-                  key={type}
-                  type="button"
-                  onClick={() => setCollection(type)}
-                  className={`admin-chip-btn${collection === type ? " is-active" : ""}`}
-                >
-                  {CONTENT_META[type].label}
-                </button>
-              ))}
-            </div>
+                    <div className="insights-kpi-card">
+                      <div className="insights-kpi-top">
+                        <span className="insights-kpi-label">
+                          Daily average
+                        </span>
+                        <HugeiconsIcon
+                          icon={ChartBarLineIcon}
+                          size={14}
+                          strokeWidth={1.8}
+                          className="insights-kpi-icon"
+                          aria-hidden
+                        />
+                      </div>
+                      <div className="insights-kpi-main">
+                        <strong className="insights-kpi-value">
+                          {decimalFmt.format(seriesStats.avgPerDay)}
+                        </strong>
+                      </div>
+                      <small className="insights-kpi-sub">
+                        {seriesStats.activeDays} of {seriesStats.totalDays}{" "}
+                        active {seriesStats.totalDays === 1 ? "day" : "days"}
+                      </small>
+                    </div>
 
-            <div className="invoice-filter-controls">
-              <Select
-                items={SORT_SELECT_ITEMS}
-                value={entrySort}
-                onValueChange={(val) => {
-                  if (val) setEntrySort(val as EntrySortMode);
-                }}
-              >
-                <SelectTrigger
-                  className="h-8 min-w-40"
-                  aria-label="Sort entries"
-                >
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectPopup>
-                  {SORT_SELECT_ITEMS.map((item) => (
-                    <SelectItem key={item.value} value={item.value}>
-                      {item.label}
-                    </SelectItem>
-                  ))}
-                </SelectPopup>
-              </Select>
+                    <div className="insights-kpi-card">
+                      <div className="insights-kpi-top">
+                        <span className="insights-kpi-label">
+                          Catalog reach
+                        </span>
+                        <HugeiconsIcon
+                          icon={Layers01Icon}
+                          size={14}
+                          strokeWidth={1.8}
+                          className="insights-kpi-icon"
+                          aria-hidden
+                        />
+                      </div>
+                      <div className="insights-kpi-main">
+                        <strong className="insights-kpi-value">
+                          {numberFmt.format(kpis.activeEntriesCount)}
+                          <span className="insights-kpi-denom">
+                            /{numberFmt.format(kpis.publishedEntriesCount)}
+                          </span>
+                        </strong>
+                        {kpis.publishedEntriesCount > 0 ? (
+                          <span className="insights-delta-pill">
+                            {reachPercent}%
+                          </span>
+                        ) : null}
+                      </div>
+                      <small className="insights-kpi-sub">
+                        {numberFmt.format(kpis.totalAllTime)} cumulative
+                        all-time reads
+                      </small>
+                    </div>
+                  </div>
+                ) : null}
 
-              <div className="invoice-search-box">
-                <HugeiconsIcon icon={Search01Icon} strokeWidth={2} size={14} />
-                <input
-                  type="search"
-                  value={entrySearch}
-                  onChange={(e) => setEntrySearch(e.target.value)}
-                  placeholder="Search title or slug…"
-                  aria-label="Filter entries"
-                />
-              </div>
-            </div>
-          </div>
+                {/* Main Recharts Readership Trend Card */}
+                <section className="invoice-section-card insights-card">
+                  <div className="invoice-section-head insights-card-head">
+                    <div>
+                      <h3>Readership trend</h3>
+                      <p>
+                        Deduplicated public content opens by calendar day
+                        (Asia/Colombo)
+                      </p>
+                    </div>
 
-          <section className="invoice-section-card">
-            {filteredEntries.length === 0 ? (
-              <div className="insights-empty-box">
-                {entrySearch.trim()
-                  ? `No entries match “${entrySearch.trim()}”.`
-                  : "No public content reads recorded for this filter yet."}
-              </div>
-            ) : (
-              <div className="invoice-table-wrap">
-                <table className="invoice-ledger-table insights-ledger-table tabular-nums">
-                  <thead>
-                    <tr>
-                      <th className="w-10">#</th>
-                      <th>Entry</th>
-                      <th>Collection</th>
-                      <th className="w-36">Share</th>
-                      <th className="text-right">In range</th>
-                      <th className="text-right">All-time</th>
-                      <th className="text-right">Last read</th>
-                      <th className="w-10 text-right" aria-label="Open" />
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredEntries.map((entry, idx) => (
-                      <tr
-                        key={`${entry.type}:${entry.slug}`}
-                        className="insights-table-row"
-                        onClick={() =>
-                          router.push(entry.href, { scroll: false })
+                    <div className="insights-card-controls">
+                      <Select
+                        items={COLLECTION_SELECT_ITEMS}
+                        value={collection}
+                        onValueChange={(val) => {
+                          if (val)
+                            setCollection(val as InsightsCollectionFilter);
+                        }}
+                      >
+                        <SelectTrigger
+                          className="h-7 min-w-36"
+                          aria-label="Filter collection"
+                        >
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectPopup>
+                          {COLLECTION_SELECT_ITEMS.map((item) => (
+                            <SelectItem key={item.value} value={item.value}>
+                              {item.label}
+                            </SelectItem>
+                          ))}
+                        </SelectPopup>
+                      </Select>
+
+                      <Tabs
+                        value={chartStyle}
+                        onValueChange={(next) =>
+                          setChartStyle(next as ChartStyle)
                         }
                       >
-                        <td className="text-muted-foreground">{idx + 1}</td>
-                        <td>
-                          <div className="insights-entry-main">
-                            <span className="insights-entry-title">
-                              {entry.title}
-                            </span>
-                            <span className="insights-entry-slug">
-                              /{entry.type}/{entry.slug}
-                            </span>
-                          </div>
-                        </td>
-                        <td>
-                          <span className="insights-entry-badge">
-                            {entry.collectionLabel}
-                          </span>
-                        </td>
-                        <td>
-                          <div className="insights-share-cell">
+                        <TabsHighlight className="insights-tab-pill">
+                          <TabsList
+                            aria-label="Chart display style"
+                            className="admin-segmented-tabs"
+                          >
+                            <TabsHighlightItem value="area">
+                              <TabsTrigger
+                                value="area"
+                                className="admin-segmented-tab is-animated"
+                              >
+                                <HugeiconsIcon
+                                  icon={ChartLineData02Icon}
+                                  strokeWidth={2}
+                                  size={12.5}
+                                  aria-hidden
+                                />
+                                <span>Area</span>
+                              </TabsTrigger>
+                            </TabsHighlightItem>
+                            <TabsHighlightItem value="bars">
+                              <TabsTrigger
+                                value="bars"
+                                className="admin-segmented-tab is-animated"
+                              >
+                                <HugeiconsIcon
+                                  icon={ChartHistogramIcon}
+                                  strokeWidth={2}
+                                  size={12.5}
+                                  aria-hidden
+                                />
+                                <span>Bars</span>
+                              </TabsTrigger>
+                            </TabsHighlightItem>
+                          </TabsList>
+                        </TabsHighlight>
+                      </Tabs>
+                    </div>
+                  </div>
+
+                  <DailyReadershipChart
+                    series={report.series}
+                    chartStyle={chartStyle}
+                    reduceMotion={Boolean(shouldReduceMotion)}
+                  />
+                </section>
+
+                {/* Bottom Two-Column Overview Split */}
+                <div className="insights-overview-split">
+                  <section className="invoice-section-card insights-card">
+                    <div className="invoice-section-head">
+                      <div>
+                        <h3>Collections</h3>
+                        <p>Share of reads across published collections</p>
+                      </div>
+                      {collection !== "all" ? (
+                        <Button
+                          type="button"
+                          size="xs"
+                          variant="ghost"
+                          onClick={() => setCollection("all")}
+                        >
+                          Show all
+                        </Button>
+                      ) : null}
+                    </div>
+
+                    <div className="insights-col-list tabular-nums">
+                      {report.byCollection.map((col) => {
+                        const isSelected = collection === col.type;
+                        return (
+                          <button
+                            key={col.type}
+                            type="button"
+                            className={`insights-col-row${isSelected ? " is-selected" : ""}`}
+                            onClick={() =>
+                              setCollection(isSelected ? "all" : col.type)
+                            }
+                          >
+                            <div className="insights-col-row-top">
+                              <span className="insights-col-name">
+                                {col.label}
+                                <small>{col.publishedCount} published</small>
+                              </span>
+                              <span className="insights-col-figures">
+                                <strong>
+                                  {numberFmt.format(col.periodReads)}
+                                </strong>
+                                <small>{col.sharePercent}%</small>
+                              </span>
+                            </div>
                             <div className="insights-meter-track" aria-hidden>
                               <span
                                 className="insights-meter-fill"
                                 style={{
                                   width: `${
-                                    entry.periodReads > 0
+                                    col.periodReads > 0
                                       ? Math.min(
                                           100,
-                                          Math.max(3, entry.sharePercent),
+                                          Math.max(2, col.sharePercent),
                                         )
                                       : 0
                                   }%`,
                                 }}
                               />
                             </div>
-                            <span>{entry.sharePercent}%</span>
-                          </div>
-                        </td>
-                        <td className="text-right font-semibold">
-                          {numberFmt.format(entry.periodReads)}
-                        </td>
-                        <td className="text-right text-muted-foreground">
-                          {numberFmt.format(entry.allTimeReads)}
-                        </td>
-                        <td className="text-right text-muted-foreground">
-                          {formatRelativeStamp(entry.lastReadAt)}
-                        </td>
-                        <td className="text-right">
-                          <HugeiconsIcon
-                            icon={ArrowUpRight01Icon}
-                            size={13.5}
-                            strokeWidth={1.9}
-                            className="inline-block text-muted-foreground"
-                            aria-hidden
-                          />
-                        </td>
-                      </tr>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </section>
+
+                  <section className="invoice-section-card insights-card">
+                    <div className="invoice-section-head">
+                      <div>
+                        <h3>Top entries</h3>
+                        <p>
+                          Most read content in{" "}
+                          {rangeMeta.longLabel.toLowerCase()}
+                        </p>
+                      </div>
+                      <Button
+                        type="button"
+                        size="xs"
+                        variant="outline"
+                        onClick={() => handleTabChange("entries")}
+                      >
+                        <span>All entries</span>
+                        <HugeiconsIcon
+                          icon={ArrowRight01Icon}
+                          strokeWidth={2}
+                          size={12}
+                          aria-hidden
+                        />
+                      </Button>
+                    </div>
+
+                    {report.topEntries.length === 0 ? (
+                      <div className="insights-empty-box">
+                        No public content reads recorded for this selection yet.
+                      </div>
+                    ) : (
+                      <div className="insights-top-preview tabular-nums">
+                        {report.topEntries.slice(0, 6).map((entry, idx) => (
+                          <button
+                            key={`${entry.type}:${entry.slug}`}
+                            type="button"
+                            className="insights-preview-row"
+                            onClick={() =>
+                              router.push(entry.href, { scroll: false })
+                            }
+                          >
+                            <span className="insights-preview-rank">
+                              {idx + 1}
+                            </span>
+                            <span className="insights-preview-copy">
+                              <strong className="insights-preview-title">
+                                {entry.title}
+                              </strong>
+                              <small>{entry.collectionLabel}</small>
+                            </span>
+                            <span className="insights-preview-count">
+                              <strong>
+                                {numberFmt.format(entry.periodReads)}
+                              </strong>
+                              <small>
+                                {entry.periodReads === 1 ? "read" : "reads"}
+                              </small>
+                            </span>
+                            <HugeiconsIcon
+                              icon={ArrowUpRight01Icon}
+                              size={13}
+                              strokeWidth={1.9}
+                              className="text-muted-foreground"
+                              aria-hidden
+                            />
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </section>
+                </div>
+              </div>
+            </TabsContent>
+
+            {/* Tab 2: Full Filterable & Sortable Content Leaderboard */}
+            <TabsContent value="entries" className="insights-tab-panel">
+              <div className="insights-tab-stack">
+                <div className="invoice-filter-bar">
+                  <div className="admin-chip-wrap">
+                    <button
+                      type="button"
+                      onClick={() => setCollection("all")}
+                      className={`admin-chip-btn${collection === "all" ? " is-active" : ""}`}
+                    >
+                      All
+                    </button>
+                    {CONTENT_TYPES.map((type: ContentType) => (
+                      <button
+                        key={type}
+                        type="button"
+                        onClick={() => setCollection(type)}
+                        className={`admin-chip-btn${collection === type ? " is-active" : ""}`}
+                      >
+                        {CONTENT_META[type].label}
+                      </button>
                     ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </section>
-        </div>
-      ) : null}
+                  </div>
 
-      {/* Tab 3: Audience (Sources & Regions) */}
-      {report?.configured && tab === "audience" ? (
-        <div className="insights-pane-scroll">
-          <div className="insights-audience-summary tabular-nums">
-            <div className="insights-kpi-card">
-              <div className="insights-kpi-top">
-                <span className="insights-kpi-label">Direct & workspace</span>
-                <HugeiconsIcon
-                  icon={Layers01Icon}
-                  size={14}
-                  strokeWidth={1.8}
-                  className="insights-kpi-icon"
-                  aria-hidden
-                />
-              </div>
-              <div className="insights-kpi-main">
-                <strong className="insights-kpi-value">
-                  {numberFmt.format(audienceSummary.directReads)}
-                </strong>
-                <span className="insights-delta-pill">
-                  {audienceSummary.directShare}%
-                </span>
-              </div>
-              <small className="insights-kpi-sub">
-                Opened directly or from workspace windows
-              </small>
-            </div>
+                  <div className="invoice-filter-controls">
+                    <Select
+                      items={SORT_SELECT_ITEMS}
+                      value={entrySort}
+                      onValueChange={(val) => {
+                        if (val) setEntrySort(val as EntrySortMode);
+                      }}
+                    >
+                      <SelectTrigger
+                        className="h-8 min-w-40"
+                        aria-label="Sort entries"
+                      >
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectPopup>
+                        {SORT_SELECT_ITEMS.map((item) => (
+                          <SelectItem key={item.value} value={item.value}>
+                            {item.label}
+                          </SelectItem>
+                        ))}
+                      </SelectPopup>
+                    </Select>
 
-            <div className="insights-kpi-card">
-              <div className="insights-kpi-top">
-                <span className="insights-kpi-label">External referrers</span>
-                <HugeiconsIcon
-                  icon={Link01Icon}
-                  size={14}
-                  strokeWidth={1.8}
-                  className="insights-kpi-icon"
-                  aria-hidden
-                />
-              </div>
-              <div className="insights-kpi-main">
-                <strong className="insights-kpi-value">
-                  {numberFmt.format(audienceSummary.externalReads)}
-                </strong>
-                <span className="insights-delta-pill">
-                  {audienceSummary.directReads + audienceSummary.externalReads >
-                  0
-                    ? `${100 - audienceSummary.directShare}%`
-                    : "0%"}
-                </span>
-              </div>
-              <small className="insights-kpi-sub">
-                Search engines, social links, and external sites
-              </small>
-            </div>
-
-            <div className="insights-kpi-card">
-              <div className="insights-kpi-top">
-                <span className="insights-kpi-label">Active regions</span>
-                <HugeiconsIcon
-                  icon={Globe02Icon}
-                  size={14}
-                  strokeWidth={1.8}
-                  className="insights-kpi-icon"
-                  aria-hidden
-                />
-              </div>
-              <div className="insights-kpi-main">
-                <strong className="insights-kpi-value">
-                  {numberFmt.format(report.topCountries.length)}
-                </strong>
-              </div>
-              <small className="insights-kpi-sub">
-                {report.topCountries[0]
-                  ? `Leading: ${report.topCountries[0].label} (${report.topCountries[0].sharePercent}%)`
-                  : "No regional data in range"}
-              </small>
-            </div>
-          </div>
-
-          <div className="insights-overview-split">
-            <section className="invoice-section-card insights-card">
-              <div className="invoice-section-head">
-                <div>
-                  <h3>Referrer sources</h3>
-                  <p>Hostname-level origin of reader sessions</p>
+                    <div className="invoice-search-box">
+                      <HugeiconsIcon
+                        icon={Search01Icon}
+                        strokeWidth={2}
+                        size={14}
+                      />
+                      <input
+                        type="search"
+                        value={entrySearch}
+                        onChange={(e) => setEntrySearch(e.target.value)}
+                        placeholder="Search title or slug…"
+                        aria-label="Filter entries"
+                      />
+                    </div>
+                  </div>
                 </div>
+
+                <section className="invoice-section-card insights-card">
+                  {filteredEntries.length === 0 ? (
+                    <div className="insights-empty-box">
+                      {entrySearch.trim()
+                        ? `No entries match “${entrySearch.trim()}”.`
+                        : "No public content reads recorded for this filter yet."}
+                    </div>
+                  ) : (
+                    <div className="invoice-table-wrap">
+                      <table className="invoice-ledger-table insights-ledger-table tabular-nums">
+                        <thead>
+                          <tr>
+                            <th className="w-10">#</th>
+                            <th>Entry</th>
+                            <th>Collection</th>
+                            <th className="w-36">Share</th>
+                            <th className="text-right">In range</th>
+                            <th className="text-right">All-time</th>
+                            <th className="text-right">Last read</th>
+                            <th className="w-10 text-right" aria-label="Open" />
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {filteredEntries.map((entry, idx) => (
+                            <tr
+                              key={`${entry.type}:${entry.slug}`}
+                              className="insights-table-row"
+                              onClick={() =>
+                                router.push(entry.href, { scroll: false })
+                              }
+                            >
+                              <td className="text-muted-foreground">
+                                {idx + 1}
+                              </td>
+                              <td>
+                                <div className="insights-entry-main">
+                                  <span className="insights-entry-title">
+                                    {entry.title}
+                                  </span>
+                                  <span className="insights-entry-slug">
+                                    /{entry.type}/{entry.slug}
+                                  </span>
+                                </div>
+                              </td>
+                              <td>
+                                <span className="insights-entry-badge">
+                                  {entry.collectionLabel}
+                                </span>
+                              </td>
+                              <td>
+                                <div className="insights-share-cell">
+                                  <div
+                                    className="insights-meter-track"
+                                    aria-hidden
+                                  >
+                                    <span
+                                      className="insights-meter-fill"
+                                      style={{
+                                        width: `${
+                                          entry.periodReads > 0
+                                            ? Math.min(
+                                                100,
+                                                Math.max(3, entry.sharePercent),
+                                              )
+                                            : 0
+                                        }%`,
+                                      }}
+                                    />
+                                  </div>
+                                  <span>{entry.sharePercent}%</span>
+                                </div>
+                              </td>
+                              <td className="text-right font-semibold">
+                                {numberFmt.format(entry.periodReads)}
+                              </td>
+                              <td className="text-right text-muted-foreground">
+                                {numberFmt.format(entry.allTimeReads)}
+                              </td>
+                              <td className="text-right text-muted-foreground">
+                                {formatRelativeStamp(entry.lastReadAt)}
+                              </td>
+                              <td className="text-right">
+                                <HugeiconsIcon
+                                  icon={ArrowUpRight01Icon}
+                                  size={13.5}
+                                  strokeWidth={1.9}
+                                  className="inline-block text-muted-foreground"
+                                  aria-hidden
+                                />
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </section>
               </div>
+            </TabsContent>
 
-              {report.topSources.length === 0 ? (
-                <div className="insights-empty-box">
-                  No referrer data recorded in{" "}
-                  {rangeMeta.longLabel.toLowerCase()}.
-                </div>
-              ) : (
-                <ul className="insights-breakdown-list tabular-nums">
-                  {report.topSources.map((row) => (
-                    <li key={row.key} className="insights-breakdown-row">
-                      <div className="insights-breakdown-head">
-                        <span className="insights-breakdown-label">
-                          {row.label}
-                        </span>
-                        <span className="insights-breakdown-figures">
-                          <strong>{numberFmt.format(row.reads)}</strong>
-                          <small>{row.sharePercent}%</small>
-                        </span>
-                      </div>
-                      <div className="insights-meter-track" aria-hidden>
-                        <span
-                          className="insights-meter-fill"
-                          style={{
-                            width: `${Math.min(100, Math.max(2, row.sharePercent))}%`,
-                          }}
-                        />
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </section>
+            {/* Tab 3: Audience (Sources & Regions) */}
+            <TabsContent value="audience" className="insights-tab-panel">
+              <div className="insights-tab-stack">
+                <div className="insights-audience-summary tabular-nums">
+                  <div className="insights-kpi-card">
+                    <div className="insights-kpi-top">
+                      <span className="insights-kpi-label">
+                        Direct & workspace
+                      </span>
+                      <HugeiconsIcon
+                        icon={Layers01Icon}
+                        size={14}
+                        strokeWidth={1.8}
+                        className="insights-kpi-icon"
+                        aria-hidden
+                      />
+                    </div>
+                    <div className="insights-kpi-main">
+                      <strong className="insights-kpi-value">
+                        {numberFmt.format(audienceSummary.directReads)}
+                      </strong>
+                      <span className="insights-delta-pill">
+                        {audienceSummary.directShare}%
+                      </span>
+                    </div>
+                    <small className="insights-kpi-sub">
+                      Opened directly or from workspace windows
+                    </small>
+                  </div>
 
-            <section className="invoice-section-card insights-card">
-              <div className="invoice-section-head">
-                <div>
-                  <h3>Reader regions</h3>
-                  <p>
-                    Country-level distribution in{" "}
-                    {rangeMeta.longLabel.toLowerCase()}
-                  </p>
+                  <div className="insights-kpi-card">
+                    <div className="insights-kpi-top">
+                      <span className="insights-kpi-label">
+                        External referrers
+                      </span>
+                      <HugeiconsIcon
+                        icon={Link01Icon}
+                        size={14}
+                        strokeWidth={1.8}
+                        className="insights-kpi-icon"
+                        aria-hidden
+                      />
+                    </div>
+                    <div className="insights-kpi-main">
+                      <strong className="insights-kpi-value">
+                        {numberFmt.format(audienceSummary.externalReads)}
+                      </strong>
+                      <span className="insights-delta-pill">
+                        {audienceSummary.directReads +
+                          audienceSummary.externalReads >
+                        0
+                          ? `${100 - audienceSummary.directShare}%`
+                          : "0%"}
+                      </span>
+                    </div>
+                    <small className="insights-kpi-sub">
+                      Search engines, social links, and external sites
+                    </small>
+                  </div>
+
+                  <div className="insights-kpi-card">
+                    <div className="insights-kpi-top">
+                      <span className="insights-kpi-label">Active regions</span>
+                      <HugeiconsIcon
+                        icon={Globe02Icon}
+                        size={14}
+                        strokeWidth={1.8}
+                        className="insights-kpi-icon"
+                        aria-hidden
+                      />
+                    </div>
+                    <div className="insights-kpi-main">
+                      <strong className="insights-kpi-value">
+                        {numberFmt.format(report.topCountries.length)}
+                      </strong>
+                    </div>
+                    <small className="insights-kpi-sub">
+                      {report.topCountries[0]
+                        ? `Leading: ${report.topCountries[0].label} (${report.topCountries[0].sharePercent}%)`
+                        : "No regional data in range"}
+                    </small>
+                  </div>
                 </div>
+
+                <div className="insights-overview-split">
+                  <section className="invoice-section-card insights-card">
+                    <div className="invoice-section-head">
+                      <div>
+                        <h3>Referrer sources</h3>
+                        <p>Hostname-level origin of reader sessions</p>
+                      </div>
+                    </div>
+
+                    {report.topSources.length === 0 ? (
+                      <div className="insights-empty-box">
+                        No referrer data recorded in{" "}
+                        {rangeMeta.longLabel.toLowerCase()}.
+                      </div>
+                    ) : (
+                      <ul className="insights-breakdown-list tabular-nums">
+                        {report.topSources.map((row) => (
+                          <li key={row.key} className="insights-breakdown-row">
+                            <div className="insights-breakdown-head">
+                              <span className="insights-breakdown-label">
+                                {row.label}
+                              </span>
+                              <span className="insights-breakdown-figures">
+                                <strong>{numberFmt.format(row.reads)}</strong>
+                                <small>{row.sharePercent}%</small>
+                              </span>
+                            </div>
+                            <div className="insights-meter-track" aria-hidden>
+                              <span
+                                className="insights-meter-fill"
+                                style={{
+                                  width: `${Math.min(100, Math.max(2, row.sharePercent))}%`,
+                                }}
+                              />
+                            </div>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </section>
+
+                  <section className="invoice-section-card insights-card">
+                    <div className="invoice-section-head">
+                      <div>
+                        <h3>Reader regions</h3>
+                        <p>
+                          Country-level distribution in{" "}
+                          {rangeMeta.longLabel.toLowerCase()}
+                        </p>
+                      </div>
+                    </div>
+
+                    {report.topCountries.length === 0 ? (
+                      <div className="insights-empty-box">
+                        No regional data recorded in{" "}
+                        {rangeMeta.longLabel.toLowerCase()}.
+                      </div>
+                    ) : (
+                      <ul className="insights-breakdown-list tabular-nums">
+                        {report.topCountries.map((row) => (
+                          <li key={row.key} className="insights-breakdown-row">
+                            <div className="insights-breakdown-head">
+                              <span className="insights-breakdown-label">
+                                <code className="insights-iso-code">
+                                  {row.key === "ZZ" ? "—" : row.key}
+                                </code>
+                                <span>{row.label}</span>
+                              </span>
+                              <span className="insights-breakdown-figures">
+                                <strong>{numberFmt.format(row.reads)}</strong>
+                                <small>{row.sharePercent}%</small>
+                              </span>
+                            </div>
+                            <div className="insights-meter-track" aria-hidden>
+                              <span
+                                className="insights-meter-fill"
+                                style={{
+                                  width: `${Math.min(100, Math.max(2, row.sharePercent))}%`,
+                                }}
+                              />
+                            </div>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </section>
+                </div>
+
+                <p className="insights-privacy-note">
+                  Counts are aggregated into daily UTC+05:30 buckets without
+                  storing visitor IP addresses, browser fingerprints, or
+                  third-party tracking cookies.
+                </p>
               </div>
-
-              {report.topCountries.length === 0 ? (
-                <div className="insights-empty-box">
-                  No regional data recorded in{" "}
-                  {rangeMeta.longLabel.toLowerCase()}.
-                </div>
-              ) : (
-                <ul className="insights-breakdown-list tabular-nums">
-                  {report.topCountries.map((row) => (
-                    <li key={row.key} className="insights-breakdown-row">
-                      <div className="insights-breakdown-head">
-                        <span className="insights-breakdown-label">
-                          <code className="insights-iso-code">
-                            {row.key === "ZZ" ? "—" : row.key}
-                          </code>
-                          <span>{row.label}</span>
-                        </span>
-                        <span className="insights-breakdown-figures">
-                          <strong>{numberFmt.format(row.reads)}</strong>
-                          <small>{row.sharePercent}%</small>
-                        </span>
-                      </div>
-                      <div className="insights-meter-track" aria-hidden>
-                        <span
-                          className="insights-meter-fill"
-                          style={{
-                            width: `${Math.min(100, Math.max(2, row.sharePercent))}%`,
-                          }}
-                        />
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </section>
-          </div>
-
-          <p className="insights-privacy-note">
-            Counts are aggregated into daily UTC+05:30 buckets without storing
-            visitor IP addresses, browser fingerprints, or third-party tracking
-            cookies.
-          </p>
-        </div>
-      ) : null}
-    </div>
+            </TabsContent>
+          </TabsContents>
+        )}
+      </div>
+    </Tabs>
   );
 }
