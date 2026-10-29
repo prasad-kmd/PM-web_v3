@@ -13,29 +13,57 @@ import { toast } from "sonner";
 
 type SessionResponse = {
   authenticated: boolean;
+  step?: "totp";
+  challengeToken?: string;
+  expiresInSeconds?: number;
+  recoveryAvailable?: boolean;
+  trustDurationDays?: number;
   username?: string;
   expiresAt?: number;
-  totpRequired?: boolean;
+  totpEnabled?: boolean;
+  deviceTrusted?: boolean;
+  usedRecoveryCode?: boolean;
+  expiredChallenge?: boolean;
   error?: string;
 };
 
-type SignInInput = {
-  username: string;
-  password: string;
-  otp?: string;
+export type TotpChallengeState = {
+  challengeToken: string;
+  expiresAtMs: number;
+  recoveryAvailable: boolean;
+  trustDurationDays: number;
 };
+
+export type PrimarySignInResult =
+  | { ok: true; step: "authenticated" }
+  | { ok: true; step: "totp"; challenge: TotpChallengeState }
+  | { ok: false; error: string };
+
+export type TotpVerifyResult =
+  { ok: true } | { ok: false; error: string; expiredChallenge?: boolean };
 
 export type AdminAuthContextValue = {
   authenticated: boolean;
   username: string | null;
   expiresAt: number | null;
-  totpRequired: boolean;
+  totpEnabled: boolean;
+  deviceTrusted: boolean;
   ready: boolean;
   lockOpen: boolean;
   openLockCurtain: () => void;
   closeLockCurtain: () => void;
-  signIn: (input: SignInInput) => Promise<{ ok: boolean; error?: string }>;
-  signOut: () => Promise<void>;
+  signInPrimary: (input: {
+    username: string;
+    password: string;
+  }) => Promise<PrimarySignInResult>;
+  verifyTotpChallenge: (input: {
+    challengeToken: string;
+    code: string;
+    useRecoveryCode?: boolean;
+    trustDevice?: boolean;
+  }) => Promise<TotpVerifyResult>;
+  forgetTrustedDevice: () => Promise<void>;
+  signOut: (options?: { forgetDevice?: boolean }) => Promise<void>;
   refreshContentCache: () => Promise<void>;
 };
 
@@ -51,7 +79,8 @@ export function AdminAuthProvider({
   const [authenticated, setAuthenticated] = useState(false);
   const [username, setUsername] = useState<string | null>(null);
   const [expiresAt, setExpiresAt] = useState<number | null>(null);
-  const [totpRequired, setTotpRequired] = useState(false);
+  const [totpEnabled, setTotpEnabled] = useState(false);
+  const [deviceTrusted, setDeviceTrusted] = useState(false);
   const [ready, setReady] = useState(false);
   const [lockOpen, setLockOpen] = useState(false);
 
@@ -66,13 +95,16 @@ export function AdminAuthProvider({
         setAuthenticated(false);
         setUsername(null);
         setExpiresAt(null);
+        setTotpEnabled(false);
+        setDeviceTrusted(false);
         return;
       }
       const data = (await res.json()) as SessionResponse;
       setAuthenticated(Boolean(data.authenticated));
       setUsername(data.username ?? null);
       setExpiresAt(data.expiresAt ?? null);
-      setTotpRequired(Boolean(data.totpRequired));
+      setTotpEnabled(Boolean(data.totpEnabled));
+      setDeviceTrusted(Boolean(data.deviceTrusted));
     } catch {
       // Quietly stay signed out if offline or unreachable.
     } finally {
@@ -92,31 +124,126 @@ export function AdminAuthProvider({
     setLockOpen(false);
   }, []);
 
-  const signIn = useCallback(
-    async ({ username: userField, password, otp }: SignInInput) => {
+  const signInPrimary = useCallback(
+    async ({
+      username: userField,
+      password,
+    }: {
+      username: string;
+      password: string;
+    }): Promise<PrimarySignInResult> => {
       try {
         const res = await fetch("/api/admin/session", {
           method: "POST",
           credentials: "same-origin",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
+            step: "credentials",
             username: userField,
             password,
-            ...(otp ? { otp } : {}),
           }),
         });
         const data = (await res.json().catch(() => ({}))) as SessionResponse;
-        if (!res.ok || !data.authenticated) {
+
+        if (!res.ok) {
           return {
             ok: false,
             error: data.error || "Incorrect username or password.",
           };
         }
+
+        if (data.step === "totp" && data.challengeToken) {
+          const ttlSec = data.expiresInSeconds ?? 90;
+          return {
+            ok: true,
+            step: "totp",
+            challenge: {
+              challengeToken: data.challengeToken,
+              expiresAtMs: Date.now() + ttlSec * 1000,
+              recoveryAvailable: Boolean(data.recoveryAvailable),
+              trustDurationDays:
+                typeof data.trustDurationDays === "number"
+                  ? data.trustDurationDays
+                  : 30,
+            },
+          };
+        }
+
+        if (!data.authenticated) {
+          return {
+            ok: false,
+            error: data.error || "Incorrect username or password.",
+          };
+        }
+
         setAuthenticated(true);
         setUsername(data.username ?? userField.trim());
         setExpiresAt(data.expiresAt ?? null);
+        setTotpEnabled(Boolean(data.totpEnabled));
+        setDeviceTrusted(Boolean(data.deviceTrusted));
         setLockOpen(false);
         toast.success("Workspace unlocked.");
+        return { ok: true, step: "authenticated" };
+      } catch {
+        return {
+          ok: false,
+          error: "Unable to reach the workspace right now.",
+        };
+      }
+    },
+    [],
+  );
+
+  const verifyTotpChallenge = useCallback(
+    async ({
+      challengeToken,
+      code,
+      useRecoveryCode,
+      trustDevice,
+    }: {
+      challengeToken: string;
+      code: string;
+      useRecoveryCode?: boolean;
+      trustDevice?: boolean;
+    }): Promise<TotpVerifyResult> => {
+      try {
+        const res = await fetch("/api/admin/session", {
+          method: "POST",
+          credentials: "same-origin",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            step: "totp",
+            challengeToken,
+            code,
+            useRecoveryCode: Boolean(useRecoveryCode),
+            trustDevice: Boolean(trustDevice),
+          }),
+        });
+        const data = (await res.json().catch(() => ({}))) as SessionResponse;
+
+        if (!res.ok || !data.authenticated) {
+          return {
+            ok: false,
+            error: data.error || "Invalid verification code.",
+            expiredChallenge: Boolean(data.expiredChallenge),
+          };
+        }
+
+        setAuthenticated(true);
+        setUsername(data.username ?? null);
+        setExpiresAt(data.expiresAt ?? null);
+        setTotpEnabled(true);
+        setDeviceTrusted(Boolean(data.deviceTrusted));
+        setLockOpen(false);
+
+        if (data.usedRecoveryCode) {
+          toast.warning("Unlocked with an emergency recovery code.", {
+            description:
+              "Rotate your authenticator & recovery codes when convenient.",
+          });
+        } else {
+          toast.success("Workspace unlocked.");
+        }
         return { ok: true };
       } catch {
         return {
@@ -128,22 +255,48 @@ export function AdminAuthProvider({
     [],
   );
 
-  const signOut = useCallback(async () => {
+  const forgetTrustedDevice = useCallback(async () => {
     try {
-      await fetch("/api/admin/session", {
-        method: "DELETE",
+      const res = await fetch("/api/admin/session", {
+        method: "PATCH",
         credentials: "same-origin",
       });
+      if (!res.ok) {
+        toast.error("Could not update browser trust setting.");
+        return;
+      }
+      setDeviceTrusted(false);
+      toast.success(
+        "Browser trust removed. Next sign-in will prompt for a code.",
+      );
     } catch {
-      // Clear local state regardless.
+      toast.error("Could not update browser trust setting.");
     }
-    setAuthenticated(false);
-    setUsername(null);
-    setExpiresAt(null);
-    setLockOpen(false);
-    onSignedOut?.();
-    toast.success("Signed out.");
-  }, [onSignedOut]);
+  }, []);
+
+  const signOut = useCallback(
+    async (options?: { forgetDevice?: boolean }) => {
+      const query = options?.forgetDevice ? "?forgetDevice=1" : "";
+      try {
+        await fetch(`/api/admin/session${query}`, {
+          method: "DELETE",
+          credentials: "same-origin",
+        });
+      } catch {
+        // Clear local state regardless.
+      }
+      setAuthenticated(false);
+      setUsername(null);
+      setExpiresAt(null);
+      if (options?.forgetDevice) {
+        setDeviceTrusted(false);
+      }
+      setLockOpen(false);
+      onSignedOut?.();
+      toast.success("Signed out.");
+    },
+    [onSignedOut],
+  );
 
   const refreshContentCache = useCallback(async () => {
     try {
@@ -172,27 +325,33 @@ export function AdminAuthProvider({
       authenticated,
       username,
       expiresAt,
-      totpRequired,
+      totpEnabled,
+      deviceTrusted,
       ready,
       lockOpen,
       openLockCurtain,
       closeLockCurtain,
-      signIn,
+      signInPrimary,
+      verifyTotpChallenge,
+      forgetTrustedDevice,
       signOut,
       refreshContentCache,
     }),
     [
       authenticated,
       closeLockCurtain,
+      deviceTrusted,
       expiresAt,
+      forgetTrustedDevice,
       lockOpen,
       openLockCurtain,
       ready,
       refreshContentCache,
-      signIn,
+      signInPrimary,
       signOut,
-      totpRequired,
+      totpEnabled,
       username,
+      verifyTotpChallenge,
     ],
   );
 

@@ -8,6 +8,9 @@ export const COOKIE_COMMENTER = "pm_commenter";
 /** Owner workstation session cookies (HttpOnly, server-managed). */
 export const COOKIE_ADMIN_DEV = "pm_admin";
 export const COOKIE_ADMIN_PROD = "__Host-pm_admin";
+/** Optional 30-day trusted-browser cookies skipping TOTP step-up on known workstations. */
+export const COOKIE_ADMIN_TRUST_DEV = "pm_admin_trust";
+export const COOKIE_ADMIN_TRUST_PROD = "__Host-pm_admin_trust";
 
 const ONE_YEAR_SECONDS = 60 * 60 * 24 * 365;
 

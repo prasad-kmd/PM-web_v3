@@ -10,6 +10,7 @@ import {
   Moon02Icon,
   RefreshIcon,
   Settings02Icon,
+  Shield01Icon,
   SunMediumIcon,
   UserCircleIcon,
 } from "@hugeicons/core-free-icons";
@@ -40,8 +41,14 @@ export function MenuBar({
   onCloseAll: () => void;
 }) {
   const { theme, toggleTheme, nextWallpaper } = useAppearance();
-  const { authenticated, openLockCurtain, signOut, refreshContentCache } =
-    useAdminAuth();
+  const {
+    authenticated,
+    deviceTrusted,
+    openLockCurtain,
+    signOut,
+    forgetTrustedDevice,
+    refreshContentCache,
+  } = useAdminAuth();
 
   const openResumeSection = (section?: string) => {
     onOpenApp("resume");
@@ -157,6 +164,16 @@ export function MenuBar({
                       <span>Settings…</span>
                       <MenubarShortcut>⌘,</MenubarShortcut>
                     </MenubarItem>
+                    {deviceTrusted && (
+                      <MenubarItem onClick={() => void forgetTrustedDevice()}>
+                        <HugeiconsIcon
+                          icon={Shield01Icon}
+                          strokeWidth={1.9}
+                          size={15}
+                        />
+                        <span>Forget trusted browser</span>
+                      </MenubarItem>
+                    )}
                   </MenubarGroup>
 
                   <MenubarSeparator />

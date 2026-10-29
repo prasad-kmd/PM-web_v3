@@ -3014,6 +3014,121 @@ body:has(.workstation-lock-curtain) .window-geometry {
   color: var(--foreground);
 }
 
+.workstation-lock-step-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 0 2px;
+  font-size: 11px;
+  color: var(--muted-foreground);
+}
+
+.workstation-lock-timer {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 7px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: color-mix(in oklab, var(--muted) 65%, transparent);
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  color: var(--foreground);
+}
+
+.workstation-lock-timer.is-urgent {
+  color: var(--destructive);
+  border-color: color-mix(in oklab, var(--destructive) 36%, transparent);
+  background: color-mix(in oklab, var(--destructive) 12%, transparent);
+}
+
+.workstation-otp-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  margin: 2px 0;
+}
+
+.workstation-otp-sep {
+  color: var(--muted-foreground);
+  font-weight: 700;
+  font-size: 16px;
+  line-height: 1;
+  user-select: none;
+  padding: 0 1px;
+}
+
+.workstation-otp-slot {
+  width: 40px;
+  height: 44px;
+  border-radius: 10px;
+  border: 1px solid var(--input);
+  background: color-mix(in oklab, var(--background) 88%, transparent);
+  text-align: center;
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--foreground);
+  outline: none !important;
+  transition:
+    border-color 140ms ease,
+    box-shadow 140ms ease,
+    transform 120ms ease;
+}
+
+.dark .workstation-otp-slot {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.14);
+}
+
+.workstation-otp-slot:focus {
+  border-color: var(--ring);
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--ring) 26%, transparent);
+  transform: translateY(-1px);
+}
+
+.workstation-trust-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 3px 2px 1px;
+  font-size: 12px;
+  color: var(--muted-foreground);
+  cursor: pointer;
+  user-select: none;
+}
+
+.workstation-trust-row:hover {
+  color: var(--foreground);
+}
+
+.workstation-trust-checkbox {
+  width: 14px;
+  height: 14px;
+  border-radius: 4px;
+  accent-color: var(--primary);
+  cursor: pointer;
+  flex: 0 0 auto;
+}
+
+.workstation-recovery-toggle {
+  align-self: center;
+  background: transparent;
+  padding: 2px 6px;
+  border-radius: 6px;
+  font-size: 11.5px;
+  color: var(--muted-foreground);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+  transition: color 140ms ease;
+}
+
+.workstation-recovery-toggle:hover {
+  color: var(--foreground);
+}
+
 /* --- Shared Studio Shell & Sub-Toolbar --- */
 
 .admin-studio-loading {

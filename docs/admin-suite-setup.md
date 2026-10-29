@@ -32,8 +32,30 @@ ADMIN_SESSION_TTL_HOURS=12
 ```
 
 - **Local development fallback:** You may set `ADMIN_PASSWORD=...` instead of `ADMIN_PASSWORD_HASH` during local testing (`ADMIN_PASSWORD_HASH` always takes precedence when set).
-- **Optional 2-step verification (TOTP):** Set `ADMIN_TOTP_SECRET=<BASE32_SECRET>` to require a 6-digit RFC 6238 authenticator code on the Workstation Lock Curtain.
 - **Session cookie:** Issues `__Host-pm_admin` (`HttpOnly; Secure; SameSite=Strict; Path=/`) over HTTPS in production and `pm_admin` on `http://localhost`.
+
+### Two-Step TOTP, Trusted Browsers & Emergency Recovery Codes (Optional)
+
+Run the offline TOTP enrollment helper to generate a 160-bit Base32 RFC 6238 secret, render a **scannable QR code directly in your terminal**, verify a live 6-digit code interactively, and derive 5 `scrypt`-hashed emergency recovery codes:
+
+```bash
+node scripts/generate-admin-totp.mjs
+```
+
+Paste the printed lines into `.env.local` (or your hosting environment variables):
+
+```dotenv
+ADMIN_TOTP_SECRET=<32-char-base32-secret>
+ADMIN_TRUST_TTL_DAYS=30
+ADMIN_RECOVERY_HASHES=scrypt:<saltHex>:<derivedHex>,scrypt:<saltHex>:<derivedHex>,...
+```
+
+How the hardened two-step unlock behaves:
+
+1. **Stealthy Step-Up Flow:** Public visitors only ever see the standard two-input **Username** + **Password** curtain (`GET /api/admin/session` never reveals whether TOTP is enabled when signed out). Only after primary credentials pass does the server issue a **90-second**, IP + User-Agent bound HMAC challenge token (`step: "totp"`) and reveal the 6-box authenticator input.
+2. **Brute-Force & Replay Hardening:** Step 2 enforces a strict **5-failure / 10-minute** IP limiter, burns the active 90-second challenge token automatically after **4 wrong codes** (requiring primary password re-entry), uses a tight **±1 step (`±30s`)** tolerance, and blocks replaying an already-accepted 6-digit step within the same warm server instance.
+3. **30-Day Trusted Workstation Cookie:** Checking **Trust this browser for 30 days** during Step 2 issues an `HttpOnly; SameSite=Strict` cookie (`__Host-pm_admin_trust` on HTTPS / `pm_admin_trust` on localhost) bound to your User-Agent and an active credential fingerprint (`ADMIN_USERNAME` + password hash + `ADMIN_TOTP_SECRET`). Rotating any secret revokes all trusted browsers immediately, and you can manually clear trust anytime from **MenuBar Profile → Forget trusted browser** (set `ADMIN_TRUST_TTL_DAYS=0` to disable browser trust).
+4. **Emergency Recovery Codes:** Save the 5 plaintext `XXXX-XXXX-XXXX` recovery codes shown once by `scripts/generate-admin-totp.mjs` in your password manager. Clicking **Use an emergency recovery code** on Step 2 verifies against `ADMIN_RECOVERY_HASHES` (and sends a non-blocking security notice via Telegram if `TELEGRAM_TOKEN` and `TELEGRAM_CHAT_ID` are configured). Rotate `ADMIN_TOTP_SECRET` and `ADMIN_RECOVERY_HASHES` after using an emergency code.
 
 ### Accessing the Suite in the UI
 
