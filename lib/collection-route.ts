@@ -10,7 +10,7 @@ import {
   OG_IMAGE_SIZE,
   ogImageUrl,
 } from "@/lib/content-metadata";
-import { getSiteUrl } from "@/lib/site";
+import { SITE_NAME, getSiteUrl } from "@/lib/site";
 
 /**
  * Shared building blocks for the explicit per-collection routes
@@ -38,9 +38,16 @@ export function collectionMetadata(type: ContentType): Metadata {
       description: meta.description,
       url,
       type: "website",
+      siteName: SITE_NAME,
+      locale: "en_US",
       images: [{ url: image, ...OG_IMAGE_SIZE, alt: meta.label }],
     },
-    twitter: { card: "summary_large_image", images: [image] },
+    twitter: {
+      card: "summary_large_image",
+      title: meta.label,
+      description: meta.description,
+      images: [image],
+    },
   };
 }
 
@@ -51,7 +58,9 @@ export async function collectionDetailMetadata(
   const { slug } = await params;
   const result = await getContentIndex(type);
   const item = result.items.find((entry) => entry.slug === slug);
-  return item ? getContentMetadata(item, type) : { title: "Entry unavailable" };
+  return item
+    ? getContentMetadata(item, type)
+    : { title: "Entry unavailable", robots: { index: false, follow: true } };
 }
 
 export async function collectionStaticParams(type: ContentType) {

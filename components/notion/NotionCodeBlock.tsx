@@ -2,6 +2,7 @@
 
 import {
   useEffect,
+  useId,
   useMemo,
   useRef,
   useState,
@@ -10,6 +11,7 @@ import {
 import { FileCodeIcon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { useCodeWriting } from "@animate-ui/react/primitives/code-block";
+import { Button } from "@/components/ui/button";
 import type { CodeToken } from "@/lib/highlighting/shiki";
 import {
   CodeBlock,
@@ -89,7 +91,22 @@ export function NotionCodeBlock({
       source.split("\n").map((text) => (text ? [{ content: text }] : [])),
     [lines, source],
   );
+  const [expanded, setExpanded] = useState(false);
+  const [wrap, setWrap] = useState(false);
+  const [overflow, setOverflow] = useState(false);
+  const contentId = useId();
+  const contentRef = useRef<HTMLPreElement>(null);
   const lineCount = plainLines.length;
+  useEffect(() => {
+    const content = contentRef.current;
+    if (!content) return;
+    const update = () => setOverflow(content.scrollHeight > 320);
+    const observer = new ResizeObserver(update);
+    observer.observe(content);
+    if (content.firstElementChild) observer.observe(content.firstElementChild);
+    update();
+    return () => observer.disconnect();
+  }, [wrap, source]);
   const typeable = lineCount > 0 && lineCount <= TYPING_MAX_LINES;
 
   // Typing switches on only after hydration and only for blocks still below
@@ -98,11 +115,16 @@ export function NotionCodeBlock({
   const [writing, setWriting] = useState(false);
   const blockRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
-    if (!typeable) return;
+    if (!typeable || wrap || (contentRef.current?.scrollHeight || 0) > 320)
+      return;
     const node = blockRef.current;
     if (!node) return;
-    if (node.getBoundingClientRect().top > window.innerHeight) setWriting(true);
-  }, [typeable]);
+    if (
+      !window.matchMedia("(prefers-reduced-motion: reduce)").matches &&
+      node.getBoundingClientRect().top > window.innerHeight
+    )
+      setWriting(true);
+  }, [typeable, wrap]);
 
   const written = useCodeWriting<HTMLDivElement>(
     source,
@@ -134,16 +156,30 @@ export function NotionCodeBlock({
         ) : null}
         <CodeBlockLanguage>{language}</CodeBlockLanguage>
         <CodeBlockActions>
+          <Button
+            variant="ghost"
+            size="sm"
+            aria-pressed={wrap}
+            onClick={() => setWrap((value) => !value)}
+          >
+            Wrap
+          </Button>
           <CodeBlockCopyButton value={code} />
         </CodeBlockActions>
       </CodeBlockHeader>
       <CodeBlockContent
+        id={contentId}
+        ref={contentRef}
+        wrap={wrap}
         lineNumbers={lineCount > 1}
         writing={written.writing}
         // Hold the final height while typing so the page never shifts.
-        style={
-          writing ? { minHeight: `calc(${lineCount}lh + 1.75rem)` } : undefined
-        }
+        style={{
+          maxHeight: expanded ? undefined : 320,
+          minHeight: writing
+            ? `min(320px, calc(${lineCount}lh + 1.75rem))`
+            : undefined,
+        }}
         aria-label={title ? `${title} (${language})` : `${language} code`}
       >
         {visible.map((line, index) => (
@@ -160,6 +196,31 @@ export function NotionCodeBlock({
           </CodeBlockLine>
         ))}
       </CodeBlockContent>
+      {overflow ? (
+        <div className="flex justify-center border-t border-border p-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            aria-expanded={expanded}
+            aria-controls={contentId}
+            onClick={() => {
+              if (expanded) {
+                const block = blockRef.current;
+                const scroller = block?.closest<HTMLElement>(".window-body");
+                if (
+                  block &&
+                  block.getBoundingClientRect().top <
+                    (scroller?.getBoundingClientRect().top || 0)
+                )
+                  block.scrollIntoView({ block: "start", behavior: "instant" });
+              }
+              setExpanded((value) => !value);
+            }}
+          >
+            {expanded ? "Collapse code" : "Expand code"}
+          </Button>
+        </div>
+      ) : null}
     </CodeBlock>
   );
 }

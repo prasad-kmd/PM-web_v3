@@ -601,7 +601,7 @@ export const getContentDetail = cache(
 export async function getFreshNotionImageUrl(
   resourceType: "block" | "page",
   id: string,
-  source: "default" | "thumbnail" = "default",
+  source: "default" | "thumbnail" | "icon" = "default",
 ): Promise<string | null> {
   const notion = createNotionClient("no-store");
   const resource = (resourceType === "block"
@@ -609,6 +609,13 @@ export async function getFreshNotionImageUrl(
     : await notion.pages.retrieve({ page_id: id })) as unknown as UnknownRecord;
   const type = typeof resource.type === "string" ? resource.type : "";
   const imageBlock = asRecord(resource[type]);
+  if (source === "icon") {
+    if (resourceType !== "block" || type !== "callout") return null;
+    const icon = asRecord(imageBlock?.icon);
+    const asset = asRecord(icon?.file) || asRecord(icon?.external);
+    const url = asset?.url;
+    return typeof url === "string" && /^https?:\/\//i.test(url) ? url : null;
+  }
   const pageProperties = asRecord(resource.properties) as Record<
     string,
     unknown

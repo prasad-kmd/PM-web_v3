@@ -16,7 +16,7 @@ import {
   COOKIE_WALLPAPER_INTENSITY,
 } from "@/lib/cookies";
 import type { Theme } from "@/lib/registry";
-import { getSiteUrl } from "@/lib/site";
+import { getSiteUrl, SITE_NAME, SITE_DESCRIPTION } from "@/lib/site";
 import { OG_IMAGE_SIZE, ogImageUrl } from "@/lib/content-metadata";
 import {
   resolveSlideshowInterval,
@@ -31,8 +31,7 @@ export const metadata: Metadata = {
     default: "Prasad M. — Desktop Workspace",
     template: "%s · Prasad M.",
   },
-  description:
-    "Prasad Madhuranga — Mechanical and Mechatronics Engineer. A professional portfolio presented as an interactive desktop workspace.",
+  description: SITE_DESCRIPTION,
   keywords: [
     "Prasad Madhuranga",
     "portfolio",
@@ -43,23 +42,28 @@ export const metadata: Metadata = {
   ],
   authors: [{ name: "Prasad M.", url: "https://github.com/prasad-kmd" }],
   openGraph: {
-    title: "Prasad M. — Desktop Workspace",
-    description:
-      "A personal engineering portfolio presented as an interactive desktop workspace.",
+    title: SITE_NAME,
+    description: SITE_DESCRIPTION,
+    siteName: SITE_NAME,
+    locale: "en_US",
+    url: getSiteUrl(),
     type: "website",
     images: [
       {
-        url: ogImageUrl("Prasad M. — Desktop Workspace", "", "default", {
+        url: ogImageUrl(SITE_NAME, SITE_DESCRIPTION, "default", {
           kind: "home",
         }),
         ...OG_IMAGE_SIZE,
+        alt: SITE_NAME,
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
+    title: SITE_NAME,
+    description: SITE_DESCRIPTION,
     images: [
-      ogImageUrl("Prasad M. — Desktop Workspace", "", "default", {
+      ogImageUrl(SITE_NAME, SITE_DESCRIPTION, "default", {
         kind: "home",
       }),
     ],

@@ -1,13 +1,28 @@
 /** Canonical public origin used consistently by metadata, feeds and discovery. */
 export function getSiteUrl(): string {
-  const candidate =
-    process.env.NEXT_PUBLIC_SITE_URL?.trim() || "http://localhost:3000";
+  const candidate = process.env.NEXT_PUBLIC_SITE_URL?.trim();
+  const production = process.env.NODE_ENV === "production";
+  if (!candidate && production) {
+    throw new Error(
+      "Set NEXT_PUBLIC_SITE_URL to your public HTTPS origin before building.",
+    );
+  }
   try {
-    const url = new URL(candidate);
+    const url = new URL(candidate || "http://localhost:3000");
+    if (
+      production &&
+      (url.protocol !== "https:" ||
+        /^(localhost|127\.0\.0\.1|\[::1\])$/i.test(url.hostname))
+    )
+      throw new Error("Production requires a public HTTPS origin.");
     if (url.protocol !== "https:" && url.protocol !== "http:")
       throw new Error("Invalid protocol");
     return url.origin;
   } catch {
+    if (production)
+      throw new Error(
+        "NEXT_PUBLIC_SITE_URL must be a valid public HTTPS origin.",
+      );
     return "http://localhost:3000";
   }
 }

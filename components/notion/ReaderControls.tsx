@@ -664,3 +664,75 @@ export function ReaderBody({ children }: { children: ReactNode }) {
     </div>
   );
 }
+
+/** Uses the same scroll owner as the outline and reading progress. */
+export function ReaderScrollToTop() {
+  const { scrollerRef, ready } = useReader();
+  const [visible, setVisible] = useState(false);
+  const button = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    if (!ready) return;
+    const scroller = scrollerRef.current;
+    const target = scroller || window;
+    const update = () =>
+      setVisible(
+        (scroller ? scroller.scrollTop : window.scrollY) >
+          (scroller ? scroller.clientHeight : window.innerHeight),
+      );
+    update();
+    target.addEventListener("scroll", update, { passive: true });
+    window.addEventListener("resize", update);
+    return () => {
+      target.removeEventListener("scroll", update);
+      window.removeEventListener("resize", update);
+    };
+  }, [ready, scrollerRef]);
+  return (
+    <div className="rdr-back-top" data-visible={visible || undefined}>
+      <WorkspaceTooltip label="Scroll to top">
+        <Button
+          ref={button}
+          variant="outline"
+          size="icon"
+          aria-label="Scroll to top"
+          tabIndex={visible ? 0 : -1}
+          aria-hidden={!visible}
+          onClick={() => {
+            const scroller = scrollerRef.current;
+            // Move keyboard focus to the heading before this button disappears.
+            const heading = button.current
+              ?.closest("main")
+              ?.querySelector<HTMLElement>("h1");
+            if (heading) {
+              heading.tabIndex = -1;
+              heading.focus({ preventScroll: true });
+            }
+            (scroller || window).scrollTo({
+              top: 0,
+              behavior: window.matchMedia("(prefers-reduced-motion: reduce)")
+                .matches
+                ? "instant"
+                : "smooth",
+            });
+          }}
+        >
+          <svg
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            aria-hidden="true"
+          >
+            <path
+              d="m6 12 6-6 6 6M12 6v14"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        </Button>
+      </WorkspaceTooltip>
+    </div>
+  );
+}

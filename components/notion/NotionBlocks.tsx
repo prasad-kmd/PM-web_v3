@@ -518,16 +518,42 @@ function renderBlock(
         </blockquote>
       );
     }
-    case "callout":
+    case "callout": {
+      const icon = record(data.icon);
+      const emoji =
+        icon?.type === "emoji" && typeof icon.emoji === "string"
+          ? icon.emoji
+          : null;
+      const hasImage = icon?.type === "file" || icon?.type === "external";
+      const iconUrl = hasImage
+        ? `/api/notion-image?type=block&source=icon&id=${encodeURIComponent(block.id)}&collection=${context.type}&page=${encodeURIComponent(context.pageId)}`
+        : null;
       return (
         <aside
           key={block.id}
-          className="rounded-xl border border-border bg-muted/50 px-5 py-4 leading-7 text-foreground"
+          className="notion-callout rounded-xl border border-border bg-muted/50 px-5 py-4 leading-7 text-foreground"
         >
-          {text}
-          {nested}
+          {emoji || iconUrl ? (
+            <span className="notion-callout-icon" aria-hidden="true">
+              {emoji || (
+                <Image
+                  src={iconUrl!}
+                  alt=""
+                  width={24}
+                  height={24}
+                  unoptimized
+                  className="size-6 object-contain"
+                />
+              )}
+            </span>
+          ) : null}
+          <div className="min-w-0 flex-1">
+            {text}
+            {nested}
+          </div>
         </aside>
       );
+    }
     case "to_do": {
       const checked = data.checked === true;
       return (
@@ -593,7 +619,7 @@ function renderBlock(
       const alt = captionText(data) || "Image in this entry";
       if (!src) return null;
       return (
-        <figure key={block.id} className="space-y-2">
+        <figure key={block.id} className="space-y-2" data-reader-image>
           <Image
             src={src}
             alt={alt}
@@ -755,13 +781,27 @@ function renderBlock(
       return (
         <details
           key={block.id}
-          className="group rounded-lg border border-border px-4 py-3"
+          className="notion-toggle rounded-lg border border-border"
         >
-          <summary className="cursor-pointer list-none font-medium text-foreground marker:hidden focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary">
-            {text}
+          <summary className="flex cursor-pointer list-none items-start gap-3 rounded-lg px-4 py-3 font-medium text-foreground marker:hidden hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring">
+            <svg
+              className="notion-toggle-chevron mt-1 size-4 shrink-0"
+              viewBox="0 0 16 16"
+              fill="none"
+              aria-hidden="true"
+            >
+              <path
+                d="m6 3 5 5-5 5"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+            <span className="min-w-0">{text}</span>
           </summary>
           {nested ? (
-            <div className="mt-3 space-y-3 border-t border-border pt-3">
+            <div className="mx-4 mb-4 ml-6 space-y-3 border-l border-border pl-5 pt-2">
               {nested}
             </div>
           ) : null}

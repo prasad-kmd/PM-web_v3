@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { WindowBreadcrumb } from "@/components/system/WindowBreadcrumb";
 import { ContactForm } from "./ContactForm";
 import { EmailReveal } from "./EmailReveal";
-import { getSiteUrl } from "@/lib/site";
+import { SITE_NAME, getSiteUrl } from "@/lib/site";
 import { OG_IMAGE_SIZE, ogImageUrl } from "@/lib/content-metadata";
 
 const description =
@@ -15,11 +15,21 @@ export function generateMetadata(): Metadata {
     alternates: { canonical: `${getSiteUrl()}/contact` },
     openGraph: {
       title: "Contact",
+      type: "website",
+      siteName: SITE_NAME,
+      locale: "en_US",
       description,
       url: `${getSiteUrl()}/contact`,
-      images: [{ url: image, ...OG_IMAGE_SIZE }],
+      images: [
+        { url: image, ...OG_IMAGE_SIZE, alt: "Contact Prasad Madhuranga" },
+      ],
     },
-    twitter: { card: "summary_large_image", images: [image] },
+    twitter: {
+      card: "summary_large_image",
+      title: "Contact",
+      description,
+      images: [image],
+    },
   };
 }
 export default function ContactPage() {

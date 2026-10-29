@@ -37,7 +37,11 @@ export async function GET(request: Request) {
     !validId(id) ||
     !collection ||
     !CONTENT_TYPES.includes(collection as ContentType) ||
-    (source !== null && (source !== "thumbnail" || resource !== "page"))
+    (source !== null &&
+      !(
+        (source === "thumbnail" && resource === "page") ||
+        (source === "icon" && resource === "block")
+      ))
   ) {
     return new Response("Not found", { status: 404 });
   }
@@ -66,7 +70,11 @@ export async function GET(request: Request) {
     const url = await getFreshNotionImageUrl(
       resource,
       id,
-      source === "thumbnail" ? "thumbnail" : "default",
+      source === "thumbnail"
+        ? "thumbnail"
+        : source === "icon"
+          ? "icon"
+          : "default",
     );
     if (!url) return new Response("Not found", { status: 404 });
     return new Response(null, {

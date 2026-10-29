@@ -10,7 +10,7 @@ import {
   ogImagePath,
   type OgImageOptions,
 } from "@/lib/og/url";
-import { getSiteUrl } from "@/lib/site";
+import { SITE_NAME, getSiteUrl } from "@/lib/site";
 
 /** Open Graph standard size; `/api/og` renders at exactly this size. */
 export const OG_IMAGE_SIZE = { width: 1200, height: 630 } as const;
@@ -45,8 +45,11 @@ export function getContentMetadata(
       title,
       description,
       url,
+      siteName: SITE_NAME,
+      locale: "en_US",
       type: "article",
-      publishedTime: item.date || undefined,
+      publishedTime: metadataDate(item.date),
+      modifiedTime: metadataDate(item.lastEditedTime || item.date),
       authors: item.author?.name ? [item.author.name] : undefined,
       images: [{ url: image, ...OG_IMAGE_SIZE, alt: title }],
     },
@@ -57,4 +60,14 @@ export function getContentMetadata(
       images: [image],
     },
   };
+}
+
+/** Omit malformed CMS dates instead of publishing invalid social timestamps. */
+export function metadataDate(
+  value: string | null | undefined,
+): string | undefined {
+  const timestamp = Date.parse(value || "");
+  return Number.isFinite(timestamp)
+    ? new Date(timestamp).toISOString()
+    : undefined;
 }

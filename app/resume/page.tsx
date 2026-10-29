@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { getSiteUrl } from "@/lib/site";
+import { SITE_NAME, getSiteUrl } from "@/lib/site";
 import { OG_IMAGE_SIZE, ogImageUrl } from "@/lib/content-metadata";
 
 export const metadata: Metadata = {
@@ -7,24 +7,33 @@ export const metadata: Metadata = {
   alternates: { canonical: `${getSiteUrl()}/resume` },
   openGraph: {
     title: "Resume",
-    description: "Profile and experience of Prasad Madhuranga.",
+    type: "website",
+    siteName: SITE_NAME,
+    locale: "en_US",
+    url: `${getSiteUrl()}/resume`,
+    description:
+      "Profile, experience, education, interests, languages, and contact details for Prasad Madhuranga.",
     images: [
       {
         url: ogImageUrl(
           "Resume",
-          "Profile and experience of Prasad Madhuranga.",
+          "Profile, experience, education, interests, languages, and contact details for Prasad Madhuranga.",
           "pages",
         ),
         ...OG_IMAGE_SIZE,
+        alt: "Prasad Madhuranga — resume",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
+    title: "Resume",
+    description:
+      "Profile, experience, education, interests, languages, and contact details for Prasad Madhuranga.",
     images: [
       ogImageUrl(
         "Resume",
-        "Profile and experience of Prasad Madhuranga.",
+        "Profile, experience, education, interests, languages, and contact details for Prasad Madhuranga.",
         "pages",
       ),
     ],
