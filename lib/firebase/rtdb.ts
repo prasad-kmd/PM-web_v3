@@ -1,5 +1,8 @@
 import "server-only";
 import { createSign } from "node:crypto";
+import http from "node:http";
+import https from "node:https";
+import { unstable_cache } from "next/cache";
 import { cleanEnvValue } from "@/lib/telegram";
 
 type FirebaseServiceConfig = {
@@ -11,6 +14,11 @@ type FirebaseServiceConfig = {
 type CachedAccessToken = {
   token: string;
   expiresAtMs: number;
+};
+
+type RawHttpResponse = {
+  status: number;
+  body: string;
 };
 
 const OAUTH_TOKEN_URL = "https://oauth2.googleapis.com/token";
@@ -77,6 +85,131 @@ export function decodeRtdbKey(encoded: string): string {
   }
 }
 
+/**
+ * Performs an outbound HTTP(S) request directly via Node's native `node:https`
+ * / `node:http` transport rather than Next.js's patched `globalThis.fetch`.
+ *
+ * Next.js patches `globalThis.fetch` during static generation (`next build` /
+ * `generateStaticParams` / ISR) and throws `DYNAMIC_SERVER_USAGE` on any
+ * uncached (`no-store` or `POST`) `fetch` — including OAuth2 service-account
+ * token exchanges needed before cached RTDB reads. Using Node's native
+ * transport avoids triggering `DYNAMIC_SERVER_USAGE` and ensures ephemeral
+ * OAuth2 bearer tokens are never persisted into the shared Data Cache.
+ */
+function rawHttpRequest(
+  urlString: string,
+  options: {
+    method: "GET" | "POST" | "PATCH" | "PUT" | "DELETE";
+    headers?: Record<string, string>;
+    body?: string;
+    timeoutMs?: number;
+  },
+  redirectsRemaining = 3,
+): Promise<RawHttpResponse> {
+  return new Promise((resolve, reject) => {
+    let target: URL;
+    try {
+      target = new URL(urlString);
+    } catch (err) {
+      reject(err);
+      return;
+    }
+
+    const transport = target.protocol === "http:" ? http : https;
+    const timeoutMs = options.timeoutMs ?? 5_000;
+    const bodyBuffer =
+      options.body !== undefined ? Buffer.from(options.body, "utf8") : null;
+
+    const headers: Record<string, string> = {
+      Accept: "application/json",
+      ...options.headers,
+    };
+    if (bodyBuffer !== null && headers["Content-Length"] === undefined) {
+      headers["Content-Length"] = String(bodyBuffer.byteLength);
+    }
+
+    let settled = false;
+    const finish = (fn: () => void) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(deadlineTimer);
+      fn();
+    };
+
+    const req = transport.request(
+      target,
+      {
+        method: options.method,
+        headers,
+      },
+      (res) => {
+        const status = res.statusCode ?? 0;
+        const location = res.headers.location;
+
+        if (
+          (status === 301 ||
+            status === 302 ||
+            status === 307 ||
+            status === 308) &&
+          location &&
+          redirectsRemaining > 0
+        ) {
+          res.resume();
+          const nextUrl = new URL(location, target);
+          const nextHeaders = { ...options.headers };
+          if (nextUrl.origin !== target.origin) {
+            delete nextHeaders.Authorization;
+            delete nextHeaders.authorization;
+          }
+          const preserveMethod = status === 307 || status === 308;
+          finish(() => {
+            rawHttpRequest(
+              nextUrl.toString(),
+              {
+                method: preserveMethod ? options.method : "GET",
+                headers: nextHeaders,
+                body: preserveMethod ? options.body : undefined,
+                timeoutMs,
+              },
+              redirectsRemaining - 1,
+            ).then(resolve, reject);
+          });
+          return;
+        }
+
+        const chunks: Buffer[] = [];
+        res.on("data", (chunk: Buffer | string) => {
+          chunks.push(
+            typeof chunk === "string" ? Buffer.from(chunk, "utf8") : chunk,
+          );
+        });
+        res.on("end", () => {
+          const text = Buffer.concat(chunks).toString("utf8");
+          finish(() => resolve({ status, body: text }));
+        });
+        res.on("error", (err) => {
+          finish(() => reject(err));
+        });
+      },
+    );
+
+    const deadlineTimer = setTimeout(() => {
+      req.destroy(
+        new Error(`RTDB HTTP request timed out after ${timeoutMs}ms`),
+      );
+    }, timeoutMs);
+
+    req.on("error", (err) => {
+      finish(() => reject(err));
+    });
+
+    if (bodyBuffer !== null) {
+      req.write(bodyBuffer);
+    }
+    req.end();
+  });
+}
+
 function signServiceAccountJwt(config: FirebaseServiceConfig): string {
   const nowSec = Math.floor(Date.now() / 1000);
   const header = toBase64Url(JSON.stringify({ alg: "RS256", typ: "JWT" }));
@@ -109,22 +242,21 @@ async function fetchAccessToken(
       assertion,
     });
 
-    const response = await fetch(OAUTH_TOKEN_URL, {
+    const response = await rawHttpRequest(OAUTH_TOKEN_URL, {
       method: "POST",
       headers: { "content-type": "application/x-www-form-urlencoded" },
       body: body.toString(),
-      signal: AbortSignal.timeout(5_000),
-      cache: "no-store",
+      timeoutMs: 5_000,
     });
 
-    if (!response.ok) {
+    if (response.status < 200 || response.status >= 300) {
       console.error(
         `[rtdb] OAuth2 token exchange failed with HTTP ${response.status}`,
       );
       return null;
     }
 
-    const data = (await response.json()) as {
+    const data = JSON.parse(response.body) as {
       access_token?: string;
       expires_in?: number;
     };
@@ -166,11 +298,52 @@ function buildRtdbUrl(
   const cleanPath = path.replace(/^\/+|\/+$/g, "");
   const url = new URL(`${databaseUrl}/${cleanPath}.json`);
   if (query) {
-    for (const [key, value] of Object.entries(query)) {
+    const sortedEntries = Object.entries(query).sort(([a], [b]) =>
+      a.localeCompare(b),
+    );
+    for (const [key, value] of sortedEntries) {
       url.searchParams.set(key, value);
     }
   }
   return url.toString();
+}
+
+/**
+ * Executes a direct authenticated GET against Firebase RTDB.
+ * Throws on transport/auth/HTTP errors so `unstable_cache` never caches
+ * transient failures, while legitimately returning `null` when RTDB responds
+ * HTTP 200 with JSON `"null"` (meaning the node does not exist yet).
+ */
+async function fetchRtdbNodeUncached<T>(
+  config: FirebaseServiceConfig,
+  url: string,
+  timeoutMs: number,
+): Promise<T | null> {
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    const token = await getAccessToken(config);
+    if (!token) {
+      throw new Error("Unable to acquire Firebase RTDB access token");
+    }
+
+    const response = await rawHttpRequest(url, {
+      method: "GET",
+      headers: { Authorization: `Bearer ${token}` },
+      timeoutMs,
+    });
+
+    if (response.status === 401 && attempt === 0) {
+      cachedToken = null;
+      continue;
+    }
+
+    if (response.status < 200 || response.status >= 300) {
+      throw new Error(`RTDB GET failed with HTTP ${response.status}`);
+    }
+
+    return JSON.parse(response.body) as T | null;
+  }
+
+  throw new Error("RTDB GET failed after token refresh retry");
 }
 
 export type RtdbReadOptions = {
@@ -187,34 +360,40 @@ export async function rtdbGet<T>(
   const config = getFirebaseConfig();
   if (!config) return null;
 
-  const token = await getAccessToken(config);
-  if (!token) return null;
-
   const url = buildRtdbUrl(config.databaseUrl, path, options?.query);
+  const timeoutMs = options?.timeoutMs ?? 5_000;
   const useCache =
     typeof options?.revalidate === "number" && options.revalidate > 0;
 
   try {
-    const response = await fetch(url, {
-      method: "GET",
-      headers: { Authorization: `Bearer ${token}` },
-      signal: AbortSignal.timeout(options?.timeoutMs ?? 5_000),
-      ...(useCache
-        ? {
-            next: {
-              revalidate: options.revalidate as number,
-              ...(options?.tags ? { tags: options.tags } : {}),
-            },
-          }
-        : { cache: "no-store" }),
-    });
-
-    if (response.status === 401) {
-      cachedToken = null;
+    if (!useCache) {
+      return await fetchRtdbNodeUncached<T>(config, url, timeoutMs);
     }
-    if (!response.ok) return null;
 
-    return (await response.json()) as T | null;
+    const cachedReader = unstable_cache(
+      async function readRtdbNode() {
+        return fetchRtdbNodeUncached<T>(config, url, timeoutMs);
+      },
+      ["rtdb-get", url],
+      {
+        revalidate: options.revalidate as number,
+        ...(options?.tags && options.tags.length > 0
+          ? { tags: options.tags }
+          : {}),
+      },
+    );
+
+    try {
+      return await cachedReader();
+    } catch (cacheErr) {
+      if (
+        cacheErr instanceof Error &&
+        cacheErr.message.includes("incrementalCache missing")
+      ) {
+        return await fetchRtdbNodeUncached<T>(config, url, timeoutMs);
+      }
+      throw cacheErr;
+    }
   } catch {
     return null;
   }
@@ -229,38 +408,49 @@ async function rtdbMutate<T>(
   const config = getFirebaseConfig();
   if (!config) return { ok: false, data: null };
 
-  const token = await getAccessToken(config);
-  if (!token) return { ok: false, data: null };
-
   const url = buildRtdbUrl(config.databaseUrl, path);
+  const serializedPayload =
+    payload !== undefined ? JSON.stringify(payload) : undefined;
 
   try {
-    const response = await fetch(url, {
-      method,
-      headers: {
-        Authorization: `Bearer ${token}`,
-        ...(payload !== undefined
-          ? { "content-type": "application/json" }
-          : {}),
-      },
-      ...(payload !== undefined ? { body: JSON.stringify(payload) } : {}),
-      signal: AbortSignal.timeout(timeoutMs),
-      cache: "no-store",
-    });
+    for (let attempt = 0; attempt < 2; attempt += 1) {
+      const token = await getAccessToken(config);
+      if (!token) return { ok: false, data: null };
 
-    if (response.status === 401) {
-      cachedToken = null;
-    }
-    if (!response.ok) {
-      return { ok: false, data: null };
+      const response = await rawHttpRequest(url, {
+        method,
+        headers: {
+          Authorization: `Bearer ${token}`,
+          ...(serializedPayload !== undefined
+            ? { "content-type": "application/json" }
+            : {}),
+        },
+        ...(serializedPayload !== undefined ? { body: serializedPayload } : {}),
+        timeoutMs,
+      });
+
+      if (response.status === 401 && attempt === 0) {
+        cachedToken = null;
+        continue;
+      }
+
+      if (response.status < 200 || response.status >= 300) {
+        return { ok: false, data: null };
+      }
+
+      if (method === "DELETE" || !response.body.trim()) {
+        return { ok: true, data: null };
+      }
+
+      try {
+        const data = JSON.parse(response.body) as T | null;
+        return { ok: true, data };
+      } catch {
+        return { ok: true, data: null };
+      }
     }
 
-    if (method === "DELETE") {
-      return { ok: true, data: null };
-    }
-
-    const data = (await response.json().catch(() => null)) as T | null;
-    return { ok: true, data };
+    return { ok: false, data: null };
   } catch {
     return { ok: false, data: null };
   }
