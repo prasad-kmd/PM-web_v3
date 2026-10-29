@@ -27,6 +27,7 @@ import {
   downloadClientInvoicePdf,
   previewClientInvoicePdfInTab,
 } from "@/components/admin/invoice/pdf/export-pdf";
+import { LoadingView } from "@/components/system/states/LoadingView";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -156,6 +157,7 @@ const EMPTY_CLIENT_FORM: ClientInput = {
 
 export function InvoiceStudioApp() {
   const [tab, setTab] = useState<LedgerTab>("overview");
+  const [booting, setBooting] = useState(true);
   const [loading, setLoading] = useState(true);
   const [storageMode, setStorageMode] = useState<"cloud" | "session">("cloud");
 
@@ -221,6 +223,7 @@ export function InvoiceStudioApp() {
       toast.error("Could not load ledger data.");
     } finally {
       setLoading(false);
+      setBooting(false);
     }
   }, []);
 
@@ -707,6 +710,10 @@ export function InvoiceStudioApp() {
     });
   }
 
+  if (booting) {
+    return <LoadingView label="Invoice Studio" layout="invoices" />;
+  }
+
   return (
     <div className="admin-studio-shell invoice-studio-shell">
       {/* 42px Split Ledger Sub-Toolbar */}
@@ -775,6 +782,12 @@ export function InvoiceStudioApp() {
           </Button>
         </div>
       </header>
+
+      {(loading || savingInvoice || savingClient || savingSettings) && (
+        <div className="state-bar" aria-hidden>
+          <span />
+        </div>
+      )}
 
       {/* Tab 1: Overview */}
       {tab === "overview" && (

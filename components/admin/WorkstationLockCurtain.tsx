@@ -101,6 +101,7 @@ export function WorkstationLockCurtain() {
             }
           }}
         >
+          <div className="workstation-lock-backdrop" aria-hidden />
           <div className="workstation-lock-ambient" aria-hidden />
 
           <motion.div

@@ -1,7 +1,8 @@
 import { Skeleton } from "@/components/ui/skeleton";
 import { Spinner } from "@/components/ui/spinner";
 
-export type LoadingLayout = "listing" | "reader" | "page";
+export type LoadingLayout =
+  "listing" | "reader" | "page" | "invoices" | "og-studio";
 
 /**
  * Loading — approved System alert (01) + Desktop-native (04) blend:
@@ -15,19 +16,43 @@ export function LoadingView({
   label: string;
   layout: LoadingLayout;
 }) {
+  const isStudio = layout === "invoices" || layout === "og-studio";
+
   return (
     <main
-      className="state-loading"
+      className={`state-loading${isStudio ? " is-studio" : ""}`}
       aria-busy="true"
       aria-label={`Opening ${label}`}
     >
-      <div className="window-toolbar is-sticky" aria-hidden>
-        <div className="state-crumbs">
-          <Skeleton className="h-2.5 w-10" />
-          <span className="state-crumb-sep" />
-          <Skeleton className="h-2.5 w-16" />
+      {isStudio ? (
+        <div className="state-skel-studio-bar" aria-hidden>
+          <div className="state-skel-studio-tabs">
+            {Array.from(
+              { length: layout === "invoices" ? 5 : 4 },
+              (_, index) => (
+                <Skeleton
+                  key={index}
+                  className="h-6 rounded-md"
+                  style={{ width: layout === "invoices" ? 72 : 68 }}
+                />
+              ),
+            )}
+          </div>
+          <div className="state-skel-studio-actions">
+            <Skeleton className="h-6 w-24 rounded-full" />
+            <Skeleton className="h-6 w-24 rounded-md" />
+          </div>
         </div>
-      </div>
+      ) : (
+        <div className="window-toolbar is-sticky" aria-hidden>
+          <div className="state-crumbs">
+            <Skeleton className="h-2.5 w-10" />
+            <span className="state-crumb-sep" />
+            <Skeleton className="h-2.5 w-16" />
+          </div>
+        </div>
+      )}
+
       <div className="state-bar" aria-hidden>
         <span />
       </div>
@@ -79,6 +104,69 @@ export function LoadingView({
               style={{ width: `${[100, 94, 98, 88, 62][i]}%` }}
             />
           ))}
+        </div>
+      ) : layout === "invoices" ? (
+        <div className="state-skel-invoices" aria-hidden>
+          <div className="state-skel-invoices-kpis">
+            {Array.from({ length: 4 }, (_, i) => (
+              <div className="state-skel-kpi" key={i}>
+                <Skeleton className="h-2.5 w-24" />
+                <Skeleton className="mt-2.5 h-6 w-32" />
+                <Skeleton className="mt-2 h-2.5 w-20" />
+              </div>
+            ))}
+          </div>
+
+          <div className="state-skel-invoices-card">
+            <div className="state-skel-invoices-head">
+              <div>
+                <Skeleton className="h-4 w-32" />
+                <Skeleton className="mt-2 h-2.5 w-52 max-w-full" />
+              </div>
+              <Skeleton className="h-7 w-28 rounded-md" />
+            </div>
+
+            <div className="state-skel-invoices-rows">
+              {Array.from({ length: 5 }, (_, i) => (
+                <div className="state-skel-invoices-row" key={i}>
+                  <Skeleton className="h-3.5 w-20" />
+                  <Skeleton className="h-3.5 w-40 max-w-full" />
+                  <Skeleton className="h-3 w-20" />
+                  <Skeleton className="h-5 w-16 rounded-full" />
+                  <Skeleton className="h-3.5 w-24 justify-self-end" />
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      ) : layout === "og-studio" ? (
+        <div className="state-skel-og" aria-hidden>
+          <div className="state-skel-og-rail">
+            <Skeleton className="h-3 w-24" />
+            <div className="state-skel-og-presets">
+              {Array.from({ length: 4 }, (_, i) => (
+                <Skeleton key={i} className="h-9 w-full rounded-lg" />
+              ))}
+            </div>
+            <Skeleton className="mt-2 h-3 w-28" />
+            <Skeleton className="h-9 w-full rounded-lg" />
+            <Skeleton className="h-16 w-full rounded-lg" />
+            <div className="state-skel-og-presets">
+              <Skeleton className="h-9 w-full rounded-lg" />
+              <Skeleton className="h-9 w-full rounded-lg" />
+            </div>
+            <Skeleton className="h-9 w-full rounded-lg" />
+          </div>
+
+          <div className="state-skel-og-stage">
+            <div className="state-skel-og-canvas-wrap">
+              <Skeleton className="aspect-[1200/630] w-full rounded-xl" />
+              <div className="state-skel-og-caption">
+                <Skeleton className="h-3 w-36" />
+                <Skeleton className="h-3 w-24" />
+              </div>
+            </div>
+          </div>
         </div>
       ) : (
         <div className="state-skel-doc" aria-hidden>

@@ -9,6 +9,12 @@ export function describeRoute(pathname: string | null | undefined): {
 } {
   const appId = getAppIdFromPathname(pathname);
   const label = appId ? APP_REGISTRY[appId].title : "page";
+  if (appId === "invoices") {
+    return { label, layout: "invoices" };
+  }
+  if (appId === "og-studio") {
+    return { label, layout: "og-studio" };
+  }
   const segments = (pathname ?? "").split("/").filter(Boolean);
   const isCollection = CONTENT_TYPES.some((type) => type === segments[0]);
   const layout: LoadingLayout = !isCollection

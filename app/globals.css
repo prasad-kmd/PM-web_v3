@@ -877,7 +877,8 @@ input:focus-visible {
 .route-content-surface:has(.settings-app),
 .window-body:has(> .resume-app),
 .route-content-surface:has(.resume-app),
-.window-body:has(.admin-studio-shell) {
+.window-body:has(.admin-studio-shell),
+.window-body:has(.state-loading.is-studio) {
   overflow: hidden;
 }
 
@@ -2757,6 +2758,29 @@ input:focus-visible {
 
 /* --- 03 · Workstation Lock Curtain --- */
 
+/* Smoothly blur the live desktop wallpaper, icons, widget, and open windows
+   without dimming them whenever the workstation lock curtain is active, while
+   keeping the 40px top MenuBar crisp. */
+.desktop-background-layer,
+.work-area,
+.window-geometry {
+  transition:
+    filter 220ms cubic-bezier(0.22, 1, 0.36, 1),
+    transform 260ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+body:has(.workstation-lock-curtain) .desktop-background-layer {
+  filter: blur(18px) saturate(1.12);
+  transform: scale(1.04);
+}
+
+body:has(.workstation-lock-curtain) .work-area,
+body:has(.workstation-lock-curtain) .window-geometry {
+  filter: blur(16px);
+  pointer-events: none;
+  user-select: none;
+}
+
 .workstation-lock-curtain {
   position: fixed;
   inset: var(--menubar-h) 0 0 0;
@@ -2765,14 +2789,29 @@ input:focus-visible {
   align-items: center;
   justify-content: center;
   padding: 24px 16px;
-  background: color-mix(in oklab, var(--background) 68%, transparent);
-  backdrop-filter: blur(28px) saturate(165%);
-  -webkit-backdrop-filter: blur(28px) saturate(165%);
+  background: transparent;
   overflow-y: auto;
 }
 
-.dark .workstation-lock-curtain {
-  background: rgba(8, 12, 22, 0.72);
+.workstation-lock-backdrop {
+  position: fixed;
+  inset: var(--menubar-h) 0 0 0;
+  pointer-events: none;
+  background: rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(22px) saturate(135%);
+  -webkit-backdrop-filter: blur(22px) saturate(135%);
+}
+
+.dark .workstation-lock-backdrop {
+  background: rgba(15, 23, 42, 0.1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .desktop-background-layer,
+  .work-area,
+  .window-geometry {
+    transition: none;
+  }
 }
 
 .workstation-lock-ambient {
@@ -2801,6 +2840,8 @@ input:focus-visible {
   border-radius: 20px;
   border: 1px solid var(--border);
   background: color-mix(in oklab, var(--popover) 84%, transparent);
+  backdrop-filter: blur(24px) saturate(160%);
+  -webkit-backdrop-filter: blur(24px) saturate(160%);
   box-shadow:
     0 24px 64px rgba(0, 0, 0, 0.16),
     inset 0 1px 0 rgba(255, 255, 255, 0.12);

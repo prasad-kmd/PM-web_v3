@@ -5,7 +5,6 @@ import { useEffect, useState } from "react";
 import {
   ArrowRight01Icon,
   ArrowUpRight01Icon,
-  Bookmark01Icon,
   Briefcase01Icon,
   Clock01Icon,
   FileDownloadIcon,
@@ -30,14 +29,15 @@ import {
   languages,
   personalDetails,
   resumeProfile,
-  selectedProjects,
 } from "@/lib/resume-data";
+
+const RESUME_PROJECTS_LIMIT = 3;
 
 type ProjectState = {
   status: "loading" | "ready" | "error";
   items: LatestItem[];
-  /** `curated` = the static fallback in lib/resume-data, not Notion. */
-  source: "live" | "curated";
+  total: number;
+  configured: boolean;
 };
 
 /**
@@ -55,15 +55,16 @@ const pad = (value: number) => String(value).padStart(2, "0");
  * - One scrollbar. `.resume-app` fills the window, `.window-body` stops scrolling
  *   while it is mounted (`:has()` in globals.css), and `.resume-scroll` is the
  *   only scroller. The aside is `position: sticky` inside it.
- * - Projects come from `GET /api/latest?types=projects` (the same projection the
- *   desktop widget uses). Until that resolves — or if Notion is not configured —
- *   `selectedProjects` renders and the section says which one is on screen.
+ * - Projects come directly from `/projects` via `GET /api/latest?types=projects&limit=3`
+ *   (up to the latest 3 published items), and the header project counter reflects
+ *   the live total count in `/projects`.
  */
 export function ResumeApp({ onNavigateHome }: { onNavigateHome?: () => void }) {
   const [projects, setProjects] = useState<ProjectState>({
     status: "loading",
     items: [],
-    source: "curated",
+    total: 0,
+    configured: true,
   });
   // The CV may not be in the repo yet. The probe decides whether a click opens
   // the file or explains, in a toast, that it has not been uploaded — the
@@ -80,45 +81,57 @@ export function ResumeApp({ onNavigateHome }: { onNavigateHome?: () => void }) {
 
   useEffect(() => {
     const controller = new AbortController();
-    fetch("/api/latest?types=projects&limit=4", {
+    fetch(`/api/latest?types=projects&limit=${RESUME_PROJECTS_LIMIT}`, {
       signal: controller.signal,
       cache: "no-store",
     })
       .then((response) => (response.ok ? response.json() : Promise.reject()))
-      .then((data: { items?: LatestItem[]; error?: string | null }) => {
-        if (controller.signal.aborted) return;
-        const items = data.items ?? [];
-        if (items.length) {
-          setProjects({ status: "ready", items, source: "live" });
-          return;
-        }
-        setProjects({
-          status: data.error === "unavailable" ? "error" : "ready",
-          items: selectedProjects,
-          source: "curated",
-        });
-      })
+      .then(
+        (data: {
+          items?: LatestItem[];
+          total?: number;
+          configured?: boolean;
+          error?: string | null;
+        }) => {
+          if (controller.signal.aborted) return;
+          const items = (data.items ?? []).slice(0, RESUME_PROJECTS_LIMIT);
+          const total =
+            typeof data.total === "number" && Number.isFinite(data.total)
+              ? data.total
+              : items.length;
+          const configured = data.configured !== false;
+          setProjects({
+            status: data.error === "unavailable" ? "error" : "ready",
+            items,
+            total,
+            configured,
+          });
+        },
+      )
       .catch(() => {
         if (controller.signal.aborted) return;
         setProjects({
           status: "error",
-          items: selectedProjects,
-          source: "curated",
+          items: [],
+          total: 0,
+          configured: true,
         });
       });
     return () => controller.abort();
   }, []);
 
-  const shown = projects.items.length ? projects.items : selectedProjects;
+  const shown = projects.items;
   const isLoading = projects.status === "loading";
 
-  // Header stats: the project count is the one number that changes as the
-  // collection grows, so it leads and replaces the static interest count.
+  // Header stats: the project count reflects the live total published items in `/projects`.
   const stats = [
-    { label: "Projects", value: shown.length },
-    { label: "Workplaces", value: experience.length },
-    { label: "Qualifications", value: education.length },
-    { label: "Languages", value: languages.length },
+    {
+      label: "Projects",
+      display: isLoading ? "—" : pad(projects.total),
+    },
+    { label: "Workplaces", display: pad(experience.length) },
+    { label: "Qualifications", display: pad(education.length) },
+    { label: "Languages", display: pad(languages.length) },
   ];
 
   return (
@@ -258,7 +271,7 @@ export function ResumeApp({ onNavigateHome }: { onNavigateHome?: () => void }) {
               {stats.map((stat) => (
                 <div className="resume-stat" key={stat.label}>
                   <dt>{stat.label}</dt>
-                  <dd>{pad(stat.value)}</dd>
+                  <dd>{stat.display}</dd>
                 </div>
               ))}
             </dl>
@@ -278,9 +291,13 @@ export function ResumeApp({ onNavigateHome }: { onNavigateHome?: () => void }) {
                   </div>
                   <span
                     className="resume-section-count"
-                    aria-label={`${shown.length} projects`}
+                    aria-label={
+                      isLoading
+                        ? "Loading project count"
+                        : `${projects.total} projects`
+                    }
                   >
-                    {pad(shown.length)}
+                    {isLoading ? "—" : pad(projects.total)}
                   </span>
                 </div>
 
@@ -296,7 +313,7 @@ export function ResumeApp({ onNavigateHome }: { onNavigateHome?: () => void }) {
                       />
                       Loading projects…
                     </>
-                  ) : projects.source === "live" ? (
+                  ) : shown.length > 0 ? (
                     <>
                       <HugeiconsIcon
                         icon={Folder01Icon}
@@ -304,99 +321,139 @@ export function ResumeApp({ onNavigateHome }: { onNavigateHome?: () => void }) {
                         size={12}
                         aria-hidden
                       />
-                      Newest published projects, straight from the index
+                      {projects.total > shown.length
+                        ? `Latest ${shown.length} of ${projects.total} published projects`
+                        : "Newest published projects from the index"}
                     </>
                   ) : (
                     <>
                       <HugeiconsIcon
-                        icon={Bookmark01Icon}
+                        icon={Folder01Icon}
                         strokeWidth={2}
                         size={12}
                         aria-hidden
                       />
-                      Curated selection — the Projects collection is not
-                      connected in this environment
+                      {!projects.configured
+                        ? "Projects collection is not connected yet"
+                        : projects.status === "error"
+                          ? "Projects are temporarily unavailable"
+                          : "No published projects yet"}
                     </>
                   )}
                 </p>
 
                 <div className="resume-projects">
-                  {isLoading
-                    ? [0, 1].map((index) => (
-                        <div
-                          className="resume-project is-skeleton"
-                          key={index}
-                          aria-hidden="true"
-                        >
-                          <span
-                            className="resume-skeleton-line"
-                            style={{ width: "46%" }}
-                          />
-                          <span
-                            className="resume-skeleton-line"
-                            style={{ width: "78%" }}
-                          />
-                          <span
-                            className="resume-skeleton-line"
-                            style={{ width: "62%" }}
-                          />
-                        </div>
-                      ))
-                    : shown.map((project) => (
-                        <BeamCard
-                          className="resume-project"
-                          key={`${project.type}-${project.id}`}
-                        >
-                          <div className="resume-project-main">
-                            <h3>
-                              <Link href={project.href}>{project.title}</Link>
-                            </h3>
-                            <p className="resume-project-meta">
-                              <span className="resume-chip">
-                                {project.category || project.typeLabel}
+                  {isLoading ? (
+                    [0, 1, 2].map((index) => (
+                      <div
+                        className="resume-project is-skeleton"
+                        key={index}
+                        aria-hidden="true"
+                      >
+                        <span
+                          className="resume-skeleton-line"
+                          style={{ width: "46%" }}
+                        />
+                        <span
+                          className="resume-skeleton-line"
+                          style={{ width: "78%" }}
+                        />
+                        <span
+                          className="resume-skeleton-line"
+                          style={{ width: "62%" }}
+                        />
+                      </div>
+                    ))
+                  ) : shown.length > 0 ? (
+                    shown.map((project) => (
+                      <BeamCard
+                        className="resume-project"
+                        key={`${project.type}-${project.id}`}
+                      >
+                        <div className="resume-project-main">
+                          <h3>
+                            <Link href={project.href}>{project.title}</Link>
+                          </h3>
+                          <p className="resume-project-meta">
+                            <span className="resume-chip">
+                              {project.category || project.typeLabel}
+                            </span>
+                            {project.dateLabel ? (
+                              <span className="resume-project-time">
+                                <HugeiconsIcon
+                                  icon={Clock01Icon}
+                                  strokeWidth={2}
+                                  size={12}
+                                  aria-hidden
+                                />
+                                {project.dateLabel}
                               </span>
-                              {project.dateLabel ? (
-                                <span className="resume-project-time">
-                                  <HugeiconsIcon
-                                    icon={Clock01Icon}
-                                    strokeWidth={2}
-                                    size={12}
-                                    aria-hidden
-                                  />
-                                  {project.dateLabel}
-                                </span>
-                              ) : null}
-                              {project.readTime ? (
-                                <span className="resume-project-time">
-                                  {project.readTime} min read
-                                </span>
-                              ) : null}
-                            </p>
-                            {project.summary ? (
-                              <p className="resume-project-summary">
-                                {project.summary}
-                              </p>
                             ) : null}
-                          </div>
-                          <Link
-                            className="resume-project-open"
-                            href={project.href}
-                            aria-label={`Open ${project.title}`}
-                          >
-                            <HugeiconsIcon
-                              icon={ArrowUpRight01Icon}
-                              strokeWidth={2}
-                              size={14}
-                              aria-hidden
-                            />
-                          </Link>
-                        </BeamCard>
-                      ))}
+                            {project.readTime ? (
+                              <span className="resume-project-time">
+                                {project.readTime} min read
+                              </span>
+                            ) : null}
+                          </p>
+                          {project.summary ? (
+                            <p className="resume-project-summary">
+                              {project.summary}
+                            </p>
+                          ) : null}
+                        </div>
+                        <Link
+                          className="resume-project-open"
+                          href={project.href}
+                          aria-label={`Open ${project.title}`}
+                        >
+                          <HugeiconsIcon
+                            icon={ArrowUpRight01Icon}
+                            strokeWidth={2}
+                            size={14}
+                            aria-hidden
+                          />
+                        </Link>
+                      </BeamCard>
+                    ))
+                  ) : (
+                    <div className="resume-project resume-project-empty">
+                      <div className="resume-project-main">
+                        <h3>
+                          {!projects.configured
+                            ? "Collection not connected"
+                            : projects.status === "error"
+                              ? "Content is temporarily unavailable"
+                              : "No projects published yet"}
+                        </h3>
+                        <p className="resume-project-summary">
+                          {!projects.configured
+                            ? "Published items in /projects will appear here automatically once the collection is connected."
+                            : projects.status === "error"
+                              ? "We couldn’t reach the projects index right now. Open /projects to try again."
+                              : "New engineering builds and experiments will appear here as soon as they are published in /projects."}
+                        </p>
+                      </div>
+                      <Link
+                        className="resume-project-open"
+                        href="/projects"
+                        aria-label="Open Projects"
+                      >
+                        <HugeiconsIcon
+                          icon={ArrowUpRight01Icon}
+                          strokeWidth={2}
+                          size={14}
+                          aria-hidden
+                        />
+                      </Link>
+                    </div>
+                  )}
                 </div>
 
-                {projects.source === "live" ? (
+                {shown.length > 0 ? (
                   <Link className="resume-more" href="/projects">
-                    All projects
+                    {projects.total > shown.length
+                      ? `All ${projects.total} projects`
+                      : "All projects"}
                     <HugeiconsIcon
                       icon={ArrowRight01Icon}
                       strokeWidth={2}

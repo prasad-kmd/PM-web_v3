@@ -1,5 +1,3 @@
-import type { LatestItem } from "./latest-types";
-
 export const resumeProfile = {
   name: "Prasad Madhuranga",
   shortName: "Prasad M.",
@@ -99,77 +97,4 @@ export const contactLinks = [
   { label: "Twitter", href: "https://twitter.com/prasadmadhuran1" },
   { label: "LinkedIn", href: "https://linkedin.com/in/prasad-madhuranga" },
   { label: "Contact", href: "/contact" },
-];
-
-/**
- * Curated fallback for the résumé's Projects section.
- *
- * When `NOTION_PROJECTS_ID` is not configured (or the collection cannot be
- * reached) the résumé renders these instead of an empty box, and says so.
- * Each entry is a plain `/projects` link so the app never dead-ends.
- *
- * The live list comes from `GET /api/latest?types=projects` and replaces this
- * one as soon as it resolves — see `components/apps/ResumeApp.tsx`.
- */
-export const selectedProjects: LatestItem[] = [
-  {
-    id: "curated-rover",
-    type: "projects",
-    typeLabel: "Project",
-    title: "Line-following rover with sensor fusion",
-    slug: "line-following-rover",
-    href: "/projects",
-    summary:
-      "A differential rover that fuses wheel odometry with a cheap IMU and keeps the line in dim corridors.",
-    category: "Robotics",
-    date: null,
-    dateLabel: null,
-    readTime: 9,
-    image: null,
-  },
-  {
-    id: "curated-jigs",
-    type: "projects",
-    typeLabel: "Project",
-    title: "Parametric jig library for sheet-metal brackets",
-    slug: "parametric-jig-library",
-    href: "/projects",
-    summary:
-      "Printable jigs that removed the marking-out step from a forty-part batch.",
-    category: "Mechanical",
-    date: null,
-    dateLabel: null,
-    readTime: 7,
-    image: null,
-  },
-  {
-    id: "curated-pick-place",
-    type: "projects",
-    typeLabel: "Project",
-    title: "Vision-guided pick-and-place cell",
-    slug: "vision-pick-and-place",
-    href: "/projects",
-    summary:
-      "A camera, a three-axis gantry and a rejection rule that cut mis-picks on a small line.",
-    category: "Automation",
-    date: null,
-    dateLabel: null,
-    readTime: 11,
-    image: null,
-  },
-  {
-    id: "curated-psu",
-    type: "projects",
-    typeLabel: "Project",
-    title: "Bench power supply rebuild",
-    slug: "bench-power-supply-rebuild",
-    href: "/projects",
-    summary:
-      "Recapping and re-metering a 1980s linear supply, then documenting the calibration.",
-    category: "Electronics",
-    date: null,
-    dateLabel: null,
-    readTime: 6,
-    image: null,
-  },
 ];

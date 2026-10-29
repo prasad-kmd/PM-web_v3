@@ -18,6 +18,7 @@ import {
 import { HugeiconsIcon } from "@hugeicons/react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
+import { LoadingView } from "@/components/system/states/LoadingView";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -208,6 +209,7 @@ export function OgStudioApp() {
   const [rendering, setRendering] = useState(false);
   const [downloading, setDownloading] = useState(false);
   const [copiedImage, setCopiedImage] = useState(false);
+  const [booted, setBooted] = useState(false);
   const [previewBlobUrl, setPreviewBlobUrl] = useState<string | null>(null);
   const [lastBlob, setLastBlob] = useState<Blob | null>(null);
   const [renderMeta, setRenderMeta] = useState<{
@@ -219,6 +221,7 @@ export function OgStudioApp() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const abortRef = useRef<AbortController | null>(null);
   const blobUrlRef = useRef<string | null>(null);
+  const initialMountRef = useRef(true);
 
   const update = useCallback(
     <K extends keyof OgCustomConfig>(key: K, value: OgCustomConfig[K]) => {
@@ -236,7 +239,10 @@ export function OgStudioApp() {
   );
 
   const renderCard = useCallback(async (snapshot: OgCustomConfig) => {
-    if (!snapshot.title.trim()) return;
+    if (!snapshot.title.trim()) {
+      setBooted(true);
+      return;
+    }
     abortRef.current?.abort();
     const controller = new AbortController();
     abortRef.current = controller;
@@ -282,14 +288,20 @@ export function OgStudioApp() {
       if (abortRef.current === controller) {
         setRendering(false);
       }
+      setBooted(true);
     }
   }, []);
 
   useEffect(() => {
-    if (!autoRender) return;
+    if (!autoRender) {
+      setBooted(true);
+      return;
+    }
+    const delay = initialMountRef.current ? 0 : 340;
     const timer = window.setTimeout(() => {
+      initialMountRef.current = false;
       void renderCard(config);
-    }, 340);
+    }, delay);
     return () => window.clearTimeout(timer);
   }, [autoRender, config, renderCard]);
 
@@ -382,6 +394,10 @@ export function OgStudioApp() {
     const kb = renderMeta.bytes / 1024;
     return `${kb >= 100 ? Math.round(kb) : kb.toFixed(1)} KB · ${renderMeta.ms} ms`;
   }, [renderMeta]);
+
+  if (!booted) {
+    return <LoadingView label="OG Image Studio" layout="og-studio" />;
+  }
 
   return (
     <div className="admin-studio-shell og-studio-shell">
@@ -483,6 +499,12 @@ export function OgStudioApp() {
           </Button>
         </div>
       </header>
+
+      {(rendering || downloading) && (
+        <div className="state-bar" aria-hidden>
+          <span />
+        </div>
+      )}
 
       {/* Main Two-Pane Studio Body */}
       <div className="og-studio-body">

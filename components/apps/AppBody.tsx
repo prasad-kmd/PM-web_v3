@@ -2,6 +2,7 @@
 
 import dynamic from "next/dynamic";
 import { useAdminAuth } from "@/components/admin/AdminAuthProvider";
+import { LoadingView } from "@/components/system/states/LoadingView";
 import { WindowBreadcrumb } from "@/components/system/WindowBreadcrumb";
 import type { AppId } from "@/lib/registry";
 import { ResumeApp } from "./ResumeApp";
@@ -12,9 +13,7 @@ const OgStudioApp = dynamic(
     import("@/components/admin/og/OgStudioApp").then((mod) => mod.OgStudioApp),
   {
     ssr: false,
-    loading: () => (
-      <div className="admin-studio-loading">Loading OG Image Studio…</div>
-    ),
+    loading: () => <LoadingView label="OG Image Studio" layout="og-studio" />,
   },
 );
 
@@ -25,9 +24,7 @@ const InvoiceStudioApp = dynamic(
     ),
   {
     ssr: false,
-    loading: () => (
-      <div className="admin-studio-loading">Loading Invoice Studio…</div>
-    ),
+    loading: () => <LoadingView label="Invoice Studio" layout="invoices" />,
   },
 );
 
@@ -56,13 +53,13 @@ export function AppBody({
       return <ResumeApp onNavigateHome={onNavigateHome} />;
     case "og-studio":
       if (!ready) {
-        return <div className="admin-studio-loading">Checking session…</div>;
+        return <LoadingView label="OG Image Studio" layout="og-studio" />;
       }
       if (!authenticated) return null;
       return <OgStudioApp />;
     case "invoices":
       if (!ready) {
-        return <div className="admin-studio-loading">Checking session…</div>;
+        return <LoadingView label="Invoice Studio" layout="invoices" />;
       }
       if (!authenticated) return null;
       return <InvoiceStudioApp />;

@@ -45,6 +45,7 @@ export async function GET(request: NextRequest) {
   return NextResponse.json(
     {
       items: result.items,
+      total: result.total,
       configured: result.configured,
       error: result.error,
       generatedAt: new Date().toISOString(),

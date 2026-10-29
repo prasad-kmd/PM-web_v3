@@ -12,6 +12,7 @@ export type { LatestItem };
 
 export type LatestResult = {
   items: LatestItem[];
+  total: number;
   configured: boolean;
   error: "missing-config" | "unavailable" | null;
 };
@@ -41,8 +42,10 @@ function toLatestItem(item: ContentItem): LatestItem {
   };
 }
 
-const timestamp = (value: string | null) =>
-  value ? Date.parse(value) || 0 : 0;
+const timestamp = (value: string | null): number | null => {
+  const parsed = value ? Date.parse(value) : Number.NaN;
+  return Number.isFinite(parsed) ? parsed : null;
+};
 
 /**
  * The newest published entries across the requested collections.
@@ -58,14 +61,20 @@ export async function getLatestContent(
 ): Promise<LatestResult> {
   const results = await Promise.all(types.map((type) => getContentIndex(type)));
 
-  const items = results
+  const sorted = results
     .flatMap((result) => result.items)
     .map(toLatestItem)
-    .sort(
-      (a, b) =>
-        timestamp(b.date) - timestamp(a.date) || a.title.localeCompare(b.title),
-    )
-    .slice(0, Math.max(1, Math.min(limit, 24)));
+    .sort((a, b) => {
+      const ta = timestamp(a.date);
+      const tb = timestamp(b.date);
+      const dateOrder =
+        ta === null ? (tb === null ? 0 : 1) : tb === null ? -1 : tb - ta;
+      return (
+        dateOrder || a.title.localeCompare(b.title) || a.id.localeCompare(b.id)
+      );
+    });
+
+  const items = sorted.slice(0, Math.max(1, Math.min(limit, 24)));
 
   const configured = results.some((result) => result.configured);
   const failed = results.every(
@@ -74,10 +83,11 @@ export async function getLatestContent(
 
   return {
     items,
+    total: sorted.length,
     configured,
     error: !configured
       ? "missing-config"
-      : failed && !items.length
+      : failed && !sorted.length
         ? "unavailable"
         : null,
   };

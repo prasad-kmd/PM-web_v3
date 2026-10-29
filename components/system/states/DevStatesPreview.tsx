@@ -19,6 +19,8 @@ const LAYOUTS: { id: LoadingLayout; label: string }[] = [
   { id: "listing", label: "Listing" },
   { id: "reader", label: "Reader" },
   { id: "page", label: "Page" },
+  { id: "invoices", label: "Invoices" },
+  { id: "og-studio", label: "OG Studio" },
 ];
 const SAMPLE_DIGEST = "4127839150";
 

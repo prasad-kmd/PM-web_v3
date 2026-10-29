@@ -1,4 +1,4 @@
-import { revalidateTag } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { NextResponse, type NextRequest } from "next/server";
 import { requireAdminSession } from "@/lib/admin/auth";
 import { sameOrigin } from "@/lib/comments/request-context";
@@ -16,6 +16,17 @@ export async function POST(request: NextRequest) {
   if (!auth.ok) return auth.response;
 
   revalidateTag("notion-cms", "max");
+  for (const path of [
+    "/projects",
+    "/blog",
+    "/articles",
+    "/tutorials",
+    "/glossary",
+    "/news",
+    "/api/latest",
+  ]) {
+    revalidatePath(path);
+  }
 
   return NextResponse.json(
     { ok: true, refreshedAt: new Date().toISOString() },
