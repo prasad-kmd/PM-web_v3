@@ -1016,6 +1016,8 @@ input:focus-visible {
 }
 
 .settings-nav-item {
+  position: relative;
+  z-index: 1;
   display: flex;
   width: 100%;
   align-items: center;
@@ -2760,13 +2762,20 @@ input:focus-visible {
 
 /* Smoothly blur the live desktop wallpaper, icons, widget, and open windows
    without dimming them whenever the workstation lock curtain is active, while
-   keeping the 40px top MenuBar crisp. */
-.desktop-background-layer,
-.work-area,
-.window-geometry {
+   keeping the 40px top MenuBar crisp. Never transition `transform` on
+   `.window-geometry`: it is a Framer Motion node (`style={{ x, y }}`), and a
+   CSS `transform` transition prevents `resetTransform` (`style.transform = "none"`)
+   from taking effect synchronously during `layoutId` (`TabsHighlight`) layout
+   measurements, double-counting the window offset on tab switches. */
+.desktop-background-layer {
   transition:
     filter 220ms cubic-bezier(0.22, 1, 0.36, 1),
     transform 260ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.work-area,
+.window-geometry {
+  transition: filter 220ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 body:has(.workstation-lock-curtain) .desktop-background-layer {
@@ -4926,6 +4935,7 @@ body:has(.workstation-lock-curtain) .window-geometry {
   z-index: 1;
   border: 0;
   outline: none;
+  transition: color 140ms ease;
 }
 
 .admin-segmented-tab.is-animated[data-state="active"] {
