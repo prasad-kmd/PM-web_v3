@@ -26,6 +26,7 @@
     "@hugeicons/react": "^1.1.10",
     "@marsidev/react-turnstile": "^1.6.1",
     "@notionhq/client": "^5.26.0",
+    "@react-pdf/renderer": "^4.9.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "fakeout": "^1.0.112",

@@ -1,20 +1,35 @@
 "use client";
 
-import { Moon02Icon, SunMediumIcon } from "@hugeicons/core-free-icons";
+import {
+  Copy01Icon,
+  Image02Icon,
+  Invoice02Icon,
+  Login01Icon,
+  Logout01Icon,
+  Mail01Icon,
+  Moon02Icon,
+  RefreshIcon,
+  Settings02Icon,
+  SunMediumIcon,
+  UserCircleIcon,
+} from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { useAppearance } from "@/lib/appearance";
-import { APP_REGISTRY, DESKTOP_APPS, type AppId } from "@/lib/registry";
-import { WorkspaceTooltip } from "@/components/ui/tooltip";
+import { toast } from "sonner";
+import { useAdminAuth } from "@/components/admin/AdminAuthProvider";
 import {
   Menubar,
   MenubarContent,
   MenubarGroup,
   MenubarItem,
+  MenubarLabel,
   MenubarMenu,
   MenubarSeparator,
   MenubarShortcut,
   MenubarTrigger,
 } from "@/components/ui/menubar";
+import { WorkspaceTooltip } from "@/components/ui/tooltip";
+import { useAppearance } from "@/lib/appearance";
+import { APP_REGISTRY, DESKTOP_APPS, type AppId } from "@/lib/registry";
 import { ClockPopover } from "./ClockPopover";
 
 export function MenuBar({
@@ -25,6 +40,8 @@ export function MenuBar({
   onCloseAll: () => void;
 }) {
   const { theme, toggleTheme, nextWallpaper } = useAppearance();
+  const { authenticated, openLockCurtain, signOut, refreshContentCache } =
+    useAdminAuth();
 
   const openResumeSection = (section?: string) => {
     onOpenApp("resume");
@@ -37,21 +54,171 @@ export function MenuBar({
     }, 140);
   };
 
+  const handleCopyWorkspaceLink = async () => {
+    try {
+      await navigator.clipboard.writeText(window.location.origin);
+      toast.success("Workspace link copied.");
+    } catch {
+      toast.error("Could not copy link.");
+    }
+  };
+
   return (
     <header className="menu-bar" aria-label="Workspace menu bar">
       <div className="menu-bar-leading">
-        {/* Replace this shared portrait file when the final photo is ready. */}
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          className="workspace-profile-photo"
-          src="/images/profile-placeholder.jpg"
-          alt="Prasad Madhuranga"
-        />
-
         <Menubar
           className="workspace-menubar w-fit"
           aria-label="Application menus"
         >
+          {/* Profile photo dropdown (quiet owner sign-in & studio launcher) */}
+          <MenubarMenu>
+            <MenubarTrigger
+              className="workspace-profile-trigger"
+              aria-label="Workspace profile menu"
+            >
+              <span className="workspace-profile-avatar-box">
+                {/* Replace this shared portrait file when the final photo is ready. */}
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  className="workspace-profile-photo"
+                  src="/images/profile-placeholder.jpg"
+                  alt="Prasad Madhuranga"
+                />
+                {authenticated && (
+                  <span className="workspace-profile-status-dot" aria-hidden />
+                )}
+              </span>
+            </MenubarTrigger>
+
+            <MenubarContent className="min-w-56">
+              <div className="menubar-profile-header">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src="/images/profile-placeholder.jpg"
+                  alt=""
+                  className="menubar-profile-header-img"
+                />
+                <div className="min-w-0">
+                  <p className="truncate text-xs font-semibold leading-tight text-foreground">
+                    Prasad Madhuranga
+                  </p>
+                  <p className="truncate text-[11px] leading-tight text-muted-foreground">
+                    {authenticated
+                      ? "Signed in · Owner"
+                      : "Mechanical + Mechatronics"}
+                  </p>
+                </div>
+              </div>
+
+              <MenubarSeparator />
+
+              {authenticated ? (
+                <>
+                  <MenubarGroup>
+                    <MenubarLabel>Studio</MenubarLabel>
+                    <MenubarItem onClick={() => onOpenApp("og-studio")}>
+                      <HugeiconsIcon
+                        icon={Image02Icon}
+                        strokeWidth={1.9}
+                        size={15}
+                      />
+                      <span>OG Image Studio</span>
+                      <MenubarShortcut>⌘⇧G</MenubarShortcut>
+                    </MenubarItem>
+                    <MenubarItem onClick={() => onOpenApp("invoices")}>
+                      <HugeiconsIcon
+                        icon={Invoice02Icon}
+                        strokeWidth={1.9}
+                        size={15}
+                      />
+                      <span>Invoice Studio</span>
+                      <MenubarShortcut>⌘⇧I</MenubarShortcut>
+                    </MenubarItem>
+                  </MenubarGroup>
+
+                  <MenubarSeparator />
+
+                  <MenubarGroup>
+                    <MenubarLabel>Workspace</MenubarLabel>
+                    <MenubarItem onClick={() => void refreshContentCache()}>
+                      <HugeiconsIcon
+                        icon={RefreshIcon}
+                        strokeWidth={1.9}
+                        size={15}
+                      />
+                      <span>Refresh content</span>
+                    </MenubarItem>
+                    <MenubarItem onClick={() => onOpenApp("settings")}>
+                      <HugeiconsIcon
+                        icon={Settings02Icon}
+                        strokeWidth={1.9}
+                        size={15}
+                      />
+                      <span>Settings…</span>
+                      <MenubarShortcut>⌘,</MenubarShortcut>
+                    </MenubarItem>
+                  </MenubarGroup>
+
+                  <MenubarSeparator />
+
+                  <MenubarItem
+                    variant="destructive"
+                    onClick={() => void signOut()}
+                  >
+                    <HugeiconsIcon
+                      icon={Logout01Icon}
+                      strokeWidth={1.9}
+                      size={15}
+                    />
+                    <span>Sign out</span>
+                  </MenubarItem>
+                </>
+              ) : (
+                <>
+                  <MenubarGroup>
+                    <MenubarItem onClick={() => openResumeSection()}>
+                      <HugeiconsIcon
+                        icon={UserCircleIcon}
+                        strokeWidth={1.9}
+                        size={15}
+                      />
+                      <span>About Prasad</span>
+                      <MenubarShortcut>⌘O</MenubarShortcut>
+                    </MenubarItem>
+                    <MenubarItem onClick={() => onOpenApp("contact")}>
+                      <HugeiconsIcon
+                        icon={Mail01Icon}
+                        strokeWidth={1.9}
+                        size={15}
+                      />
+                      <span>Get in touch…</span>
+                    </MenubarItem>
+                    <MenubarItem onClick={() => void handleCopyWorkspaceLink()}>
+                      <HugeiconsIcon
+                        icon={Copy01Icon}
+                        strokeWidth={1.9}
+                        size={15}
+                      />
+                      <span>Copy workspace link</span>
+                    </MenubarItem>
+                  </MenubarGroup>
+
+                  <MenubarSeparator />
+
+                  <MenubarItem onClick={openLockCurtain}>
+                    <HugeiconsIcon
+                      icon={Login01Icon}
+                      strokeWidth={1.9}
+                      size={15}
+                    />
+                    <span>Sign in…</span>
+                    <MenubarShortcut>⌘⇧L</MenubarShortcut>
+                  </MenubarItem>
+                </>
+              )}
+            </MenubarContent>
+          </MenubarMenu>
+
           <MenubarMenu>
             <MenubarTrigger>File</MenubarTrigger>
             <MenubarContent>

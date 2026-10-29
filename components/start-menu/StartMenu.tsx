@@ -11,7 +11,12 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useAppearance } from "@/lib/appearance";
-import { APP_REGISTRY, PINNED_ORDER, RECOMMENDED, type AppId } from "@/lib/registry";
+import {
+  APP_REGISTRY,
+  PINNED_ORDER,
+  RECOMMENDED,
+  type AppId,
+} from "@/lib/registry";
 import { FLYOUT_IN, FLYOUT_OUT } from "@/lib/windows";
 
 /* =========================================================
@@ -20,9 +25,9 @@ import { FLYOUT_IN, FLYOUT_OUT } from "@/lib/windows";
    continuous motion (matches the win11React reference).
    ========================================================= */
 
-const ALL_APPS = (Object.keys(APP_REGISTRY) as AppId[]).sort((a, b) =>
-  APP_REGISTRY[a].title.localeCompare(APP_REGISTRY[b].title),
-);
+const ALL_APPS = (Object.keys(APP_REGISTRY) as AppId[])
+  .filter((id) => !APP_REGISTRY[id].adminOnly)
+  .sort((a, b) => APP_REGISTRY[a].title.localeCompare(APP_REGISTRY[b].title));
 
 export function StartMenu({
   open,
@@ -81,7 +86,11 @@ export function StartMenu({
           >
             <div className="start-search-wrap">
               <label className="start-search">
-                <HugeiconsIcon icon={Search01Icon} strokeWidth={2} aria-hidden="true" />
+                <HugeiconsIcon
+                  icon={Search01Icon}
+                  strokeWidth={2}
+                  aria-hidden="true"
+                />
                 <input
                   ref={inputRef}
                   value={query}
@@ -102,7 +111,13 @@ export function StartMenu({
                       className="start-more-btn"
                       onClick={() => setAllApps(true)}
                     >
-                      All apps <HugeiconsIcon icon={ChevronRightIcon} strokeWidth={2} aria-hidden="true" size={12} />
+                      All apps{" "}
+                      <HugeiconsIcon
+                        icon={ChevronRightIcon}
+                        strokeWidth={2}
+                        aria-hidden="true"
+                        size={12}
+                      />
                     </button>
                   </div>
 
@@ -118,7 +133,11 @@ export function StartMenu({
                         onClick={() => onOpenApp(appId)}
                       >
                         {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={APP_REGISTRY[appId].icon} alt="" aria-hidden />
+                        <img
+                          src={APP_REGISTRY[appId].icon}
+                          alt=""
+                          aria-hidden
+                        />
                         <span>{APP_REGISTRY[appId].title}</span>
                       </motion.button>
                     ))}
@@ -139,7 +158,11 @@ export function StartMenu({
                         onClick={() => onOpenApp(item.appId)}
                       >
                         {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={APP_REGISTRY[item.appId].icon} alt="" aria-hidden />
+                        <img
+                          src={APP_REGISTRY[item.appId].icon}
+                          alt=""
+                          aria-hidden
+                        />
                         <span className="recommended-copy">
                           <strong>{APP_REGISTRY[item.appId].title}</strong>
                           <small>{item.subtitle}</small>
@@ -178,16 +201,25 @@ export function StartMenu({
                         className="all-apps-item"
                         initial={{ opacity: 0, x: -4 }}
                         animate={{ opacity: 1, x: 0 }}
-                        transition={{ ...FLYOUT_IN, delay: Math.min(i * 0.02, 0.12) }}
+                        transition={{
+                          ...FLYOUT_IN,
+                          delay: Math.min(i * 0.02, 0.12),
+                        }}
                         onClick={() => onOpenApp(appId)}
                       >
                         {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={APP_REGISTRY[appId].icon} alt="" aria-hidden />
+                        <img
+                          src={APP_REGISTRY[appId].icon}
+                          alt=""
+                          aria-hidden
+                        />
                         <span className="min-w-0 flex-1">
                           <span className="block text-xs font-medium truncate">
                             {APP_REGISTRY[appId].title}
                           </span>
-                          <span className="all-apps-kind">{APP_REGISTRY[appId].kind}</span>
+                          <span className="all-apps-kind">
+                            {APP_REGISTRY[appId].kind}
+                          </span>
                         </span>
                       </motion.button>
                     ))}
@@ -200,7 +232,9 @@ export function StartMenu({
               <div className="profile-chip">
                 <span className="profile-avatar">PM</span>
                 <span className="min-w-0">
-                  <span className="block text-xs font-semibold leading-tight">Prasad M.</span>
+                  <span className="block text-xs font-semibold leading-tight">
+                    Prasad M.
+                  </span>
                   <span className="block text-[10px] text-[var(--muted-ink)] leading-tight">
                     Kandy, LK
                   </span>
@@ -212,22 +246,34 @@ export function StartMenu({
                   type="button"
                   className="power-btn"
                   onClick={toggleTheme}
-                  title={theme === "dark" ? "Switch to light" : "Switch to dark"}
+                  title={
+                    theme === "dark" ? "Switch to light" : "Switch to dark"
+                  }
                   aria-label="Toggle theme"
                 >
-                  <HugeiconsIcon icon={SunMoonIcon} strokeWidth={2} aria-hidden="true" />
+                  <HugeiconsIcon
+                    icon={SunMoonIcon}
+                    strokeWidth={2}
+                    aria-hidden="true"
+                  />
                 </button>
                 <button
                   type="button"
                   className="power-btn"
                   onClick={() => {
-                    toast.info("Sign out is a demo action in this portfolio shell.");
+                    toast.info(
+                      "Sign out is a demo action in this portfolio shell.",
+                    );
                     onClose();
                   }}
                   title="Power"
                   aria-label="Power"
                 >
-                  <HugeiconsIcon icon={PowerIcon} strokeWidth={2} aria-hidden="true" />
+                  <HugeiconsIcon
+                    icon={PowerIcon}
+                    strokeWidth={2}
+                    aria-hidden="true"
+                  />
                 </button>
               </div>
             </footer>

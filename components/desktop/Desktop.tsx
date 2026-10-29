@@ -12,14 +12,21 @@ import type { ReactNode } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { useShouldReduceMotion } from "@animate-ui/react/utils/motion";
 import { Toaster } from "sonner";
+import {
+  AdminAuthProvider,
+  useAdminAuth,
+} from "@/components/admin/AdminAuthProvider";
+import { WorkstationLockCurtain } from "@/components/admin/WorkstationLockCurtain";
 import { ContextMenu, ContextMenuTrigger } from "@/components/ui/context-menu";
 import { WindowsLayer } from "@/components/window/WindowsLayer";
-import { useWindowManager } from "@/hooks/useWindowManager";
+import { useWindowManager, type WindowState } from "@/hooks/useWindowManager";
 import { useAppearance } from "@/lib/appearance";
 import {
   APP_REGISTRY,
   getAppIdFromPathname,
+  getDocumentTitleForApp,
   getPathnameForApp,
+  isAdminOnlyApp,
   usesRouteContent,
   type AppId,
 } from "@/lib/registry";
@@ -52,6 +59,86 @@ function useMobileWindowMode() {
   return isMobile;
 }
 
+/**
+ * Handles owner studio hotkeys (`⌘⇧L`, `⌘⇧G`, `⌘⇧I`) and protects direct URL
+ * visits or Back/Forward entries to `/og-studio` and `/invoices` when signed out:
+ * closes the restricted window, prompts sign-in on the lock curtain, and
+ * reopens the requested studio automatically upon unlock.
+ */
+function AdminWorkspaceBridge({
+  windows,
+  onOpenApp,
+  onCloseAdminWindows,
+}: {
+  windows: WindowState[];
+  onOpenApp: (appId: AppId) => void;
+  onCloseAdminWindows: () => void;
+}) {
+  const { authenticated, ready, lockOpen, openLockCurtain, closeLockCurtain } =
+    useAdminAuth();
+  const pendingProtectedAppRef = useRef<AppId | null>(null);
+
+  useEffect(() => {
+    if (!ready) return;
+
+    if (!authenticated) {
+      const activeProtected = windows
+        .filter((w) => !w.exiting && isAdminOnlyApp(w.appId))
+        .sort((a, b) => b.z - a.z)[0];
+
+      if (activeProtected) {
+        pendingProtectedAppRef.current = activeProtected.appId;
+        onCloseAdminWindows();
+        openLockCurtain();
+      }
+      return;
+    }
+
+    if (pendingProtectedAppRef.current) {
+      const target = pendingProtectedAppRef.current;
+      pendingProtectedAppRef.current = null;
+      onOpenApp(target);
+    }
+  }, [
+    authenticated,
+    onCloseAdminWindows,
+    onOpenApp,
+    openLockCurtain,
+    ready,
+    windows,
+  ]);
+
+  useEffect(() => {
+    if (!lockOpen && !authenticated) {
+      pendingProtectedAppRef.current = null;
+    }
+  }, [authenticated, lockOpen]);
+
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (!(event.metaKey || event.ctrlKey) || !event.shiftKey) return;
+      const key = event.key.toLowerCase();
+      if (key === "l") {
+        event.preventDefault();
+        if (!authenticated) {
+          if (lockOpen) closeLockCurtain();
+          else openLockCurtain();
+        }
+      } else if (authenticated && key === "g") {
+        event.preventDefault();
+        onOpenApp("og-studio");
+      } else if (authenticated && key === "i") {
+        event.preventDefault();
+        onOpenApp("invoices");
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [authenticated, closeLockCurtain, lockOpen, onOpenApp, openLockCurtain]);
+
+  return null;
+}
+
 export function Desktop({ children }: { children?: ReactNode }) {
   const [hydrated, setHydrated] = useState(false);
   const [area, setArea] = useState<Area>({ w: 1280, h: 720, left: 0, top: 40 });
@@ -79,7 +166,7 @@ export function Desktop({ children }: { children?: ReactNode }) {
 
   const isMobileWindowMode = useMobileWindowMode();
   const manager = useWindowManager(area, isMobileWindowMode);
-  const { open, syncToRoute, topAppId } = manager;
+  const { open, closeApp, syncToRoute, topAppId } = manager;
 
   const initializedRef = useRef(false);
   const handlingRouteChangeRef = useRef(false);
@@ -89,6 +176,11 @@ export function Desktop({ children }: { children?: ReactNode }) {
   currentTopAppRef.current = topAppId;
 
   const openApp = useCallback((appId: AppId) => open(appId), [open]);
+
+  const closeAdminWindows = useCallback(() => {
+    closeApp("og-studio");
+    closeApp("invoices");
+  }, [closeApp]);
 
   const captureContextTarget = useCallback((event: React.MouseEvent) => {
     const target = event.target as HTMLElement;
@@ -100,8 +192,8 @@ export function Desktop({ children }: { children?: ReactNode }) {
     });
   }, []);
 
-  // Measure workspace geometry and open any direct-URL app (e.g. /resume, /settings)
-  // inside the DesktopOS shell before first paint.
+  // Measure workspace geometry and open any direct-URL app (e.g. /resume, /settings,
+  // /og-studio, /invoices) inside the DesktopOS shell before first paint.
   useLayoutEffect(() => {
     const element = workRef.current;
     if (!element) return;
@@ -175,6 +267,9 @@ export function Desktop({ children }: { children?: ReactNode }) {
   // and generateMetadata must refresh as well as the URL.
   useEffect(() => {
     if (!initializedRef.current) return;
+    if (!usesRouteContent(topAppId)) {
+      document.title = getDocumentTitleForApp(topAppId);
+    }
     if (handlingRouteChangeRef.current) {
       if (topAppId === expectedRouteAppRef.current) {
         handlingRouteChangeRef.current = false;
@@ -227,7 +322,12 @@ export function Desktop({ children }: { children?: ReactNode }) {
   }, [pathname, syncToRoute]);
 
   return (
-    <>
+    <AdminAuthProvider onSignedOut={closeAdminWindows}>
+      <AdminWorkspaceBridge
+        windows={manager.windows}
+        onOpenApp={openApp}
+        onCloseAdminWindows={closeAdminWindows}
+      />
       <div
         className="desktop-root"
         data-wallpaper-intensity={wallpaperIntensity}
@@ -301,10 +401,10 @@ export function Desktop({ children }: { children?: ReactNode }) {
           />
         </ContextMenu>
       </div>
-      {/* Outside `.desktop-root` on purpose: that div opens a stacking context
-          (`isolation: isolate`), and windows are portalled to <body> above it,
-          so a toaster inside would paint underneath an open window. */}
+      {/* Outside `.desktop-root` so portalled windows and the workstation lock
+          curtain share the root stacking context cleanly beneath the 40px bar. */}
+      <WorkstationLockCurtain />
       <Toaster position="bottom-right" closeButton />
-    </>
+    </AdminAuthProvider>
   );
 }

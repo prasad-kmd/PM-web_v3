@@ -876,7 +876,8 @@ input:focus-visible {
 .window-body:has(> .settings-app),
 .route-content-surface:has(.settings-app),
 .window-body:has(> .resume-app),
-.route-content-surface:has(.resume-app) {
+.route-content-surface:has(.resume-app),
+.window-body:has(.admin-studio-shell) {
   overflow: hidden;
 }
 
@@ -2705,5 +2706,1763 @@ input:focus-visible {
   /* Short screens: keep the card to its header + availability line. */
   .profile-card-panel {
     display: none;
+  }
+}
+
+/* ==========================================================================
+   Owner Workstation Suite — Profile Menu, Lock Curtain (03),
+   Bloom Spotlight OG Studio (05), and Split Ledger Invoice Studio (01)
+   ========================================================================== */
+
+.workspace-profile-trigger {
+  height: 30px !important;
+  padding: 1px !important;
+  border-radius: 7px !important;
+  background: transparent;
+}
+
+.workspace-profile-avatar-box {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.workspace-profile-status-dot {
+  position: absolute;
+  right: -1px;
+  bottom: -1px;
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: #10b981;
+  border: 1.5px solid var(--background);
+}
+
+.menubar-profile-header {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 6px 8px 5px;
+}
+
+.menubar-profile-header-img {
+  width: 28px;
+  height: 28px;
+  border-radius: 7px;
+  object-fit: cover;
+  border: 1px solid var(--border);
+  flex: 0 0 auto;
+}
+
+/* --- 03 · Workstation Lock Curtain --- */
+
+.workstation-lock-curtain {
+  position: fixed;
+  inset: var(--menubar-h) 0 0 0;
+  z-index: 65;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 16px;
+  background: color-mix(in oklab, var(--background) 68%, transparent);
+  backdrop-filter: blur(28px) saturate(165%);
+  -webkit-backdrop-filter: blur(28px) saturate(165%);
+  overflow-y: auto;
+}
+
+.dark .workstation-lock-curtain {
+  background: rgba(8, 12, 22, 0.72);
+}
+
+.workstation-lock-ambient {
+  position: absolute;
+  width: min(560px, 88vw);
+  height: min(420px, 70vh);
+  border-radius: 999px;
+  pointer-events: none;
+  background: radial-gradient(
+    circle,
+    rgba(0, 103, 192, 0.16) 0%,
+    rgba(56, 189, 248, 0.06) 44%,
+    transparent 72%
+  );
+  filter: blur(24px);
+}
+
+.workstation-lock-column {
+  position: relative;
+  width: min(336px, 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 28px 24px 22px;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  background: color-mix(in oklab, var(--popover) 84%, transparent);
+  box-shadow:
+    0 24px 64px rgba(0, 0, 0, 0.16),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+
+.dark .workstation-lock-column {
+  background: rgba(16, 21, 34, 0.82);
+  border-color: rgba(255, 255, 255, 0.12);
+  box-shadow:
+    0 28px 72px rgba(0, 0, 0, 0.48),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.workstation-lock-avatar-wrap {
+  position: relative;
+  display: inline-flex;
+}
+
+.workstation-lock-avatar {
+  width: 76px;
+  height: 76px;
+  border-radius: 999px;
+  object-fit: cover;
+  border: 2px solid color-mix(in oklab, var(--foreground) 14%, transparent);
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.18);
+}
+
+.workstation-lock-badge {
+  position: absolute;
+  right: -2px;
+  bottom: 0;
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  background: var(--background);
+  color: var(--foreground);
+  border: 1px solid var(--border);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.14);
+}
+
+.workstation-lock-heading {
+  text-align: center;
+}
+
+.workstation-lock-name {
+  margin: 0;
+  font-size: 19px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--foreground);
+}
+
+.workstation-lock-status {
+  margin: 3px 0 0;
+  font-size: 12px;
+  color: var(--muted-foreground);
+}
+
+.workstation-lock-form {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+.workstation-lock-field {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  height: 38px;
+  border-radius: 11px;
+  border: 1px solid var(--input);
+  background: color-mix(in oklab, var(--background) 86%, transparent);
+  transition:
+    border-color 140ms ease,
+    box-shadow 140ms ease;
+}
+
+.dark .workstation-lock-field {
+  background: rgba(255, 255, 255, 0.055);
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+.workstation-lock-field:focus-within {
+  border-color: var(--ring);
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--ring) 24%, transparent);
+}
+
+.workstation-lock-field-icon {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  color: var(--muted-foreground);
+  flex: 0 0 auto;
+}
+
+.workstation-lock-input {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  border: 0;
+  background: transparent;
+  padding: 0 12px 0 0;
+  font-size: 13px;
+  color: var(--foreground);
+  outline: none !important;
+}
+
+.workstation-lock-input::placeholder {
+  color: var(--muted-foreground);
+  opacity: 0.78;
+}
+
+.workstation-lock-input-trailing {
+  padding-right: 4px;
+}
+
+.workstation-lock-eye {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  margin-right: 2px;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--muted-foreground);
+  cursor: pointer;
+}
+
+.workstation-lock-eye:hover {
+  color: var(--foreground);
+  background: var(--accent);
+}
+
+.workstation-lock-error {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 10px;
+  border-radius: 9px;
+  font-size: 12px;
+  line-height: 1.35;
+  color: var(--destructive);
+  background: color-mix(in oklab, var(--destructive) 10%, transparent);
+  border: 1px solid color-mix(in oklab, var(--destructive) 26%, transparent);
+}
+
+.workstation-lock-actions {
+  margin-top: 4px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.workstation-lock-cancel {
+  background: transparent;
+  font-size: 12px;
+  color: var(--muted-foreground);
+  padding: 4px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: color 140ms ease;
+}
+
+.workstation-lock-cancel:hover {
+  color: var(--foreground);
+}
+
+/* --- Shared Studio Shell & Sub-Toolbar --- */
+
+.admin-studio-loading {
+  display: grid;
+  place-items: center;
+  height: 100%;
+  min-height: 280px;
+  font-size: 13px;
+  color: var(--muted-foreground);
+}
+
+.admin-studio-shell {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  background: var(--background);
+  color: var(--foreground);
+}
+
+.admin-studio-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-height: 42px;
+  padding: 5px 12px;
+  border-bottom: 1px solid var(--border);
+  background: color-mix(in oklab, var(--muted) 45%, var(--background));
+  flex: 0 0 auto;
+  flex-wrap: wrap;
+}
+
+.admin-studio-toolbar-left,
+.admin-studio-toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex-wrap: wrap;
+}
+
+.admin-studio-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #0284c7;
+  background: rgba(2, 132, 199, 0.1);
+  border: 1px solid rgba(2, 132, 199, 0.22);
+}
+
+.dark .admin-studio-pill {
+  color: #38bdf8;
+  background: rgba(56, 189, 248, 0.12);
+  border-color: rgba(56, 189, 248, 0.24);
+}
+
+.admin-template-strip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.admin-inline-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11.5px;
+  color: var(--muted-foreground);
+  cursor: pointer;
+  margin-right: 4px;
+}
+
+.admin-segmented-tabs {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 2px;
+  border-radius: 8px;
+  background: color-mix(in oklab, var(--foreground) 6%, transparent);
+  border: 1px solid var(--border);
+}
+
+.admin-segmented-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 26px;
+  padding: 0 9px;
+  border-radius: 6px;
+  font-size: 11.5px;
+  font-weight: 500;
+  color: var(--muted-foreground);
+  background: transparent;
+  cursor: pointer;
+  white-space: nowrap;
+  transition:
+    background-color 120ms ease,
+    color 120ms ease;
+}
+
+.admin-segmented-tab:hover {
+  color: var(--foreground);
+}
+
+.admin-segmented-tab.is-active {
+  background: var(--background);
+  color: var(--foreground);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+}
+
+.dark .admin-segmented-tab.is-active {
+  background: rgba(255, 255, 255, 0.11);
+}
+
+.admin-chip-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.admin-chip-btn {
+  display: inline-flex;
+  align-items: center;
+  height: 24px;
+  padding: 0 9px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--muted-foreground);
+  background: color-mix(in oklab, var(--foreground) 5%, transparent);
+  border: 1px solid var(--border);
+  cursor: pointer;
+  transition: all 120ms ease;
+}
+
+.admin-chip-btn:hover:not(.is-static) {
+  color: var(--foreground);
+  background: var(--accent);
+}
+
+.admin-chip-btn.is-active {
+  color: var(--primary-foreground);
+  background: var(--primary);
+  border-color: var(--primary);
+}
+
+.admin-chip-btn.is-static {
+  cursor: default;
+}
+
+.admin-form-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.admin-field-block {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+}
+
+.admin-field-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.admin-field-label {
+  font-size: 11.5px;
+  font-weight: 500;
+  color: var(--muted-foreground);
+}
+
+.admin-field-counter {
+  font-size: 10.5px;
+  color: var(--muted-foreground);
+}
+
+.admin-field-grid-2 {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 9px;
+}
+
+.admin-field-grid-3 {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 9px;
+}
+
+.admin-field-grid-4 {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 9px;
+}
+
+.admin-switch-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: color-mix(in oklab, var(--muted) 40%, transparent);
+}
+
+.admin-switch-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+/* --- 05 · Bloom Spotlight OG Image Studio --- */
+
+.og-studio-body {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.og-studio-inspector {
+  width: 356px;
+  flex: 0 0 356px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px;
+  border-right: 1px solid var(--border);
+  background: color-mix(in oklab, var(--muted) 25%, var(--background));
+  min-height: 0;
+}
+
+.og-studio-inspector-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding-right: 3px;
+}
+
+.og-backdrop-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 7px;
+}
+
+.og-backdrop-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 5px;
+  padding: 5px;
+  border-radius: 9px;
+  border: 1px solid var(--border);
+  background: var(--background);
+  cursor: pointer;
+  text-align: left;
+  transition:
+    border-color 130ms ease,
+    transform 130ms ease;
+}
+
+.og-backdrop-tile:hover {
+  border-color: var(--ring);
+}
+
+.og-backdrop-tile.is-active {
+  border-color: #0284c7;
+  box-shadow: 0 0 0 2px rgba(2, 132, 199, 0.24);
+}
+
+.og-backdrop-swatch {
+  display: block;
+  width: 100%;
+  height: 32px;
+  border-radius: 6px;
+}
+
+.og-backdrop-name {
+  font-size: 10.5px;
+  font-weight: 500;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.og-accent-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.og-accent-dot {
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition:
+    transform 120ms ease,
+    box-shadow 120ms ease;
+}
+
+.og-accent-dot:hover {
+  transform: scale(1.08);
+}
+
+.og-accent-dot.is-active {
+  border-color: var(--background);
+  box-shadow: 0 0 0 2px var(--foreground);
+}
+
+.og-preset-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 7px;
+}
+
+.og-preset-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding: 8px 10px;
+  border-radius: 9px;
+  border: 1px solid var(--border);
+  background: var(--background);
+  text-align: left;
+  cursor: pointer;
+}
+
+.og-preset-card strong {
+  font-size: 11.5px;
+  font-weight: 600;
+}
+
+.og-preset-card small {
+  font-size: 10.5px;
+  color: var(--muted-foreground);
+  line-height: 1.3;
+}
+
+.og-preset-card.is-active {
+  border-color: #0284c7;
+  background: rgba(2, 132, 199, 0.06);
+}
+
+.og-upload-dropzone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 20px 14px;
+  border-radius: 11px;
+  border: 1.5px dashed var(--border);
+  background: color-mix(in oklab, var(--muted) 35%, transparent);
+  color: var(--foreground);
+  cursor: pointer;
+  text-align: center;
+}
+
+.og-upload-dropzone:hover {
+  border-color: var(--ring);
+  background: var(--accent);
+}
+
+.og-upload-dropzone span {
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.og-upload-dropzone small {
+  font-size: 10.5px;
+  color: var(--muted-foreground);
+}
+
+.og-media-attached {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--background);
+}
+
+.og-media-thumb {
+  width: 44px;
+  height: 44px;
+  border-radius: 7px;
+  object-fit: cover;
+  border: 1px solid var(--border);
+}
+
+.og-studio-stage {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  background: color-mix(in oklab, var(--muted) 48%, var(--background));
+}
+
+.og-studio-stage-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.og-stage-telemetry {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--muted-foreground);
+}
+
+.og-stage-rendering {
+  color: #0284c7;
+  font-weight: 500;
+}
+
+.og-studio-viewport {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.og-bloom-halo {
+  position: absolute;
+  width: min(560px, 78%);
+  height: min(320px, 68%);
+  border-radius: 999px;
+  opacity: 0.26;
+  filter: blur(56px);
+  pointer-events: none;
+}
+
+.og-canvas-frame {
+  position: relative;
+  width: 100%;
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  background: #0b1120;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.28);
+}
+
+.og-canvas-img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  transition: opacity 150ms ease;
+}
+
+.og-canvas-img.is-updating {
+  opacity: 0.72;
+}
+
+.og-canvas-placeholder {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  min-height: 260px;
+  font-size: 12.5px;
+  color: rgba(255, 255, 255, 0.68);
+}
+
+.og-social-card-preview {
+  position: relative;
+  width: min(540px, 100%);
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  background: var(--card);
+  box-shadow: 0 18px 46px rgba(0, 0, 0, 0.18);
+}
+
+.og-social-card-media {
+  aspect-ratio: 1200 / 630;
+  background: #0b1120;
+  overflow: hidden;
+}
+
+.og-social-card-media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.og-social-card-meta {
+  padding: 12px 15px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.og-social-domain {
+  font-size: 11px;
+  text-transform: lowercase;
+  color: var(--muted-foreground);
+}
+
+.og-social-title {
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.og-social-desc {
+  margin: 0;
+  font-size: 12px;
+  color: var(--muted-foreground);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* --- 01 · Split Ledger Invoice Studio --- */
+
+.invoice-sync-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 24px;
+  padding: 0 9px;
+  border-radius: 999px;
+  font-size: 11px;
+  color: var(--muted-foreground);
+  border: 1px solid var(--border);
+  background: var(--background);
+}
+
+.invoice-sync-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: #f59e0b;
+}
+
+.invoice-sync-pill.is-cloud .invoice-sync-dot {
+  background: #10b981;
+}
+
+.invoice-pane-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.invoice-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.invoice-kpi-card {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 13px 15px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: color-mix(in oklab, var(--card) 92%, var(--muted));
+}
+
+.invoice-kpi-label {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--muted-foreground);
+}
+
+.invoice-kpi-value {
+  font-size: 19px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--foreground);
+}
+
+.invoice-kpi-value.is-emerald {
+  color: #059669;
+}
+
+.dark .invoice-kpi-value.is-emerald {
+  color: #34d399;
+}
+
+.invoice-kpi-value.is-danger {
+  color: #dc2626;
+}
+
+.dark .invoice-kpi-value.is-danger {
+  color: #f87171;
+}
+
+.invoice-kpi-sub {
+  font-size: 11px;
+  color: var(--muted-foreground);
+}
+
+.invoice-section-card {
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--card);
+  overflow: hidden;
+}
+
+.invoice-section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 13px 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.invoice-section-head h3 {
+  margin: 0;
+  font-size: 13.5px;
+  font-weight: 600;
+}
+
+.invoice-section-head p {
+  margin: 2px 0 0;
+  font-size: 11.5px;
+  color: var(--muted-foreground);
+}
+
+.invoice-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 36px 20px;
+  text-align: center;
+  font-size: 12.5px;
+  color: var(--muted-foreground);
+}
+
+.invoice-table-wrap {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.invoice-ledger-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12.5px;
+}
+
+.invoice-ledger-table th {
+  padding: 9px 14px;
+  text-align: left;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--muted-foreground);
+  background: color-mix(in oklab, var(--muted) 55%, transparent);
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+
+.invoice-ledger-table td {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+}
+
+.invoice-ledger-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.invoice-ledger-table tbody tr:hover {
+  background: color-mix(in oklab, var(--accent) 45%, transparent);
+}
+
+.invoice-row-actions {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+}
+
+.invoice-status-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  background: color-mix(in oklab, var(--foreground) 8%, transparent);
+  color: var(--foreground);
+}
+
+.invoice-status-pill.is-paid {
+  background: rgba(16, 185, 129, 0.14);
+  color: #047857;
+}
+.dark .invoice-status-pill.is-paid {
+  color: #34d399;
+}
+
+.invoice-status-pill.is-sent {
+  background: rgba(2, 132, 199, 0.14);
+  color: #0369a1;
+}
+.dark .invoice-status-pill.is-sent {
+  color: #38bdf8;
+}
+
+.invoice-status-pill.is-overdue {
+  background: rgba(239, 68, 68, 0.15);
+  color: #b91c1c;
+}
+.dark .invoice-status-pill.is-overdue {
+  color: #f87171;
+}
+
+.invoice-status-pill.is-cancelled {
+  opacity: 0.62;
+}
+
+.invoice-filter-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.invoice-filter-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.invoice-search-box {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 10px;
+  border-radius: 7px;
+  border: 1px solid var(--border);
+  background: var(--background);
+  color: var(--muted-foreground);
+}
+
+.invoice-search-box input {
+  border: 0;
+  background: transparent;
+  font-size: 12px;
+  color: var(--foreground);
+  outline: none !important;
+  width: 170px;
+}
+
+/* Split Composer + Live A4 Stage */
+
+.invoice-split-studio {
+  display: grid;
+  grid-template-columns: minmax(360px, 1fr) minmax(360px, 1fr);
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.invoice-composer-pane {
+  min-height: 0;
+  overflow-y: auto;
+  padding: 14px;
+  border-right: 1px solid var(--border);
+}
+
+.invoice-form-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 13px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--card);
+}
+
+.invoice-form-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.invoice-form-card-head h4 {
+  margin: 0;
+  font-size: 12.5px;
+  font-weight: 600;
+}
+
+.invoice-mini-chip {
+  padding: 1px 6px;
+  border-radius: 5px;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--muted-foreground);
+  background: color-mix(in oklab, var(--foreground) 6%, transparent);
+  cursor: pointer;
+}
+
+.invoice-mini-chip:hover {
+  color: var(--foreground);
+  background: var(--accent);
+}
+
+.invoice-items-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.invoice-item-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  padding: 9px 10px;
+  border-radius: 9px;
+  border: 1px solid var(--border);
+  background: color-mix(in oklab, var(--muted) 35%, transparent);
+}
+
+.invoice-item-top {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.invoice-item-index {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--muted-foreground);
+  min-width: 20px;
+}
+
+.invoice-item-numbers {
+  display: grid;
+  grid-template-columns: 92px 1fr auto;
+  gap: 8px;
+  align-items: end;
+}
+
+.invoice-num-field {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.invoice-num-field > span,
+.invoice-line-total > span {
+  font-size: 10.5px;
+  color: var(--muted-foreground);
+}
+
+.invoice-line-total {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: center;
+  min-width: 96px;
+  padding-bottom: 4px;
+}
+
+.invoice-line-total strong {
+  font-size: 12.5px;
+  font-weight: 600;
+}
+
+.invoice-preview-pane {
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  background: color-mix(in oklab, var(--muted) 52%, var(--background));
+}
+
+.invoice-preview-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 14px;
+  border-bottom: 1px solid var(--border);
+  background: color-mix(in oklab, var(--background) 85%, transparent);
+  flex-wrap: wrap;
+}
+
+.invoice-preview-total {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  font-size: 12px;
+}
+
+.invoice-preview-total span {
+  color: var(--muted-foreground);
+}
+
+.invoice-preview-total strong {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.invoice-preview-stage {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 18px;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+}
+
+/* Live A4 Paper Sheet (always crisp light editorial paper like printed PDF) */
+
+.invoice-paper-sheet {
+  width: 100%;
+  max-width: 560px;
+  min-height: 700px;
+  background: #ffffff;
+  color: #1e293b;
+  border-radius: 10px;
+  padding: 26px 28px 22px;
+  box-shadow:
+    0 20px 48px rgba(15, 23, 42, 0.16),
+    0 0 0 1px rgba(15, 23, 42, 0.08);
+  display: flex;
+  flex-direction: column;
+  font-size: 11px;
+}
+
+.invoice-paper-accent {
+  width: 58px;
+  height: 3px;
+  border-radius: 99px;
+  background: #0067c0;
+  margin-bottom: 14px;
+}
+
+.invoice-paper-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid #e2e8f0;
+  margin-bottom: 14px;
+}
+
+.invoice-paper-logo-row {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.invoice-paper-logo {
+  width: 30px;
+  height: 30px;
+  border-radius: 6px;
+  object-fit: contain;
+}
+
+.invoice-paper-bname {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.invoice-paper-tagline {
+  margin: 1px 0 0;
+  font-size: 10px;
+  font-weight: 500;
+  color: #0067c0;
+}
+
+.invoice-paper-bmeta {
+  margin-top: 6px;
+  font-size: 10px;
+  line-height: 1.45;
+  color: #64748b;
+}
+
+.invoice-paper-bmeta p {
+  margin: 0;
+}
+
+.invoice-paper-docmeta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  text-align: right;
+}
+
+.invoice-paper-wordmark {
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: #0f172a;
+}
+
+.invoice-paper-num {
+  font-size: 11.5px;
+  color: #0f172a;
+  margin-bottom: 4px;
+}
+
+.invoice-paper-dates {
+  font-size: 10px;
+  color: #64748b;
+  margin-bottom: 6px;
+}
+
+.invoice-paper-dates strong {
+  color: #0f172a;
+}
+
+.invoice-paper-parties {
+  display: grid;
+  grid-template-columns: 1.35fr 1fr;
+  gap: 12px;
+  margin-bottom: 15px;
+}
+
+.invoice-paper-billto {
+  padding: 10px 12px;
+  border-radius: 7px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.invoice-paper-billto strong {
+  font-size: 12px;
+  color: #0f172a;
+}
+
+.invoice-paper-company {
+  font-size: 10.5px;
+  font-weight: 500;
+  color: #334155;
+}
+
+.invoice-paper-billto p {
+  margin: 2px 0 0;
+  font-size: 10px;
+  color: #64748b;
+  line-height: 1.4;
+}
+
+.invoice-paper-duecard {
+  padding: 10px 12px;
+  border-radius: 7px;
+  background: #f0f7ff;
+  border: 1px solid #bae6fd;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.invoice-paper-duecard strong {
+  font-size: 15px;
+  font-weight: 700;
+  color: #0f172a;
+  margin-top: 2px;
+}
+
+.invoice-paper-duecard small {
+  font-size: 9.5px;
+  color: #64748b;
+  margin-top: 2px;
+}
+
+.invoice-paper-kicker {
+  display: block;
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #64748b;
+}
+
+.invoice-paper-table {
+  width: 100%;
+  border-collapse: collapse;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  overflow: hidden;
+  margin-bottom: 14px;
+}
+
+.invoice-paper-table thead th {
+  background: #0f172a;
+  color: #ffffff;
+  font-size: 9.5px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 6px 8px;
+}
+
+.invoice-paper-table tbody td {
+  padding: 7px 8px;
+  font-size: 10.5px;
+  border-top: 1px solid #e2e8f0;
+  color: #334155;
+}
+
+.invoice-paper-table tbody tr:nth-child(even) td {
+  background: #f8fafc;
+}
+
+.invoice-paper-totals-wrap {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 16px;
+}
+
+.invoice-paper-totals {
+  width: 210px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.invoice-paper-totals > div {
+  display: flex;
+  justify-content: space-between;
+  font-size: 10.5px;
+  color: #475569;
+}
+
+.invoice-paper-totals > div strong {
+  color: #0f172a;
+}
+
+.invoice-paper-totals > div.is-grand {
+  margin-top: 4px;
+  padding-top: 6px;
+  border-top: 1.5px solid #0f172a;
+  font-size: 12px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.invoice-paper-totals > div.is-grand strong {
+  color: #0067c0;
+}
+
+.invoice-paper-notes {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  padding-top: 12px;
+  border-top: 1px solid #e2e8f0;
+  margin-top: auto;
+}
+
+.invoice-paper-notes p {
+  margin: 3px 0 0;
+  font-size: 9.5px;
+  line-height: 1.45;
+  color: #64748b;
+}
+
+.invoice-paper-footline {
+  margin-top: 14px;
+  padding-top: 8px;
+  border-top: 1px solid #f1f5f9;
+  display: flex;
+  justify-content: space-between;
+  font-size: 9px;
+  color: #94a3b8;
+}
+
+/* Clients & Settings Panes */
+
+.invoice-clients-layout {
+  display: grid;
+  grid-template-columns: 330px minmax(0, 1fr);
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.invoice-client-editor {
+  padding: 14px;
+  border-right: 1px solid var(--border);
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.invoice-clients-list-pane {
+  padding: 14px;
+  overflow-y: auto;
+}
+
+.invoice-client-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 10px;
+}
+
+.invoice-client-card {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 11px;
+  border: 1px solid var(--border);
+  background: var(--card);
+}
+
+.invoice-settings-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  max-width: 820px;
+}
+
+.invoice-mobile-composer-bar {
+  display: none;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px 12px;
+  border-bottom: 1px solid var(--border);
+  background: color-mix(in oklab, var(--muted) 38%, var(--background));
+  flex: 0 0 auto;
+  flex-wrap: wrap;
+}
+
+/* Narrow window container & mobile viewport layout (prevents Grid min-height: 0
+   track collapse so Composer fields and A4 preview never overlap). */
+@container window-body (max-width: 860px) {
+  .invoice-mobile-composer-bar {
+    display: flex;
+  }
+
+  .invoice-split-studio {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 0%;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  .invoice-split-studio.is-mobile-editor .invoice-composer-pane {
+    display: block;
+    flex: 1 1 0%;
+    min-height: 0;
+    overflow-y: auto;
+    border-right: 0;
+  }
+
+  .invoice-split-studio.is-mobile-editor .invoice-preview-pane {
+    display: none;
+  }
+
+  .invoice-split-studio.is-mobile-preview .invoice-composer-pane {
+    display: none;
+  }
+
+  .invoice-split-studio.is-mobile-preview .invoice-preview-pane {
+    display: flex;
+    flex: 1 1 0%;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  .invoice-clients-layout {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 0%;
+    min-height: 0;
+    overflow-y: auto;
+  }
+
+  .invoice-client-editor,
+  .invoice-clients-list-pane {
+    flex: 0 0 auto;
+    height: auto;
+    min-height: max-content;
+    overflow: visible;
+    border-right: 0;
+  }
+
+  .invoice-client-editor {
+    border-bottom: 1px solid var(--border);
+  }
+}
+
+@media (max-width: 920px) {
+  .admin-studio-toolbar {
+    padding: 6px 10px;
+    gap: 6px;
+  }
+
+  .admin-studio-toolbar-left {
+    max-width: 100%;
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    scrollbar-width: none;
+  }
+
+  .admin-studio-toolbar-left::-webkit-scrollbar {
+    display: none;
+  }
+
+  .og-studio-body {
+    flex-direction: column;
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+
+  .og-studio-inspector {
+    width: 100%;
+    flex: 0 0 auto;
+    height: auto;
+    border-right: 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .og-studio-inspector-scroll {
+    flex: 0 0 auto;
+    overflow: visible;
+  }
+
+  .og-studio-stage {
+    flex: 0 0 auto;
+    min-height: 360px;
+  }
+
+  .invoice-mobile-composer-bar {
+    display: flex;
+  }
+
+  .invoice-split-studio {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 0%;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  .invoice-split-studio.is-mobile-editor .invoice-composer-pane {
+    display: block;
+    flex: 1 1 0%;
+    min-height: 0;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    border-right: 0;
+    padding: 12px;
+  }
+
+  .invoice-split-studio.is-mobile-editor .invoice-preview-pane {
+    display: none;
+  }
+
+  .invoice-split-studio.is-mobile-preview .invoice-composer-pane {
+    display: none;
+  }
+
+  .invoice-split-studio.is-mobile-preview .invoice-preview-pane {
+    display: flex;
+    flex: 1 1 0%;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  .invoice-preview-stage {
+    padding: 12px;
+  }
+
+  .invoice-clients-layout {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 0%;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+
+  .invoice-client-editor,
+  .invoice-clients-list-pane {
+    flex: 0 0 auto;
+    height: auto;
+    min-height: max-content;
+    overflow: visible;
+    border-right: 0;
+  }
+
+  .invoice-client-editor {
+    border-bottom: 1px solid var(--border);
+  }
+
+  .invoice-kpi-grid,
+  .admin-field-grid-4 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 600px) {
+  .admin-field-grid-2,
+  .admin-field-grid-3,
+  .admin-field-grid-4 {
+    grid-template-columns: 1fr;
+  }
+
+  .invoice-kpi-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .invoice-form-card-head {
+    flex-wrap: wrap;
+  }
+
+  .invoice-item-numbers {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .invoice-line-total {
+    grid-column: 1 / -1;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    padding-top: 4px;
+    border-top: 1px dashed var(--border);
+  }
+
+  .invoice-paper-sheet {
+    min-height: auto;
+    padding: 16px 14px;
+    overflow-x: auto;
+  }
+
+  .invoice-paper-head {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .invoice-paper-docmeta {
+    align-items: flex-start;
+    text-align: left;
+  }
+
+  .invoice-paper-parties,
+  .invoice-paper-notes {
+    grid-template-columns: 1fr;
   }
 }

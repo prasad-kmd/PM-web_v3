@@ -26,6 +26,11 @@ const nextConfig = {
       "./public/images/profile-placeholder.jpg",
       "./public/favicon-pm.svg",
     ],
+    "/api/og-custom": [
+      "./public/og/**",
+      "./public/images/profile-placeholder.jpg",
+      "./public/favicon-pm.svg",
+    ],
   },
   compiler: {
     // Strip debug logging from production bundles (keeps warnings/errors).

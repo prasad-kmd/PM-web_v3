@@ -8,7 +8,9 @@ export type AppId =
   | "glossary"
   | "news"
   | "bookmarks"
-  | "contact";
+  | "contact"
+  | "og-studio"
+  | "invoices";
 
 export type AppMeta = {
   id: AppId;
@@ -17,6 +19,7 @@ export type AppMeta = {
   description: string;
   icon: string;
   route: `/${AppId}`;
+  adminOnly?: boolean;
 };
 export const APP_REGISTRY: Record<AppId, AppMeta> = {
   resume: {
@@ -99,6 +102,24 @@ export const APP_REGISTRY: Record<AppId, AppMeta> = {
     icon: "/icons/fluent-color/program.svg",
     route: "/settings",
   },
+  "og-studio": {
+    id: "og-studio",
+    title: "OG Image Studio",
+    kind: "Brand graphics",
+    description: "Compose and export social share artwork",
+    icon: "/icons/fluent-color/program.svg",
+    route: "/og-studio",
+    adminOnly: true,
+  },
+  invoices: {
+    id: "invoices",
+    title: "Invoice Studio",
+    kind: "Workspace ledger",
+    description: "Compose invoices, manage clients, and export PDFs",
+    icon: "/icons/fluent-color/document.svg",
+    route: "/invoices",
+    adminOnly: true,
+  },
 };
 export const DESKTOP_APPS: AppId[] = [
   "resume",
@@ -132,6 +153,9 @@ const ROUTED_APPS: AppId[] = [
 ];
 export function usesRouteContent(appId: AppId | null): appId is AppId {
   return appId !== null && ROUTED_APPS.includes(appId);
+}
+export function isAdminOnlyApp(appId: AppId | null): boolean {
+  return appId !== null && Boolean(APP_REGISTRY[appId]?.adminOnly);
 }
 export function getAppIdFromPathname(
   pathname: string | null | undefined,

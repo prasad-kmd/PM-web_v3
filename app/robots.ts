@@ -6,7 +6,13 @@ export default function robots(): MetadataRoute.Robots {
       {
         userAgent: "*",
         allow: ["/", "/api/og", "/api/notion-image"],
-        disallow: ["/api/", "/bookmarks", "/settings"],
+        disallow: [
+          "/api/",
+          "/bookmarks",
+          "/settings",
+          "/og-studio",
+          "/invoices",
+        ],
       },
     ],
     sitemap: `${getSiteUrl()}/sitemap.xml`,

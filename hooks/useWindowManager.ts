@@ -144,7 +144,30 @@ export function useWindowManager(area: Area, isMobile: boolean) {
     ): WindowState => {
       ensureLayoutsLoaded();
       const stored = layoutsRef.current[appId];
-      const freshRect = centeredDefault(targetArea);
+      const baseDefault = centeredDefault(targetArea);
+      const studioSize =
+        appId === "invoices"
+          ? {
+              w: Math.min(1140, Math.max(760, targetArea.w - 48)),
+              h: Math.min(750, Math.max(540, targetArea.h - 36)),
+            }
+          : appId === "og-studio"
+            ? {
+                w: Math.min(1090, Math.max(740, targetArea.w - 56)),
+                h: Math.min(720, Math.max(520, targetArea.h - 40)),
+              }
+            : null;
+      const freshRect = studioSize
+        ? clampRect(
+            {
+              x: Math.round((targetArea.w - studioSize.w) / 2),
+              y: Math.round((targetArea.h - studioSize.h) / 2),
+              w: studioSize.w,
+              h: studioSize.h,
+            },
+            targetArea,
+          )
+        : baseDefault;
       const restRect = stored
         ? clampRect(stored.restRect, targetArea)
         : freshRect;
