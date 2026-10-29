@@ -13,6 +13,7 @@ import {
   Mail01Icon,
   Image02Icon,
   Invoice02Icon,
+  ChartLineData02Icon,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -38,6 +39,7 @@ function ShortcutGlyph({ appId }: { appId: AppId }) {
           contact: Mail01Icon,
           "og-studio": Image02Icon,
           invoices: Invoice02Icon,
+          insights: ChartLineData02Icon,
         }[appId]
       }
       strokeWidth={2}

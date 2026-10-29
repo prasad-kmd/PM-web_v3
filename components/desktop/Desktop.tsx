@@ -17,6 +17,7 @@ import {
   useAdminAuth,
 } from "@/components/admin/AdminAuthProvider";
 import { WorkstationLockCurtain } from "@/components/admin/WorkstationLockCurtain";
+import { CommandPalette } from "@/components/command/CommandPalette";
 import { ContextMenu, ContextMenuTrigger } from "@/components/ui/context-menu";
 import { WindowsLayer } from "@/components/window/WindowsLayer";
 import { useWindowManager, type WindowState } from "@/hooks/useWindowManager";
@@ -132,6 +133,9 @@ function AdminWorkspaceBridge({
       } else if (authenticated && key === "i") {
         event.preventDefault();
         onOpenApp("invoices");
+      } else if (authenticated && key === "a") {
+        event.preventDefault();
+        onOpenApp("insights");
       }
     };
     window.addEventListener("keydown", onKeyDown);
@@ -143,6 +147,7 @@ function AdminWorkspaceBridge({
 
 export function Desktop({ children }: { children?: ReactNode }) {
   const [hydrated, setHydrated] = useState(false);
+  const [paletteOpen, setPaletteOpen] = useState(false);
   const [area, setArea] = useState<Area>({ w: 1280, h: 720, left: 0, top: 40 });
   const [contextTarget, setContextTarget] = useState<{
     link: string | null;
@@ -227,7 +232,24 @@ export function Desktop({ children }: { children?: ReactNode }) {
   const closeAdminWindows = useCallback(() => {
     closeApp("og-studio");
     closeApp("invoices");
+    closeApp("insights");
   }, [closeApp]);
+
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (!(event.metaKey || event.ctrlKey) || event.altKey) return;
+      const key = event.key.toLowerCase();
+      if (!event.shiftKey && key === "k") {
+        event.preventDefault();
+        setPaletteOpen((current) => !current);
+      } else if (!event.shiftKey && key === ",") {
+        event.preventDefault();
+        openApp("settings");
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [openApp]);
 
   const captureContextTarget = useCallback((event: React.MouseEvent) => {
     const target = event.target as HTMLElement;
@@ -397,7 +419,11 @@ export function Desktop({ children }: { children?: ReactNode }) {
         </div>
         <div className="desktop-background-scrim" aria-hidden />
 
-        <MenuBar onOpenApp={openApp} onCloseAll={manager.closeAll} />
+        <MenuBar
+          onOpenApp={openApp}
+          onCloseAll={manager.closeAll}
+          onOpenCommandPalette={() => setPaletteOpen(true)}
+        />
 
         <ContextMenu>
           <ContextMenuTrigger
@@ -455,6 +481,7 @@ export function Desktop({ children }: { children?: ReactNode }) {
           <DesktopContextMenuContent
             onOpenSettings={() => openApp("settings")}
             onOpenResume={() => openApp("resume")}
+            onOpenCommandPalette={() => setPaletteOpen(true)}
             targetLink={contextTarget.link}
             targetImage={contextTarget.image}
           />
@@ -462,6 +489,12 @@ export function Desktop({ children }: { children?: ReactNode }) {
       </div>
       {/* Outside `.desktop-root` so portalled windows and the workstation lock
           curtain share the root stacking context cleanly beneath the 40px bar. */}
+      <CommandPalette
+        open={paletteOpen}
+        onOpenChange={setPaletteOpen}
+        onOpenApp={openApp}
+        onCloseAll={manager.closeAll}
+      />
       <WorkstationLockCurtain />
       <Toaster position="bottom-right" closeButton />
     </AdminAuthProvider>

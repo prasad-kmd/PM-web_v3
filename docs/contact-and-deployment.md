@@ -5,7 +5,8 @@
 Set these environment variables in your hosting provider, never in the repository:
 
 - `TELEGRAM_TOKEN`: Telegram bot token.
-- `TELEGRAM_CHAT_ID`: chat that should receive submissions. Start the bot and grant it permission to send to that chat.
+- `TELEGRAM_CHAT_ID`: chat (or Forum Supergroup `-100…` ID) that should receive submissions. Start the bot and grant it permission to send to that chat.
+- `TELEGRAM_TOPIC_CONTACT`, `TELEGRAM_TOPIC_COMMENTS`, `TELEGRAM_TOPIC_AUTH`, `TELEGRAM_TOPIC_SYSTEM` _(optional)_: integer `message_thread_id` values when `TELEGRAM_CHAT_ID` is a Telegram group with **Topics** enabled (see [`docs/engagement-and-insights.md`](./engagement-and-insights.md)).
 - `NEXT_PUBLIC_TURNSTILE_SITE_KEY`: public Cloudflare Turnstile site key for your deployed domain.
 - `TURNSTILE_SECRET_KEY`: matching **server-only** Turnstile secret.
 

@@ -57,10 +57,6 @@ const nextConfig = {
       },
       {
         protocol: "https",
-        hostname: "i.pravatar.cc",
-      },
-      {
-        protocol: "https",
         hostname: "storage.googleapis.com",
       },
       {
@@ -75,16 +71,6 @@ const nextConfig = {
         protocol: "https",
         hostname: "avatars.githubusercontent.com",
       },
-      { protocol: "https", hostname: "covers.openlibrary.org" },
-      { protocol: "https", hostname: "cdn.cloudflare.steamstatic.com" },
-      // Optional safety: older CheapShark thumbs sometimes used this
-      { protocol: "https", hostname: "cdn.akamai.steamstatic.com" },
-      { protocol: "https", hostname: "www.cheapshark.com" },
-      // CheapShark thumbs can come from store CDNs; example shown in CheapShark docs:
-      { protocol: "https", hostname: "cdn.fanatical.com" },
-      // (Optional) seen in CheapShark usage examples in the wild:
-      { protocol: "https", hostname: "shared.fastly.steamstatic.com" },
-      { protocol: "https", hostname: "image.tmdb.org" },
       { protocol: "https", hostname: "images.unsplash.com" },
     ],
     formats: ["image/webp", "image/avif"],
@@ -107,17 +93,22 @@ const nextConfig = {
   },
   // Add security headers including CSP
   async headers() {
+    const isDev = process.env.NODE_ENV !== "production";
+    const evalDirective = isDev ? "'unsafe-eval' " : "";
+    const devConnect = isDev
+      ? " http://localhost:3000 https://localhost:3000 ws://localhost:3000 wss://localhost:3000"
+      : "";
     const cspHeader = `
       default-src 'self';
-      script-src 'self' 'unsafe-eval' 'wasm-unsafe-eval' 'unsafe-inline' blob: https://gist.github.com https://challenges.cloudflare.com https://turnstile.cloudflare.com;
+      script-src 'self' ${evalDirective}'wasm-unsafe-eval' 'unsafe-inline' blob: https://gist.github.com https://challenges.cloudflare.com https://turnstile.cloudflare.com;
       style-src 'self' 'unsafe-inline' https://challenges.cloudflare.com;
-      img-src 'self' blob: data: https://github.com https://*.notion.so https://*.amazonaws.com https://i.pravatar.cc https://placehold.co https://images.unsplash.com https://*.unsplash.com https://lh3.googleusercontent.com https://avatars.githubusercontent.com https://avatar.vercel.sh https://*.githubusercontent.com https://*.googleusercontent.com https://challenges.cloudflare.com https://image.tmdb.org https://ghchart.rshah.org/409ba5/prasad-kmd https://pbs.twimg.com https://abs.twimg.com https://unavatar.io https://media.licdn.com;
+      img-src 'self' blob: data: https://github.com https://*.notion.so https://*.amazonaws.com https://placehold.co https://images.unsplash.com https://*.unsplash.com https://lh3.googleusercontent.com https://avatars.githubusercontent.com https://avatar.vercel.sh https://*.githubusercontent.com https://*.googleusercontent.com https://challenges.cloudflare.com https://ghchart.rshah.org/409ba5/prasad-kmd https://pbs.twimg.com https://abs.twimg.com https://unavatar.io https://media.licdn.com;
       font-src 'self' data:;
       media-src 'self' blob: data: https://*.notion.so https://*.amazonaws.com;
-      connect-src 'self' blob: data: https://api.notion.com https://api.telegram.org https://lh3.googleusercontent.com https://avatars.githubusercontent.com https://*.googleusercontent.com https://*.githubusercontent.com https://*.amazonaws.com https://i.pravatar.cc https://placehold.co https://images.unsplash.com https://*.unsplash.com https://challenges.cloudflare.com https://turnstile.cloudflare.com http://localhost:3000 https://localhost:3000 ws://localhost:3000 wss://localhost:3000 https://cheapshark.com https://openlibrary.org https://api.codetabs.com https://export.arxiv.org;
+      connect-src 'self' blob: data: https://lh3.googleusercontent.com https://avatars.githubusercontent.com https://*.googleusercontent.com https://*.githubusercontent.com https://*.amazonaws.com https://placehold.co https://images.unsplash.com https://*.unsplash.com https://challenges.cloudflare.com https://turnstile.cloudflare.com${devConnect};
       frame-src 'self' https://www.youtube.com https://challenges.cloudflare.com https://turnstile.cloudflare.com;
       worker-src 'self' blob: https://challenges.cloudflare.com;
-      ${process.env.NODE_ENV === "production" ? "upgrade-insecure-requests;" : ""}
+      ${!isDev ? "upgrade-insecure-requests;" : ""}
     `
       .replace(/\s{2,}/g, " ")
       .trim();

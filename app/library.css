@@ -776,6 +776,9 @@
   align-items: center;
   gap: 6px;
 }
+.rdr-reads {
+  font-variant-numeric: tabular-nums;
+}
 .rdr-byline {
   color: var(--foreground);
   font-weight: 500;
@@ -1071,6 +1074,36 @@
   background: var(--accent);
   color: var(--foreground);
   font-weight: 500;
+}
+
+.rdr-cite-popover {
+  width: 284px;
+  gap: 10px;
+}
+.rdr-cite-preview {
+  max-height: 112px;
+  margin: 0;
+  overflow: auto;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: color-mix(in oklab, var(--muted) 65%, var(--card));
+  color: var(--foreground);
+  font-family: var(
+    --font-mono,
+    SFMono-Regular,
+    Consolas,
+    Liberation Mono,
+    monospace
+  );
+  font-size: 11.5px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.rdr-cite-preview:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: -1px;
 }
 
 @container window-body (max-width: 900px) {
@@ -2280,6 +2313,10 @@
 
 .dsn-trigger-open:hover {
   opacity: 0.88;
+}
+
+.dsn-comment[data-hidden="true"] {
+  opacity: 0.54;
 }
 
 /* Narrow readers: the sheet becomes a bottom drawer, the trigger stacks. */

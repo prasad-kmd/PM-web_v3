@@ -7,6 +7,7 @@ import {
   Image01Icon,
   InformationCircleIcon,
   Refresh01Icon,
+  Search01Icon,
   Settings02Icon,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon, type IconSvgElement } from "@hugeicons/react";
@@ -68,11 +69,13 @@ async function sharePage() {
 export function DesktopContextMenuContent({
   onOpenSettings,
   onOpenResume,
+  onOpenCommandPalette,
   targetLink,
   targetImage,
 }: {
   onOpenSettings: () => void;
   onOpenResume: () => void;
+  onOpenCommandPalette?: () => void;
   targetLink: string | null;
   targetImage: string | null;
 }) {
@@ -140,6 +143,13 @@ export function DesktopContextMenuContent({
       <ContextMenuSeparator />
       <ContextMenuGroup>
         <ContextMenuLabel>Workspace</ContextMenuLabel>
+        {onOpenCommandPalette ? (
+          <ContextMenuItem onClick={onOpenCommandPalette}>
+            <MenuIcon icon={Search01Icon} />
+            Find in workspace…
+            <ContextMenuShortcut>⌘K</ContextMenuShortcut>
+          </ContextMenuItem>
+        ) : null}
         <ContextMenuItem onClick={nextWallpaper}>
           <MenuIcon icon={Image01Icon} />
           Next wallpaper

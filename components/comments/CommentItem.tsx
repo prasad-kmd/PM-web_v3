@@ -9,10 +9,15 @@ import {
   Linkedin01Icon,
   Link01Icon,
   NewTwitterIcon,
+  ViewIcon,
+  ViewOffSlashIcon,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
+import { toast } from "sonner";
+import { useAdminAuth } from "@/components/admin/AdminAuthProvider";
 import type { CommentView } from "@/lib/comments/types";
 import { CommentAvatar } from "./CommentAvatar";
+import { useDiscussion } from "./DiscussionContext";
 
 const formatter = new Intl.DateTimeFormat("en", {
   day: "numeric",
@@ -72,6 +77,9 @@ function badge(comment: CommentView): Badge | null {
 
 export function CommentItem({ comment }: { comment: CommentView }) {
   const [copied, setCopied] = useState(false);
+  const [moderating, setModerating] = useState(false);
+  const { authenticated } = useAdminAuth();
+  const { moderationEnabled, toggleCommentHidden } = useDiscussion();
   const tag = badge(comment);
   const isOwner = comment.role === "owner";
   const avatarSrc =
@@ -98,10 +106,26 @@ export function CommentItem({ comment }: { comment: CommentView }) {
     }
   }
 
+  async function handleToggleHidden() {
+    if (moderating) return;
+    const nextHidden = !comment.hidden;
+    setModerating(true);
+    const ok = await toggleCommentHidden(comment.id, nextHidden);
+    setModerating(false);
+    if (ok) {
+      toast.success(
+        nextHidden ? "Comment hidden from public view." : "Comment restored.",
+      );
+    } else {
+      toast.error("Could not update comment visibility.");
+    }
+  }
+
   return (
     <article
       className="dsn-comment"
       data-role={comment.role ?? undefined}
+      data-hidden={comment.hidden ? "true" : undefined}
       id={`comment-${comment.id}`}
     >
       <CommentAvatar name={comment.name} src={avatarSrc} />
@@ -152,6 +176,11 @@ export function CommentItem({ comment }: { comment: CommentView }) {
               </span>
             )
           ) : null}
+          {comment.hidden ? (
+            <span className="dsn-tag" data-tone="muted">
+              Hidden
+            </span>
+          ) : null}
           <time
             dateTime={comment.createdAt}
             title={formatter.format(Date.parse(comment.createdAt) || 0)}
@@ -179,6 +208,21 @@ export function CommentItem({ comment }: { comment: CommentView }) {
             />
             Permalink
           </a>
+          {authenticated && moderationEnabled ? (
+            <button
+              type="button"
+              onClick={() => void handleToggleHidden()}
+              disabled={moderating}
+            >
+              <HugeiconsIcon
+                icon={comment.hidden ? ViewIcon : ViewOffSlashIcon}
+                strokeWidth={2}
+                size={12}
+                aria-hidden
+              />
+              {comment.hidden ? "Restore" : "Hide"}
+            </button>
+          ) : null}
         </div>
       </div>
     </article>

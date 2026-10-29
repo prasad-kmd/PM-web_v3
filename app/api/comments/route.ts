@@ -13,7 +13,12 @@ import {
   commentDailyLimit,
   commentReadLimit,
 } from "@/lib/comments/rate-limit";
+import {
+  getHiddenCommentIds,
+  isCommentModerationWritable,
+} from "@/lib/comments/moderation";
 import { clientIp, sameOrigin } from "@/lib/comments/request-context";
+import { notifyCommentPosted } from "@/lib/comments/telegram-notify";
 import type { CommentPage, CommentView } from "@/lib/comments/types";
 import {
   commentPayloadSchema,
@@ -88,27 +93,41 @@ export async function GET(request: NextRequest) {
 
   try {
     const notion = createNotionClient("no-store");
-    const response = await notion.comments.list({
-      block_id: pageId,
-      page_size: COMMENTS_PAGE_SIZE,
-      ...(cursor ? { start_cursor: cursor } : {}),
-    });
+    const [response, hiddenIds, adminSession] = await Promise.all([
+      notion.comments.list({
+        block_id: pageId,
+        page_size: COMMENTS_PAGE_SIZE,
+        ...(cursor ? { start_cursor: cursor } : {}),
+      }),
+      getHiddenCommentIds(),
+      getAdminSession(request),
+    ]);
+    const isAdmin = adminSession !== null;
 
-    const results: CommentView[] = response.results.map((comment) =>
-      toCommentView(
+    const mapped: CommentView[] = response.results.map((comment) => {
+      const view = toCommentView(
         comment.id,
         comment.created_time,
         (comment.rich_text ?? [])
           .map((item) => ("plain_text" in item ? item.plain_text : ""))
           .join(""),
-      ),
-    );
+      );
+      if (hiddenIds.has(view.id)) {
+        return { ...view, hidden: true };
+      }
+      return view;
+    });
+
+    const results = isAdmin
+      ? mapped
+      : mapped.filter((comment) => !comment.hidden);
 
     const page: CommentPage = {
       results,
       nextCursor: response.next_cursor ?? null,
       hasMore: Boolean(response.has_more),
       configured: true,
+      ...(isAdmin ? { moderationEnabled: isCommentModerationWritable() } : {}),
     };
     return noStore(page);
   } catch (error) {
@@ -235,6 +254,13 @@ export async function POST(request: NextRequest) {
           ? created.created_time
           : new Date().toISOString();
       const view = toCommentView(created.id, createdTime, text);
+
+      notifyCommentPosted({
+        request,
+        pageId: parsedOwner.data.pageId,
+        comment: view,
+        isOwner: true,
+      });
 
       return noStore({ comment: view });
     } catch (error) {
@@ -369,6 +395,14 @@ export async function POST(request: NextRequest) {
         ? created.created_time
         : new Date().toISOString();
     const view = toCommentView(created.id, createdTime, text);
+
+    notifyCommentPosted({
+      request,
+      pageId: payload.pageId,
+      comment: view,
+      guestEmail: identity.email,
+      isOwner: false,
+    });
 
     const response = noStore({ comment: view, identity });
     response.headers.append(

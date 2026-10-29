@@ -37,6 +37,8 @@ type DiscussionValue = {
   loadMore: () => void;
   refresh: () => void;
   addComment: (comment: CommentView) => void;
+  toggleCommentHidden: (commentId: string, hidden: boolean) => Promise<boolean>;
+  moderationEnabled: boolean;
   /** Number of comments known so far, or null before the first fetch. */
   count: number | null;
   configured: boolean | null;
@@ -70,6 +72,7 @@ export function DiscussionProvider({
   const [cursor, setCursor] = useState<string | null>(null);
   const [loadingMore, setLoadingMore] = useState(false);
   const [configured, setConfigured] = useState<boolean | null>(null);
+  const [moderationEnabled, setModerationEnabled] = useState(false);
   const requested = useRef(false);
 
   const load = useCallback(
@@ -91,6 +94,7 @@ export function DiscussionProvider({
           nextCursor?: string | null;
           hasMore?: boolean;
           configured?: boolean;
+          moderationEnabled?: boolean;
           error?: CommentError;
         };
         if (!response.ok) {
@@ -104,6 +108,9 @@ export function DiscussionProvider({
           return;
         }
         setConfigured(data.configured ?? true);
+        if (typeof data.moderationEnabled === "boolean") {
+          setModerationEnabled(data.moderationEnabled);
+        }
         setComments((current) =>
           mode === "first"
             ? (data.results ?? [])
@@ -152,6 +159,70 @@ export function DiscussionProvider({
     setConfigured(true);
   }, []);
 
+  const toggleCommentHidden = useCallback(
+    async (commentId: string, hidden: boolean): Promise<boolean> => {
+      try {
+        const res = await fetch("/api/admin/comments/moderate", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ commentId, pageId, hidden }),
+        });
+        if (!res.ok) return false;
+        setComments((current) =>
+          current.map((item) =>
+            item.id === commentId ? { ...item, hidden } : item,
+          ),
+        );
+        return true;
+      } catch {
+        return false;
+      }
+    },
+    [pageId],
+  );
+
+  // Auto-open the discussion sheet and scroll to the target comment when a
+  // `#comment-<id>` hash or `?comment=<id>` query link is visited directly.
+  useEffect(() => {
+    const resolveLinkedCommentId = (): string | null => {
+      if (window.location.hash.startsWith("#comment-")) {
+        return decodeURIComponent(
+          window.location.hash.slice("#comment-".length),
+        );
+      }
+      const qp = new URLSearchParams(window.location.search).get("comment");
+      return qp ? qp.trim() : null;
+    };
+
+    const syncCommentLink = () => {
+      if (resolveLinkedCommentId()) {
+        openPanel();
+      }
+    };
+    syncCommentLink();
+    window.addEventListener("hashchange", syncCommentLink);
+    return () => window.removeEventListener("hashchange", syncCommentLink);
+  }, [openPanel]);
+
+  useEffect(() => {
+    if (!open || status !== "ready") return;
+    let targetId: string | null = null;
+    if (window.location.hash.startsWith("#comment-")) {
+      targetId = `comment-${decodeURIComponent(window.location.hash.slice("#comment-".length))}`;
+    } else {
+      const qp = new URLSearchParams(window.location.search).get("comment");
+      if (qp?.trim()) targetId = `comment-${qp.trim()}`;
+    }
+    if (!targetId) return;
+    const timer = window.setTimeout(() => {
+      document.getElementById(targetId)?.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+      });
+    }, 120);
+    return () => window.clearTimeout(timer);
+  }, [comments.length, open, status]);
+
   // Escape closes the sheet, like every other overlay on the desktop.
   useEffect(() => {
     if (!open) return;
@@ -177,7 +248,12 @@ export function DiscussionProvider({
       loadMore,
       refresh,
       addComment,
-      count: status === "idle" ? null : comments.length,
+      toggleCommentHidden,
+      moderationEnabled,
+      count:
+        status === "idle"
+          ? null
+          : comments.filter((item) => !item.hidden).length,
       configured,
       ensureLoaded,
     }),
@@ -186,17 +262,19 @@ export function DiscussionProvider({
       closePanel,
       comments,
       configured,
+      ensureLoaded,
       error,
       hasMore,
       loadingMore,
-      load,
       loadMore,
+      moderationEnabled,
       open,
       openPanel,
       pageId,
       refresh,
       status,
       title,
+      toggleCommentHidden,
     ],
   );
 

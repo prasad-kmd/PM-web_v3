@@ -147,3 +147,9 @@ If you prefer a dedicated Clients database instead of single-DB fallback:
 #### Optional `NOTION_INVOICE_SETTINGS_PAGE_ID`
 
 Share an empty Notion page with your invoice integration and set `NOTION_INVOICE_SETTINGS_PAGE_ID`. Saving defaults in the **Settings** tab writes a single JSON code block to that page; otherwise defaults are read from `INVOICE_*` in `.env.local`.
+
+---
+
+## 6. Content Insights Studio (`/insights`) & Telegram Topic Routing
+
+For setting up the **Content Insights** studio (`⌘⇧A`), ad-blocker-resilient Firebase Realtime Database read counters, inline comment moderation, and per-topic Telegram group routing (`TELEGRAM_TOPIC_*`), see [`docs/engagement-and-insights.md`](./engagement-and-insights.md).

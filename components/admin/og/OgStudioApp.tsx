@@ -31,6 +31,12 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import {
+  CONTENT_META,
+  formatContentDate,
+  type ContentType,
+} from "@/lib/content-types";
+import type { SearchEntry, SearchIndexResponse } from "@/lib/search-score";
+import {
   buildOgCustomQuery,
   CANVAS_PRESETS,
   DEFAULT_OG_CUSTOM_CONFIG,
@@ -89,6 +95,15 @@ const DESC_SIZE_SELECT_ITEMS = [
   { value: "md", label: "Standard (22px)" },
   { value: "lg", label: "Lead (26px)" },
 ];
+
+const ENTRY_TYPE_BACKDROP: Record<ContentType, OgBackdropId> = {
+  projects: "bloom-blue",
+  articles: "bloom-coral",
+  blog: "bloom-violet",
+  tutorials: "bloom-teal",
+  glossary: "bloom-emerald",
+  news: "bloom-slate",
+};
 
 const STUDIO_TEMPLATES: Array<{
   id: string;
@@ -217,6 +232,74 @@ export function OgStudioApp() {
     ms: number;
   } | null>(null);
   const [localFileName, setLocalFileName] = useState<string | null>(null);
+  const [publishedEntries, setPublishedEntries] = useState<SearchEntry[]>([]);
+  const [selectedEntryId, setSelectedEntryId] = useState<string>("__none__");
+
+  useEffect(() => {
+    let active = true;
+    fetch("/api/search-index")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data: SearchIndexResponse | null) => {
+        if (active && data && Array.isArray(data.entries)) {
+          setPublishedEntries(data.entries);
+        }
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const entrySelectItems = useMemo(
+    () => [
+      { value: "__none__", label: "Choose a published entry…" },
+      ...publishedEntries.map((entry) => ({
+        value: `${entry.type}:${entry.slug}`,
+        label: `${CONTENT_META[entry.type].label} · ${entry.title}`,
+      })),
+    ],
+    [publishedEntries],
+  );
+
+  const handleApplyEntry = useCallback(
+    (compositeKey: string | null) => {
+      if (!compositeKey || compositeKey === "__none__") {
+        setSelectedEntryId("__none__");
+        return;
+      }
+      setSelectedEntryId(compositeKey);
+      const found = publishedEntries.find(
+        (e) => `${e.type}:${e.slug}` === compositeKey,
+      );
+      if (!found) return;
+
+      const dateText = formatContentDate(found.date);
+      const kickerParts = [
+        dateText,
+        found.readTime ? `${found.readTime} min read` : null,
+      ].filter(Boolean);
+      const combinedTags = Array.from(
+        new Set([...found.categories, ...found.tags]),
+      )
+        .slice(0, 4)
+        .join(", ");
+
+      setConfig((prev) => ({
+        ...prev,
+        title: found.title.slice(0, 180),
+        description: found.description.slice(0, 320),
+        category: (found.categories[0] || CONTENT_META[found.type].label).slice(
+          0,
+          48,
+        ),
+        kicker: kickerParts.join(" · ").slice(0, 60),
+        tags: combinedTags.slice(0, 160),
+        backdrop: ENTRY_TYPE_BACKDROP[found.type],
+      }));
+      toast.success(`Prefilled from “${found.title}”.`);
+    },
+    [publishedEntries],
+  );
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const abortRef = useRef<AbortController | null>(null);
@@ -537,6 +620,30 @@ export function OgStudioApp() {
           <div className="og-studio-inspector-scroll">
             {inspectorTab === "content" && (
               <div className="admin-form-stack">
+                {publishedEntries.length > 0 && (
+                  <div className="admin-field-block">
+                    <span className="admin-field-label">
+                      Fill from published entry
+                    </span>
+                    <Select
+                      items={entrySelectItems}
+                      value={selectedEntryId}
+                      onValueChange={handleApplyEntry}
+                    >
+                      <SelectTrigger className="w-full">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectPopup>
+                        {entrySelectItems.map((item) => (
+                          <SelectItem key={item.value} value={item.value}>
+                            {item.label}
+                          </SelectItem>
+                        ))}
+                      </SelectPopup>
+                    </Select>
+                  </div>
+                )}
+
                 <div className="admin-field-block">
                   <div className="admin-field-row">
                     <label className="admin-field-label" htmlFor="og-title">

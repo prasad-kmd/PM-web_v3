@@ -2,7 +2,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Spinner } from "@/components/ui/spinner";
 
 export type LoadingLayout =
-  "listing" | "reader" | "page" | "invoices" | "og-studio";
+  "listing" | "reader" | "page" | "invoices" | "og-studio" | "insights";
 
 /**
  * Loading — approved System alert (01) + Desktop-native (04) blend:
@@ -16,7 +16,8 @@ export function LoadingView({
   label: string;
   layout: LoadingLayout;
 }) {
-  const isStudio = layout === "invoices" || layout === "og-studio";
+  const isStudio =
+    layout === "invoices" || layout === "og-studio" || layout === "insights";
 
   return (
     <main
@@ -28,12 +29,15 @@ export function LoadingView({
         <div className="state-skel-studio-bar" aria-hidden>
           <div className="state-skel-studio-tabs">
             {Array.from(
-              { length: layout === "invoices" ? 5 : 4 },
+              {
+                length:
+                  layout === "invoices" ? 5 : layout === "insights" ? 3 : 4,
+              },
               (_, index) => (
                 <Skeleton
                   key={index}
                   className="h-6 rounded-md"
-                  style={{ width: layout === "invoices" ? 72 : 68 }}
+                  style={{ width: layout === "invoices" ? 72 : 76 }}
                 />
               ),
             )}
@@ -105,7 +109,7 @@ export function LoadingView({
             />
           ))}
         </div>
-      ) : layout === "invoices" ? (
+      ) : layout === "invoices" || layout === "insights" ? (
         <div className="state-skel-invoices" aria-hidden>
           <div className="state-skel-invoices-kpis">
             {Array.from({ length: 4 }, (_, i) => (

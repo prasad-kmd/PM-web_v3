@@ -38,6 +38,7 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { WorkspaceTooltip } from "@/components/ui/tooltip";
 import { useContentBookmarks } from "./ContentBookmarksProvider";
+import { ReaderCitePopover } from "./ReaderCitePopover";
 import type { ContentItem } from "@/lib/notion-cms";
 
 /* -------------------------------------------------------------------------- */
@@ -394,9 +395,11 @@ function ReadingOptions() {
 
 export function ReaderToolbarActions({
   item,
+  baseUrl,
   leading,
 }: {
   item: ContentItem;
+  baseUrl?: string;
   /** Rendered before the outline toggle — the discussion button lives here. */
   leading?: ReactNode;
 }) {
@@ -425,6 +428,7 @@ export function ReaderToolbarActions({
         </WorkspaceTooltip>
       ) : null}
       <BookmarkToggle item={item} />
+      <ReaderCitePopover item={item} baseUrl={baseUrl} />
       <ShareButton />
       <ReadingOptions />
     </>

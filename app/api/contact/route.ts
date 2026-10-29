@@ -5,6 +5,11 @@ import {
   isBlockedContent,
   verifyTurnstile,
 } from "@/lib/contact/security";
+import {
+  isTelegramConfigured,
+  sendTelegramDocument,
+  sendTelegramMessage,
+} from "@/lib/telegram";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -61,28 +66,6 @@ async function readForm(request: NextRequest): Promise<FormData> {
     headers: { "Content-Type": request.headers.get("content-type") || "" },
   }).formData();
 }
-async function send(
-  method: "sendMessage" | "sendDocument",
-  body: Record<string, string> | FormData,
-) {
-  const token = process.env.TELEGRAM_TOKEN!;
-  const response = await fetch(
-    `https://api.telegram.org/bot${token}/${method}`,
-    {
-      method: "POST",
-      ...(body instanceof FormData
-        ? { body }
-        : {
-            headers: { "content-type": "application/json" },
-            body: JSON.stringify(body),
-          }),
-      signal: AbortSignal.timeout(12_000),
-      cache: "no-store",
-    },
-  );
-  const result = (await response.json()) as { ok?: boolean };
-  if (!response.ok || !result.ok) throw new Error("Telegram delivery failed");
-}
 export async function POST(request: NextRequest) {
   const origin = request.headers.get("origin");
   const host = request.headers.get("host");
@@ -96,10 +79,8 @@ export async function POST(request: NextRequest) {
   }
   if (Number(request.headers.get("content-length") || 0) > MAX_REQUEST)
     return reply("Request is too large.", 413);
-  const chatId = process.env.TELEGRAM_CHAT_ID?.trim();
   if (
-    !process.env.TELEGRAM_TOKEN ||
-    !chatId ||
+    !isTelegramConfigured() ||
     (process.env.NODE_ENV === "production" && !process.env.TURNSTILE_SECRET_KEY)
   )
     return reply(
@@ -191,26 +172,27 @@ export async function POST(request: NextRequest) {
     return reply("Security verification failed. Please retry.", 403);
   const text = `New website contact\nName: ${name}\nEmail: ${email}\nPhone: ${phone || "Not provided"}\nSubject: ${subject}\n\n${message}`;
   if (text.length > 4096)
-    return reply("Message exceeds Telegram’s text limit.", 400);
-  try {
-    await send("sendMessage", { chat_id: chatId, text });
-  } catch {
+    return reply("Message is too long. Please shorten it and try again.", 400);
+  const sent = await sendTelegramMessage({
+    channel: "contact",
+    text,
+    timeoutMs: 12_000,
+  });
+  if (!sent) {
     return reply(
       "Message could not be delivered. Please use a direct contact link.",
       502,
     );
   }
   if (attachment && typeof attachment !== "string" && attachment.size > 0) {
-    const upload = new FormData();
-    upload.set("chat_id", chatId);
-    upload.set("document", attachment, attachment.name.slice(0, 100));
-    upload.set(
-      "caption",
-      `Attachment for: ${name.slice(0, 80)} / ${subject.slice(0, 120)}`,
-    );
-    try {
-      await send("sendDocument", upload);
-    } catch {
+    const uploaded = await sendTelegramDocument({
+      channel: "contact",
+      file: attachment,
+      filename: attachment.name.slice(0, 100),
+      caption: `Attachment for: ${name.slice(0, 80)} / ${subject.slice(0, 120)}`,
+      timeoutMs: 12_000,
+    });
+    if (!uploaded) {
       return NextResponse.json(
         {
           ok: true,

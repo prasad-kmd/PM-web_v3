@@ -19,6 +19,7 @@ import {
   type ContentType,
 } from "@/lib/notion-cms";
 import { getSiteUrl } from "@/lib/site";
+import { getEntryReadCount } from "@/lib/engagement/reads";
 import { isFeedType } from "@/lib/content-listing";
 import { collectLinks } from "@/lib/inline-links";
 import { entryOgImagePath } from "@/lib/og/url";
@@ -29,6 +30,7 @@ import { DiscussionSheet } from "@/components/comments/DiscussionSheet";
 import { DiscussionToolbarButton } from "@/components/comments/DiscussionToolbarButton";
 import { DiscussionTrigger } from "@/components/comments/DiscussionTrigger";
 import { ImageGallery } from "./ImageGallery";
+import { ReaderReadCount } from "./ReaderReadCount";
 import { ReaderScrollToTop } from "./ReaderControls";
 import { metadataDate } from "@/lib/content-metadata";
 import { entryDescription } from "@/lib/og/url";
@@ -166,7 +168,11 @@ export async function ContentDetailPage({
   const feed = isFeedType(type);
   const storyLinks = feed ? collectLinks(result.blocks) : [];
 
-  const index = await getContentIndex(type);
+  const [index, initialReads] = await Promise.all([
+    getContentIndex(type),
+    getEntryReadCount(type, item.slug),
+  ]);
+  const siteBaseUrl = getSiteUrl();
   const ordered = [...index.items].sort(byReadingOrder(type));
   const position = ordered.findIndex((other) => other.id === item.id);
   const next = position >= 0 ? ordered[position + 1] : undefined;
@@ -214,6 +220,7 @@ export async function ContentDetailPage({
             actions={
               <ReaderToolbarActions
                 item={item}
+                baseUrl={siteBaseUrl}
                 leading={<DiscussionToolbarButton />}
               />
             }
@@ -259,6 +266,11 @@ export async function ContentDetailPage({
                       <HugeiconsIcon icon={Clock01Icon} size={14} aria-hidden />
                       {readTime} min read
                     </span>
+                    <ReaderReadCount
+                      type={type}
+                      slug={item.slug}
+                      initialCount={initialReads}
+                    />
                   </div>
                 </header>
                 {item.image ? (

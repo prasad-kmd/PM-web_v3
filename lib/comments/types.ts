@@ -52,6 +52,8 @@ export type CommentView = {
   isExternal: boolean;
   /** True for the pre-PMc `[Name|id|avatar]` format. */
   isLegacy: boolean;
+  /** Present only for the signed-in owner when a comment is hidden from public view. */
+  hidden?: boolean;
 };
 
 export type CommentPage = {
@@ -60,6 +62,8 @@ export type CommentPage = {
   hasMore: boolean;
   /** False when this deployment has no Notion credentials. */
   configured: boolean;
+  /** True when the signed-in owner can hide/restore comments live. */
+  moderationEnabled?: boolean;
 };
 
 export type CommentErrorType =

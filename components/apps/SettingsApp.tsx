@@ -104,6 +104,7 @@ type SystemInfo = {
     notion: boolean;
     turnstile: boolean;
     telegram: boolean;
+    readership?: boolean;
     canonicalUrl: boolean;
   };
 };
@@ -112,6 +113,10 @@ const KEYBOARD_GROUPS = [
   {
     title: "Desktop",
     rows: [
+      {
+        keys: ["⌘", "K"],
+        label: "Open workspace command search",
+      },
       { keys: ["Enter"], label: "Open the selected shortcut" },
       {
         keys: ["⌘", "click"],
@@ -384,6 +389,15 @@ function AboutTab() {
                   <span className="settings-list-value">
                     <StatePill
                       on={system.integrations.telegram}
+                      labels={["Configured", "Not configured"]}
+                    />
+                  </span>
+                </div>
+                <div className="settings-list-row">
+                  <span className="settings-list-key">Readership counter</span>
+                  <span className="settings-list-value">
+                    <StatePill
+                      on={Boolean(system.integrations.readership)}
                       labels={["Configured", "Not configured"]}
                     />
                   </span>

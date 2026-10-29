@@ -28,6 +28,17 @@ const InvoiceStudioApp = dynamic(
   },
 );
 
+const ContentInsightsApp = dynamic(
+  () =>
+    import("@/components/admin/insights/ContentInsightsApp").then(
+      (mod) => mod.ContentInsightsApp,
+    ),
+  {
+    ssr: false,
+    loading: () => <LoadingView label="Content Insights" layout="insights" />,
+  },
+);
+
 /** Keep desktop windows and direct app routes on the same application body. */
 export function AppBody({
   appId,
@@ -63,6 +74,12 @@ export function AppBody({
       }
       if (!authenticated) return null;
       return <InvoiceStudioApp />;
+    case "insights":
+      if (!ready) {
+        return <LoadingView label="Content Insights" layout="insights" />;
+      }
+      if (!authenticated) return null;
+      return <ContentInsightsApp />;
     default:
       return null;
   }

@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  ChartLineData02Icon,
   Copy01Icon,
   Image02Icon,
   Invoice02Icon,
@@ -9,6 +10,7 @@ import {
   Mail01Icon,
   Moon02Icon,
   RefreshIcon,
+  Search01Icon,
   Settings02Icon,
   Shield01Icon,
   SunMediumIcon,
@@ -17,6 +19,7 @@ import {
 import { HugeiconsIcon } from "@hugeicons/react";
 import { toast } from "sonner";
 import { useAdminAuth } from "@/components/admin/AdminAuthProvider";
+import { invalidateCommandPaletteIndex } from "@/components/command/CommandPalette";
 import {
   Menubar,
   MenubarContent,
@@ -36,9 +39,11 @@ import { ClockPopover } from "./ClockPopover";
 export function MenuBar({
   onOpenApp,
   onCloseAll,
+  onOpenCommandPalette,
 }: {
   onOpenApp: (appId: AppId) => void;
   onCloseAll: () => void;
+  onOpenCommandPalette: () => void;
 }) {
   const { theme, toggleTheme, nextWallpaper } = useAppearance();
   const {
@@ -123,6 +128,15 @@ export function MenuBar({
                 <>
                   <MenubarGroup>
                     <MenubarLabel>Studio</MenubarLabel>
+                    <MenubarItem onClick={() => onOpenApp("insights")}>
+                      <HugeiconsIcon
+                        icon={ChartLineData02Icon}
+                        strokeWidth={1.9}
+                        size={15}
+                      />
+                      <span>Content Insights</span>
+                      <MenubarShortcut>⌘⇧A</MenubarShortcut>
+                    </MenubarItem>
                     <MenubarItem onClick={() => onOpenApp("og-studio")}>
                       <HugeiconsIcon
                         icon={Image02Icon}
@@ -147,7 +161,12 @@ export function MenuBar({
 
                   <MenubarGroup>
                     <MenubarLabel>Workspace</MenubarLabel>
-                    <MenubarItem onClick={() => void refreshContentCache()}>
+                    <MenubarItem
+                      onClick={() => {
+                        invalidateCommandPaletteIndex();
+                        void refreshContentCache();
+                      }}
+                    >
                       <HugeiconsIcon
                         icon={RefreshIcon}
                         strokeWidth={1.9}
@@ -240,6 +259,9 @@ export function MenuBar({
             <MenubarTrigger>File</MenubarTrigger>
             <MenubarContent>
               <MenubarGroup>
+                <MenubarItem onClick={onOpenCommandPalette}>
+                  Find in workspace… <MenubarShortcut>⌘K</MenubarShortcut>
+                </MenubarItem>
                 <MenubarItem onClick={() => onOpenApp("resume")}>
                   Open Resume <MenubarShortcut>⌘O</MenubarShortcut>
                 </MenubarItem>
@@ -349,6 +371,18 @@ export function MenuBar({
       </div>
 
       <div className="menu-bar-status">
+        <WorkspaceTooltip label="Find in workspace" shortcut="⌘K">
+          <button
+            type="button"
+            className="menu-bar-icon-btn"
+            onClick={onOpenCommandPalette}
+            aria-label="Find in workspace"
+            aria-keyshortcuts="Meta+K Control+K"
+          >
+            <HugeiconsIcon icon={Search01Icon} strokeWidth={2} size={15} />
+          </button>
+        </WorkspaceTooltip>
+
         <WorkspaceTooltip
           label={
             theme === "dark"

@@ -1,6 +1,13 @@
 import "server-only";
-import { after, type NextRequest } from "next/server";
+import type { NextRequest } from "next/server";
 import { clientIp } from "@/lib/comments/request-context";
+import {
+  escapeTelegramHtml,
+  formatColomboTimestamp,
+  isTelegramConfigured,
+  scheduleTelegramNotification,
+  sendTelegramMessage,
+} from "@/lib/telegram";
 
 export type LoginAlertOutcome =
   | "succeeded"
@@ -36,25 +43,7 @@ type RateLimitSuppressionState = {
 const RATE_LIMIT_COOLDOWN_MS = 2 * 60_000;
 const rateLimitAlertBuckets = new Map<string, RateLimitSuppressionState>();
 
-function cleanEnv(raw: string | undefined): string {
-  if (!raw) return "";
-  const trimmed = raw.trim();
-  if (
-    trimmed.length >= 2 &&
-    ((trimmed.startsWith('"') && trimmed.endsWith('"')) ||
-      (trimmed.startsWith("'") && trimmed.endsWith("'")))
-  ) {
-    return trimmed.slice(1, -1).trim();
-  }
-  return trimmed;
-}
-
-function escapeHtml(value: string): string {
-  return value
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;");
-}
+const escapeHtml = escapeTelegramHtml;
 
 function cleanLine(value: string | null | undefined, max = 140): string {
   if (!value) return "";
@@ -127,22 +116,7 @@ export function summarizeUserAgent(ua: string): string {
   return os ? `${browser} · ${os}` : browser;
 }
 
-function formatColomboTime(date: Date): string {
-  try {
-    return new Intl.DateTimeFormat("en-GB", {
-      timeZone: "Asia/Colombo",
-      year: "numeric",
-      month: "short",
-      day: "2-digit",
-      hour: "2-digit",
-      minute: "2-digit",
-      second: "2-digit",
-      hour12: true,
-    }).format(date);
-  } catch {
-    return date.toISOString();
-  }
-}
+const formatColomboTime = formatColomboTimestamp;
 
 function pruneRateLimitBuckets(nowMs: number) {
   if (rateLimitAlertBuckets.size < 256) return;
@@ -347,63 +321,24 @@ export function buildAdminLoginTelegramMessage(
   };
 }
 
-async function postTelegramMessage(
-  token: string,
-  chatId: string,
-  payload: { html: string; plain: string; silent: boolean },
-): Promise<void> {
-  const endpoint = `https://api.telegram.org/bot${token}/sendMessage`;
-  try {
-    const res = await fetch(endpoint, {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({
-        chat_id: chatId,
-        text: payload.html,
-        parse_mode: "HTML",
-        disable_web_page_preview: true,
-        ...(payload.silent ? { disable_notification: true } : {}),
-      }),
-      signal: AbortSignal.timeout(8_000),
-      cache: "no-store",
-    });
-
-    if (res.ok) return;
-
-    // Fallback to plain text if HTML formatting was rejected for any reason.
-    await fetch(endpoint, {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({
-        chat_id: chatId,
-        text: payload.plain,
-        disable_web_page_preview: true,
-        ...(payload.silent ? { disable_notification: true } : {}),
-      }),
-      signal: AbortSignal.timeout(8_000),
-      cache: "no-store",
-    });
-  } catch {
-    // Non-blocking audit alert; never interrupt or fail authentication.
-  }
-}
-
 /**
  * Schedules a non-blocking Telegram notification for any admin sign-in event
- * (successful, failed, blocked, or rate-limited) via Next.js `after()`.
+ * (successful, failed, blocked, or rate-limited) in the `auth` topic channel.
  */
 export function notifyAdminLoginAttempt(input: AdminLoginAlertInput): void {
-  const token = cleanEnv(process.env.TELEGRAM_TOKEN);
-  const chatId = cleanEnv(process.env.TELEGRAM_CHAT_ID);
-  if (!token || !chatId) return;
+  if (!isTelegramConfigured()) return;
 
   const built = buildAdminLoginTelegramMessage(input);
   if (!built) return;
 
-  const task = () => postTelegramMessage(token, chatId, built);
-  try {
-    after(task);
-  } catch {
-    void task();
-  }
+  scheduleTelegramNotification(() =>
+    sendTelegramMessage({
+      channel: "auth",
+      text: built.html,
+      parseMode: "HTML",
+      fallbackPlainText: built.plain,
+      silent: built.silent,
+      timeoutMs: 8_000,
+    }),
+  );
 }

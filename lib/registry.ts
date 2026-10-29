@@ -10,7 +10,8 @@ export type AppId =
   | "bookmarks"
   | "contact"
   | "og-studio"
-  | "invoices";
+  | "invoices"
+  | "insights";
 
 export type AppMeta = {
   id: AppId;
@@ -118,6 +119,15 @@ export const APP_REGISTRY: Record<AppId, AppMeta> = {
     description: "Compose invoices, manage clients, and export PDFs",
     icon: "/icons/fluent-color/document.svg",
     route: "/invoices",
+    adminOnly: true,
+  },
+  insights: {
+    id: "insights",
+    title: "Content Insights",
+    kind: "Readership",
+    description: "Public content readership trends and top entries",
+    icon: "/icons/fluent-color/math_folder.svg",
+    route: "/insights",
     adminOnly: true,
   },
 };

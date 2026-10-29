@@ -16,6 +16,7 @@ export async function POST(request: NextRequest) {
   if (!auth.ok) return auth.response;
 
   revalidateTag("notion-cms", "max");
+  revalidateTag("reads", "max");
   for (const path of [
     "/projects",
     "/blog",
@@ -24,6 +25,9 @@ export async function POST(request: NextRequest) {
     "/glossary",
     "/news",
     "/api/latest",
+    "/api/search-index",
+    "/llms.txt",
+    "/feed.xml",
   ]) {
     revalidatePath(path);
   }

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import type { ContentType } from "@/lib/notion-cms";
 import { BUILD_INFO } from "@/lib/build-info";
+import { isFirebaseConfigured } from "@/lib/firebase/rtdb";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -57,6 +58,7 @@ export function GET(): NextResponse {
       present("NEXT_PUBLIC_TURNSTILE_SITE_KEY") &&
       present("TURNSTILE_SECRET_KEY"),
     telegram: present("TELEGRAM_TOKEN") && present("TELEGRAM_CHAT_ID"),
+    readership: isFirebaseConfigured(),
     canonicalUrl: present("NEXT_PUBLIC_SITE_URL"),
   };
 
