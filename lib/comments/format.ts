@@ -62,11 +62,26 @@ function decodeRole(segment: string): CommentRole {
   return ROLES.includes(value) ? value : null;
 }
 
-/** Builds `[PMc1|…]: ` for a resolved guest commenter. */
+/**
+ * Builds `[PMc1|…]:` for guest comments, or `[PMc2|…|role]:` when signed in
+ * as the verified workspace owner.
+ */
 export function encodeCommentMeta(
   commenter: ResolvedCommenter,
   email: string,
+  role: CommentRole = null,
 ): string {
+  if (role === "owner" || role === "member") {
+    const parts = [
+      "PMc2",
+      sanitizeSegment(commenter.name, NAME_MAX_LENGTH) || "Anonymous",
+      sanitizeSegment(email, 254),
+      encodeSource(commenter.avatarSource, commenter.handle),
+      sanitizeSegment(commenter.avatar ?? "", 300),
+      role,
+    ];
+    return `[${parts.join(SEP)}]:`;
+  }
   const parts = [
     "PMc1",
     sanitizeSegment(commenter.name, NAME_MAX_LENGTH) || "Anonymous",
@@ -85,8 +100,9 @@ export function formatComment(
   commenter: ResolvedCommenter,
   email: string,
   content: string,
+  role: CommentRole = null,
 ): string {
-  const meta = encodeCommentMeta(commenter, email);
+  const meta = encodeCommentMeta(commenter, email, role);
   const budget = NOTION_COMMENT_LIMIT - meta.length - 1;
   return `${meta} ${content.trim().slice(0, Math.max(0, budget))}`;
 }
@@ -172,7 +188,7 @@ export function parseComment(raw: string): Parsed {
   }
 
   return {
-    name: "Notion user",
+    name: "Author note",
     email: null,
     avatar: null,
     handle: null,

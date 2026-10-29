@@ -10,6 +10,7 @@ import {
   type ReactNode,
 } from "react";
 import { toast } from "sonner";
+import type { AdminCommentProfile } from "@/lib/admin/comment-profile";
 
 type SessionResponse = {
   authenticated: boolean;
@@ -23,6 +24,7 @@ type SessionResponse = {
   totpEnabled?: boolean;
   deviceTrusted?: boolean;
   usedRecoveryCode?: boolean;
+  commentProfile?: AdminCommentProfile;
   expiredChallenge?: boolean;
   error?: string;
 };
@@ -48,6 +50,7 @@ export type AdminAuthContextValue = {
   expiresAt: number | null;
   totpEnabled: boolean;
   deviceTrusted: boolean;
+  commentProfile: AdminCommentProfile | null;
   ready: boolean;
   lockOpen: boolean;
   openLockCurtain: () => void;
@@ -81,6 +84,8 @@ export function AdminAuthProvider({
   const [expiresAt, setExpiresAt] = useState<number | null>(null);
   const [totpEnabled, setTotpEnabled] = useState(false);
   const [deviceTrusted, setDeviceTrusted] = useState(false);
+  const [commentProfile, setCommentProfile] =
+    useState<AdminCommentProfile | null>(null);
   const [ready, setReady] = useState(false);
   const [lockOpen, setLockOpen] = useState(false);
 
@@ -97,14 +102,17 @@ export function AdminAuthProvider({
         setExpiresAt(null);
         setTotpEnabled(false);
         setDeviceTrusted(false);
+        setCommentProfile(null);
         return;
       }
       const data = (await res.json()) as SessionResponse;
-      setAuthenticated(Boolean(data.authenticated));
+      const isAuthed = Boolean(data.authenticated);
+      setAuthenticated(isAuthed);
       setUsername(data.username ?? null);
       setExpiresAt(data.expiresAt ?? null);
       setTotpEnabled(Boolean(data.totpEnabled));
       setDeviceTrusted(Boolean(data.deviceTrusted));
+      setCommentProfile(isAuthed ? (data.commentProfile ?? null) : null);
     } catch {
       // Quietly stay signed out if offline or unreachable.
     } finally {
@@ -181,6 +189,7 @@ export function AdminAuthProvider({
         setExpiresAt(data.expiresAt ?? null);
         setTotpEnabled(Boolean(data.totpEnabled));
         setDeviceTrusted(Boolean(data.deviceTrusted));
+        setCommentProfile(data.commentProfile ?? null);
         setLockOpen(false);
         toast.success("Workspace unlocked.");
         return { ok: true, step: "authenticated" };
@@ -234,6 +243,7 @@ export function AdminAuthProvider({
         setExpiresAt(data.expiresAt ?? null);
         setTotpEnabled(true);
         setDeviceTrusted(Boolean(data.deviceTrusted));
+        setCommentProfile(data.commentProfile ?? null);
         setLockOpen(false);
 
         if (data.usedRecoveryCode) {
@@ -288,6 +298,7 @@ export function AdminAuthProvider({
       setAuthenticated(false);
       setUsername(null);
       setExpiresAt(null);
+      setCommentProfile(null);
       if (options?.forgetDevice) {
         setDeviceTrusted(false);
       }
@@ -307,6 +318,7 @@ export function AdminAuthProvider({
       if (!res.ok) {
         if (res.status === 401) {
           setAuthenticated(false);
+          setCommentProfile(null);
           onSignedOut?.();
           toast.error("Session expired. Please sign in again.");
           return;
@@ -327,6 +339,7 @@ export function AdminAuthProvider({
       expiresAt,
       totpEnabled,
       deviceTrusted,
+      commentProfile,
       ready,
       lockOpen,
       openLockCurtain,
@@ -340,6 +353,7 @@ export function AdminAuthProvider({
     [
       authenticated,
       closeLockCurtain,
+      commentProfile,
       deviceTrusted,
       expiresAt,
       forgetTrustedDevice,
@@ -368,4 +382,8 @@ export function useAdminAuth(): AdminAuthContextValue {
     throw new Error("useAdminAuth must be used inside <AdminAuthProvider>.");
   }
   return ctx;
+}
+
+export function useOptionalAdminAuth(): AdminAuthContextValue | null {
+  return useContext(AdminAuthContext);
 }

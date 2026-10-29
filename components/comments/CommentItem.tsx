@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import {
+  CheckmarkBadge01Icon,
   CheckmarkCircle02Icon,
   Copy01Icon,
   Github01Icon,
@@ -44,12 +45,20 @@ type Badge = {
   /** Accessible name and tooltip: the platform is never spelled out visually. */
   label: string;
   tone: string;
-  /** Platform marks render as a glyph; owner/legacy badges stay as words. */
+  /** Platform marks render as a glyph; owner badge renders glyph + label. */
   icon?: typeof Github01Icon;
+  withText?: boolean;
 };
 
 function badge(comment: CommentView): Badge | null {
-  if (comment.role === "owner") return { label: "Owner", tone: "owner" };
+  if (comment.role === "owner") {
+    return {
+      label: "Owner",
+      tone: "owner",
+      icon: CheckmarkBadge01Icon,
+      withText: true,
+    };
+  }
   if (comment.isExternal) return { label: "Direct note", tone: "muted" };
   if (comment.isLegacy) return { label: "Earlier comment", tone: "muted" };
   if (comment.source === "github")
@@ -64,6 +73,10 @@ function badge(comment: CommentView): Badge | null {
 export function CommentItem({ comment }: { comment: CommentView }) {
   const [copied, setCopied] = useState(false);
   const tag = badge(comment);
+  const isOwner = comment.role === "owner";
+  const avatarSrc =
+    comment.avatar || (isOwner ? "/images/profile-placeholder.jpg" : null);
+
   const profile =
     comment.source === "github" && comment.handle
       ? `https://github.com/${comment.handle}`
@@ -86,8 +99,12 @@ export function CommentItem({ comment }: { comment: CommentView }) {
   }
 
   return (
-    <article className="dsn-comment" id={`comment-${comment.id}`}>
-      <CommentAvatar name={comment.name} src={comment.avatar} />
+    <article
+      className="dsn-comment"
+      data-role={comment.role ?? undefined}
+      id={`comment-${comment.id}`}
+    >
+      <CommentAvatar name={comment.name} src={avatarSrc} />
       <div className="dsn-comment-body">
         <div className="dsn-comment-head">
           <strong>
@@ -100,7 +117,21 @@ export function CommentItem({ comment }: { comment: CommentView }) {
             )}
           </strong>
           {tag ? (
-            tag.icon ? (
+            tag.icon && tag.withText ? (
+              <span
+                className="dsn-tag dsn-tag-owner"
+                data-tone={tag.tone}
+                title="Verified workspace owner"
+              >
+                <HugeiconsIcon
+                  icon={tag.icon}
+                  strokeWidth={2.2}
+                  size={10.5}
+                  aria-hidden
+                />
+                {tag.label}
+              </span>
+            ) : tag.icon ? (
               <span
                 className="dsn-tag dsn-tag-icon"
                 data-tone={tag.tone}

@@ -55,7 +55,8 @@ How the hardened two-step unlock behaves:
 1. **Stealthy Step-Up Flow:** Public visitors only ever see the standard two-input **Username** + **Password** curtain (`GET /api/admin/session` never reveals whether TOTP is enabled when signed out). Only after primary credentials pass does the server issue a **90-second**, IP + User-Agent bound HMAC challenge token (`step: "totp"`) and reveal the 6-box authenticator input.
 2. **Brute-Force & Replay Hardening:** Step 2 enforces a strict **5-failure / 10-minute** IP limiter, burns the active 90-second challenge token automatically after **4 wrong codes** (requiring primary password re-entry), uses a tight **±1 step (`±30s`)** tolerance, and blocks replaying an already-accepted 6-digit step within the same warm server instance.
 3. **30-Day Trusted Workstation Cookie:** Checking **Trust this browser for 30 days** during Step 2 issues an `HttpOnly; SameSite=Strict` cookie (`__Host-pm_admin_trust` on HTTPS / `pm_admin_trust` on localhost) bound to your User-Agent and an active credential fingerprint (`ADMIN_USERNAME` + password hash + `ADMIN_TOTP_SECRET`). Rotating any secret revokes all trusted browsers immediately, and you can manually clear trust anytime from **MenuBar Profile → Forget trusted browser** (set `ADMIN_TRUST_TTL_DAYS=0` to disable browser trust).
-4. **Emergency Recovery Codes:** Save the 5 plaintext `XXXX-XXXX-XXXX` recovery codes shown once by `scripts/generate-admin-totp.mjs` in your password manager. Clicking **Use an emergency recovery code** on Step 2 verifies against `ADMIN_RECOVERY_HASHES` (and sends a non-blocking security notice via Telegram if `TELEGRAM_TOKEN` and `TELEGRAM_CHAT_ID` are configured). Rotate `ADMIN_TOTP_SECRET` and `ADMIN_RECOVERY_HASHES` after using an emergency code.
+4. **Emergency Recovery Codes:** Save the 5 plaintext `XXXX-XXXX-XXXX` recovery codes shown once by `scripts/generate-admin-totp.mjs` in your password manager. Clicking **Use an emergency recovery code** on Step 2 verifies against `ADMIN_RECOVERY_HASHES`. Rotate `ADMIN_TOTP_SECRET` and `ADMIN_RECOVERY_HASHES` after using an emergency code.
+5. **Telegram Sign-In Audit Alerts:** When `TELEGRAM_TOKEN` and `TELEGRAM_CHAT_ID` are set, every admin sign-in attempt — whether successful, failed (wrong password, wrong/replayed TOTP code, invalid recovery code, expired challenge, malformed payload), cross-origin blocked, or rate-limited — dispatches a non-blocking Telegram notification via Next.js `after()` containing the outcome, stage/method, reason, username, browser trust state, `Asia/Colombo` & UTC timestamps, client IP, proxy geo headers (when present), and parsed browser/OS details. Repeated rate-limit hits from the same IP are coalesced over a 2-minute window to prevent Telegram bot flooding.
 
 ### Accessing the Suite in the UI
 
@@ -65,6 +66,7 @@ How the hardened two-step unlock behaves:
   - **OG Image Studio** (`⌘⇧G`)
   - **Invoice Studio** (`⌘⇧I`)
   - **Refresh content** (invalidates cached CMS tags immediately via `/api/admin/cache/purge`)
+  - **Automatic Owner Comment Mode:** Opening any entry's discussion panel while signed in automatically applies your owner profile (`ADMIN_DISPLAY_NAME` / `ADMIN_COMMENT_EMAIL` / social handles, defaulting to `Prasad Madhuranga` and `CONTACT_EMAIL`), skips the guest identity inputs and Turnstile prompt, and publishes comments in `PMc2` format (`role=owner`) with the distinguished **Owner** badge (with a one-click **Guest mode** toggle if needed).
   - **Sign out** (clears session cookies and closes open studio windows)
 
 ---

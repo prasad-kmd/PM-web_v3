@@ -4,11 +4,14 @@ import { useEffect, useRef, useState } from "react";
 import { Turnstile, type TurnstileInstance } from "@marsidev/react-turnstile";
 import {
   ArrowUp02Icon,
+  CheckmarkBadge01Icon,
   PencilEdit02Icon,
   Shield01Icon,
+  UserCheck01Icon,
   UserRemove01Icon,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
+import { useOptionalAdminAuth } from "@/components/admin/AdminAuthProvider";
 import { COMMENT_MAX_LENGTH, COMMENT_MIN_LENGTH } from "@/lib/comments/limits";
 import type { CommentError, CommentView } from "@/lib/comments/types";
 import { useCommenterIdentity } from "@/hooks/use-commenter-identity";
@@ -17,10 +20,9 @@ import { CommentAvatar } from "./CommentAvatar";
 /**
  * The composer.
  *
- * Three states: known identity (chip + textarea), unknown identity (chip invites
- * you to add details), and editing (the identity fields inline). The draft is
- * kept in `sessionStorage` per page so a reload — or the desktop closing the
- * window — does not lose what was typed.
+ * When signed in as the workspace owner, owner details and the distinguished
+ * Owner badge are applied automatically without requiring manual fields or a
+ * separate spam challenge. Otherwise, guest identity states apply.
  */
 
 const DRAFT_PREFIX = "pm_comment_draft:";
@@ -34,7 +36,12 @@ export function CommentComposer({
   siteKey: string;
   onPosted: (comment: CommentView) => void;
 }) {
+  const adminAuth = useOptionalAdminAuth();
+  const adminProfile = adminAuth?.authenticated
+    ? adminAuth.commentProfile
+    : null;
   const { identity, setIdentity, save, forget, known } = useCommenterIdentity();
+  const [guestOverride, setGuestOverride] = useState(false);
   const [content, setContent] = useState("");
   const [editing, setEditing] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -43,6 +50,17 @@ export function CommentComposer({
   const widgetRef = useRef<TurnstileInstance>(undefined);
   const honeypotRef = useRef<HTMLInputElement | null>(null);
   const draftKey = `${DRAFT_PREFIX}${pageId}`;
+
+  const activeOwner = Boolean(adminProfile) && !guestOverride;
+
+  // Automatically engage Owner mode whenever admin sign-in activates.
+  useEffect(() => {
+    if (adminProfile) {
+      setGuestOverride(false);
+      setEditing(false);
+      setError(null);
+    }
+  }, [adminProfile]);
 
   useEffect(() => {
     try {
@@ -63,11 +81,11 @@ export function CommentComposer({
     }
   };
 
-  // The spam-check token is short-lived; the widget renews it in place.
+  // Signed-in owner posts are authenticated by the HttpOnly session cookie;
+  // guest posts require a valid Turnstile token.
   const canSubmit =
     content.trim().length >= COMMENT_MIN_LENGTH &&
-    Boolean(token) &&
-    Boolean(siteKey) &&
+    (activeOwner || (Boolean(token) && Boolean(siteKey))) &&
     !busy;
 
   async function submit() {
@@ -75,20 +93,31 @@ export function CommentComposer({
     setBusy(true);
     setError(null);
     try {
+      const payload = activeOwner
+        ? {
+            pageId,
+            content: content.trim(),
+            website: honeypotRef.current?.value ?? "",
+            asOwner: true,
+          }
+        : {
+            pageId,
+            content: content.trim(),
+            name: identity.name.trim(),
+            email: identity.email.trim(),
+            github: identity.github?.trim() || undefined,
+            linkedin: identity.linkedin?.trim() || undefined,
+            twitter: identity.twitter?.trim() || undefined,
+            website: honeypotRef.current?.value ?? "",
+            turnstileToken: token,
+            asOwner: false,
+          };
+
       const response = await fetch("/api/comments", {
         method: "POST",
+        credentials: "same-origin",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({
-          pageId,
-          content: content.trim(),
-          name: identity.name.trim(),
-          email: identity.email.trim(),
-          github: identity.github?.trim() || undefined,
-          linkedin: identity.linkedin?.trim() || undefined,
-          twitter: identity.twitter?.trim() || undefined,
-          website: honeypotRef.current?.value ?? "",
-          turnstileToken: token,
-        }),
+        body: JSON.stringify(payload),
       });
       const data = (await response.json()) as {
         comment?: CommentView;
@@ -101,22 +130,26 @@ export function CommentComposer({
             message: "The comment was not saved.",
           },
         );
-        setToken("");
-        widgetRef.current?.reset();
+        if (!activeOwner) {
+          setToken("");
+          widgetRef.current?.reset();
+        }
         return;
       }
-      save({
-        name: identity.name.trim(),
-        email: identity.email.trim(),
-        github: identity.github?.trim(),
-        linkedin: identity.linkedin?.trim(),
-        twitter: identity.twitter?.trim(),
-      });
+      if (!activeOwner) {
+        save({
+          name: identity.name.trim(),
+          email: identity.email.trim(),
+          github: identity.github?.trim(),
+          linkedin: identity.linkedin?.trim(),
+          twitter: identity.twitter?.trim(),
+        });
+        setToken("");
+        widgetRef.current?.reset();
+        setEditing(false);
+      }
       onPosted(data.comment);
       updateDraft("");
-      setToken("");
-      widgetRef.current?.reset();
-      setEditing(false);
     } catch {
       setError({
         type: "unknown",
@@ -129,7 +162,51 @@ export function CommentComposer({
 
   return (
     <div className="dsn-composer">
-      {known && !editing ? (
+      {activeOwner && adminProfile ? (
+        <div className="dsn-ident" data-owner="">
+          <CommentAvatar
+            name={adminProfile.name}
+            src={adminProfile.avatar}
+            size={28}
+          />
+          <div className="dsn-ident-copy">
+            <div className="dsn-ident-title">
+              <strong>{adminProfile.name}</strong>
+              <span
+                className="dsn-tag dsn-tag-owner"
+                data-tone="owner"
+                title="Verified workspace owner"
+              >
+                <HugeiconsIcon
+                  icon={CheckmarkBadge01Icon}
+                  strokeWidth={2.2}
+                  size={10.5}
+                  aria-hidden
+                />
+                Owner
+              </span>
+            </div>
+            <span>Signed in · commenting with owner badge</span>
+          </div>
+          <div className="dsn-ident-actions">
+            <button
+              type="button"
+              onClick={() => setGuestOverride(true)}
+              title="Switch to guest comment mode"
+            >
+              <HugeiconsIcon
+                icon={UserRemove01Icon}
+                strokeWidth={2}
+                size={12}
+                aria-hidden
+              />
+              Guest mode
+            </button>
+          </div>
+        </div>
+      ) : null}
+
+      {!activeOwner && known && !editing ? (
         <div className="dsn-ident">
           <CommentAvatar name={identity.name} src={null} size={26} />
           <div className="dsn-ident-copy">
@@ -137,6 +214,23 @@ export function CommentComposer({
             <span>{identity.email} · saved on this device</span>
           </div>
           <div className="dsn-ident-actions">
+            {adminProfile ? (
+              <button
+                type="button"
+                onClick={() => {
+                  setGuestOverride(false);
+                  setEditing(false);
+                }}
+              >
+                <HugeiconsIcon
+                  icon={UserCheck01Icon}
+                  strokeWidth={2}
+                  size={12}
+                  aria-hidden
+                />
+                As owner
+              </button>
+            ) : null}
             <button type="button" onClick={() => setEditing(true)}>
               <HugeiconsIcon
                 icon={PencilEdit02Icon}
@@ -165,12 +259,33 @@ export function CommentComposer({
         </div>
       ) : null}
 
-      {!known || editing ? (
+      {!activeOwner && (!known || editing) ? (
         <div className="dsn-fields">
-          <p className="dsn-fields-note">
-            Comments are public. Your name and email travel with the comment so
-            a reply can reach you; the email is never shown to other readers.
-          </p>
+          <div className="dsn-fields-head">
+            <p className="dsn-fields-note">
+              Comments are public. Your name and email travel with the comment
+              so a reply can reach you; the email is never shown to other
+              readers.
+            </p>
+            {adminProfile ? (
+              <button
+                type="button"
+                className="dsn-owner-switch"
+                onClick={() => {
+                  setGuestOverride(false);
+                  setEditing(false);
+                }}
+              >
+                <HugeiconsIcon
+                  icon={CheckmarkBadge01Icon}
+                  strokeWidth={2}
+                  size={11}
+                  aria-hidden
+                />
+                Use owner profile
+              </button>
+            ) : null}
+          </div>
           <div className="dsn-field-row">
             <label>
               <span>Name</span>
@@ -261,7 +376,9 @@ export function CommentComposer({
             updateDraft(event.target.value.slice(0, COMMENT_MAX_LENGTH))
           }
           rows={3}
-          placeholder="Add to the discussion…"
+          placeholder={
+            activeOwner ? "Reply as workspace owner…" : "Add to the discussion…"
+          }
         />
       </label>
 
@@ -280,14 +397,23 @@ export function CommentComposer({
       </div>
 
       <div className="dsn-composer-foot">
-        <span className="dsn-turnstile" data-state={token ? "ok" : "idle"}>
+        <span
+          className="dsn-turnstile"
+          data-state={activeOwner || token ? "ok" : "idle"}
+        >
           <HugeiconsIcon
-            icon={Shield01Icon}
+            icon={activeOwner ? CheckmarkBadge01Icon : Shield01Icon}
             strokeWidth={2}
             size={12}
             aria-hidden
           />
-          {siteKey ? (token ? "Verified" : "Security check") : "Not configured"}
+          {activeOwner
+            ? "Verified owner"
+            : siteKey
+              ? token
+                ? "Verified"
+                : "Security check"
+              : "Not configured"}
         </span>
         <span className="dsn-count">
           {content.trim().length} / {COMMENT_MAX_LENGTH}
@@ -308,7 +434,7 @@ export function CommentComposer({
         </button>
       </div>
 
-      {siteKey ? (
+      {!activeOwner && siteKey ? (
         <div className="dsn-turnstile-widget">
           <Turnstile
             ref={widgetRef}

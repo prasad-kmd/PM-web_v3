@@ -15,13 +15,14 @@ import {
   hasTrustedDeviceCookie,
   isAdminAuthConfigured,
   isAdminTotpRequired,
-  notifyRecoveryCodeUsed,
   recordTotpChallengeFailure,
   verifyAdminPrimaryCredentials,
   verifyAdminRecoveryCode,
   verifyAdminTotpStep,
   verifyTotpChallengeToken,
 } from "@/lib/admin/auth";
+import { getAdminCommentProfile } from "@/lib/admin/comment-profile";
+import { notifyAdminLoginAttempt } from "@/lib/admin/telegram-notify";
 import { clientIp, sameOrigin } from "@/lib/comments/request-context";
 import { createLimiter } from "@/lib/contact/security";
 
@@ -59,6 +60,18 @@ async function jitterDelay() {
   );
 }
 
+function peekUsername(body: unknown): string | null {
+  if (
+    typeof body === "object" &&
+    body !== null &&
+    "username" in body &&
+    typeof (body as { username?: unknown }).username === "string"
+  ) {
+    return (body as { username: string }).username.trim().slice(0, 80) || null;
+  }
+  return null;
+}
+
 export async function GET(request: NextRequest) {
   const session = await getAdminSession(request);
   if (!session) {
@@ -78,6 +91,7 @@ export async function GET(request: NextRequest) {
       deviceTrusted: totpEnabled
         ? hasTrustedDeviceCookie(request, session.username)
         : false,
+      commentProfile: getAdminCommentProfile(),
     },
     { headers: NO_STORE_HEADERS },
   );
@@ -85,6 +99,13 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   if (!sameOrigin(request)) {
+    notifyAdminLoginAttempt({
+      request,
+      outcome: "blocked",
+      stage: "Origin check",
+      reason: "Cross-origin sign-in request blocked",
+      statusCode: 403,
+    });
     return NextResponse.json(
       { error: "Cross-origin sign-in requests are not permitted." },
       { status: 403, headers: NO_STORE_HEADERS },
@@ -92,6 +113,13 @@ export async function POST(request: NextRequest) {
   }
 
   if (!isAdminAuthConfigured()) {
+    notifyAdminLoginAttempt({
+      request,
+      outcome: "failed",
+      stage: "System configuration",
+      reason: "Admin credentials are not configured on server",
+      statusCode: 503,
+    });
     return NextResponse.json(
       { error: "Workspace sign-in is currently unavailable." },
       { status: 503, headers: NO_STORE_HEADERS },
@@ -102,6 +130,13 @@ export async function POST(request: NextRequest) {
   try {
     body = await request.json();
   } catch {
+    notifyAdminLoginAttempt({
+      request,
+      outcome: "failed",
+      stage: "Request validation",
+      reason: "Malformed JSON payload",
+      statusCode: 400,
+    });
     return NextResponse.json(
       { error: "Invalid request payload." },
       { status: 400, headers: NO_STORE_HEADERS },
@@ -119,6 +154,14 @@ export async function POST(request: NextRequest) {
   if (isTotpStep) {
     const burstWait = totpBurstLimit(ip);
     if (burstWait > 0) {
+      notifyAdminLoginAttempt({
+        request,
+        outcome: "rate_limited",
+        stage: "Two-step verification",
+        reason: "Burst rate limit exceeded on 2FA verification",
+        statusCode: 429,
+        retryAfterSeconds: burstWait,
+      });
       return NextResponse.json(
         {
           error: `Too many requests. Please wait ${burstWait}s before trying again.`,
@@ -133,11 +176,22 @@ export async function POST(request: NextRequest) {
 
     const parsedTotp = TotpStepSchema.safeParse(body);
     if (!parsedTotp.success) {
+      notifyAdminLoginAttempt({
+        request,
+        outcome: "failed",
+        stage: "Two-step verification",
+        reason: "Invalid or missing verification code fields",
+        statusCode: 400,
+      });
       return NextResponse.json(
         { error: "Enter a valid verification code." },
         { status: 400, headers: NO_STORE_HEADERS },
       );
     }
+
+    const stepMethod = parsedTotp.data.useRecoveryCode
+      ? "Emergency recovery code"
+      : "Authenticator (TOTP)";
 
     const challenge = verifyTotpChallengeToken(
       parsedTotp.data.challengeToken,
@@ -145,6 +199,14 @@ export async function POST(request: NextRequest) {
       request,
     );
     if (!challenge.ok) {
+      notifyAdminLoginAttempt({
+        request,
+        outcome: "failed",
+        stage: "Two-step verification",
+        method: stepMethod,
+        reason: "Expired, consumed, or mismatched 2FA challenge",
+        statusCode: 401,
+      });
       await jitterDelay();
       return NextResponse.json(
         {
@@ -157,6 +219,7 @@ export async function POST(request: NextRequest) {
 
     let verified = false;
     let failureMessage = "Invalid verification code.";
+    let failureReason = "Incorrect 6-digit authenticator code";
     let usedRecoveryCode = false;
 
     if (parsedTotp.data.useRecoveryCode) {
@@ -166,8 +229,10 @@ export async function POST(request: NextRequest) {
         usedRecoveryCode = true;
       } else if (recovery.alreadyUsed) {
         failureMessage = "That recovery code has already been used.";
+        failureReason = "Recovery code already consumed";
       } else {
         failureMessage = "Invalid recovery code.";
+        failureReason = "Invalid emergency recovery code";
       }
     } else {
       const totp = verifyAdminTotpStep(
@@ -179,6 +244,7 @@ export async function POST(request: NextRequest) {
       } else if (totp.replay) {
         failureMessage =
           "That code was just used. Wait for the next 6-digit code.";
+        failureReason = "Replayed 6-digit authenticator code";
       }
     }
 
@@ -188,6 +254,32 @@ export async function POST(request: NextRequest) {
         challenge.jti,
         challenge.expiresAtMs,
       );
+
+      if (ipPenalty > 0) {
+        notifyAdminLoginAttempt({
+          request,
+          outcome: "rate_limited",
+          stage: "Two-step verification",
+          method: stepMethod,
+          reason: `${failureReason} · IP locked out`,
+          username: challenge.username,
+          statusCode: 429,
+          retryAfterSeconds: ipPenalty,
+        });
+      } else {
+        notifyAdminLoginAttempt({
+          request,
+          outcome: "failed",
+          stage: "Two-step verification",
+          method: stepMethod,
+          reason: burned
+            ? `${failureReason} · Challenge burned after repeated failures`
+            : failureReason,
+          username: challenge.username,
+          statusCode: 401,
+        });
+      }
+
       await jitterDelay();
 
       if (ipPenalty > 0) {
@@ -226,7 +318,9 @@ export async function POST(request: NextRequest) {
     consumeTotpChallenge(challenge.jti, challenge.expiresAtMs);
 
     if (usedRecoveryCode) {
-      notifyRecoveryCodeUsed(ip, request.headers.get("user-agent") || "");
+      console.warn(
+        `[admin-auth] Emergency recovery code used to unlock workspace (ip=${ip}). Rotate ADMIN_RECOVERY_HASHES / ADMIN_TOTP_SECRET when convenient.`,
+      );
     }
 
     const { token, session, maxAgeSeconds } = createAdminSessionToken(
@@ -236,6 +330,21 @@ export async function POST(request: NextRequest) {
       ? createTrustedDeviceToken(challenge.username, request)
       : null;
 
+    notifyAdminLoginAttempt({
+      request,
+      outcome: usedRecoveryCode ? "succeeded_recovery" : "succeeded",
+      stage: "Two-step verification",
+      method: usedRecoveryCode
+        ? "Password + Emergency recovery code"
+        : "Password + Authenticator (TOTP)",
+      username: session.username,
+      statusCode: 200,
+      deviceTrusted: Boolean(trustCookie),
+      trustDurationDays: trustCookie
+        ? Math.round(trustCookie.maxAgeSeconds / 86_400)
+        : 0,
+    });
+
     const response = NextResponse.json(
       {
         authenticated: true,
@@ -244,6 +353,7 @@ export async function POST(request: NextRequest) {
         totpEnabled: true,
         deviceTrusted: Boolean(trustCookie),
         usedRecoveryCode,
+        commentProfile: getAdminCommentProfile(),
       },
       { headers: NO_STORE_HEADERS },
     );
@@ -266,10 +376,20 @@ export async function POST(request: NextRequest) {
   }
 
   // --- Step 1: Primary Username + Password verification ---
+  const candidateUser = peekUsername(body);
   const burstWait = loginBurstLimit(ip);
   const windowWait = loginWindowLimit(ip);
   const retryAfter = Math.max(burstWait, windowWait);
   if (retryAfter > 0) {
+    notifyAdminLoginAttempt({
+      request,
+      outcome: "rate_limited",
+      stage: "Primary credentials",
+      reason: "Password attempt rate limit exceeded",
+      username: candidateUser,
+      statusCode: 429,
+      retryAfterSeconds: retryAfter,
+    });
     return NextResponse.json(
       {
         error: `Too many attempts. Please wait ${retryAfter}s before trying again.`,
@@ -287,6 +407,14 @@ export async function POST(request: NextRequest) {
 
   const parsedCreds = CredentialsStepSchema.safeParse(body);
   if (!parsedCreds.success) {
+    notifyAdminLoginAttempt({
+      request,
+      outcome: "failed",
+      stage: "Primary credentials",
+      reason: "Missing or invalid username or password fields",
+      username: candidateUser,
+      statusCode: 400,
+    });
     return NextResponse.json(
       { error: "Enter both your username and password." },
       { status: 400, headers: NO_STORE_HEADERS },
@@ -299,6 +427,15 @@ export async function POST(request: NextRequest) {
   );
 
   if (!primary.ok) {
+    notifyAdminLoginAttempt({
+      request,
+      outcome: "failed",
+      stage: "Primary credentials",
+      method: "Password",
+      reason: "Incorrect username or password",
+      username: parsedCreds.data.username,
+      statusCode: 401,
+    });
     await jitterDelay();
     return NextResponse.json(
       { error: "Incorrect username or password." },
@@ -309,6 +446,9 @@ export async function POST(request: NextRequest) {
   const totpEnabled = isAdminTotpRequired();
   const trustedBrowser =
     totpEnabled && hasTrustedDeviceCookie(request, primary.canonicalUsername);
+  const trustTtlSec = getTrustDeviceTtlSeconds();
+  const trustDurationDays =
+    trustTtlSec > 0 ? Math.round(trustTtlSec / 86_400) : 0;
 
   // If TOTP is active and this browser is not trusted, step up to Step 2.
   if (totpEnabled && !trustedBrowser) {
@@ -317,7 +457,14 @@ export async function POST(request: NextRequest) {
       ip,
       request,
     );
-    const trustTtlSec = getTrustDeviceTtlSeconds();
+    notifyAdminLoginAttempt({
+      request,
+      outcome: "challenge_issued",
+      stage: "Primary credentials",
+      method: "Password (2FA challenge issued)",
+      username: primary.canonicalUsername,
+      statusCode: 200,
+    });
     return NextResponse.json(
       {
         authenticated: false,
@@ -325,8 +472,7 @@ export async function POST(request: NextRequest) {
         challengeToken,
         expiresInSeconds,
         recoveryAvailable: hasAdminRecoveryCodes(),
-        trustDurationDays:
-          trustTtlSec > 0 ? Math.round(trustTtlSec / 86_400) : 0,
+        trustDurationDays,
       },
       { headers: NO_STORE_HEADERS },
     );
@@ -335,6 +481,18 @@ export async function POST(request: NextRequest) {
   const { token, session, maxAgeSeconds } = createAdminSessionToken(
     primary.canonicalUsername,
   );
+
+  notifyAdminLoginAttempt({
+    request,
+    outcome: "succeeded",
+    stage: "Primary credentials",
+    method: trustedBrowser ? "Password + Trusted browser" : "Password",
+    username: session.username,
+    statusCode: 200,
+    deviceTrusted: trustedBrowser,
+    trustDurationDays: trustedBrowser ? trustDurationDays : 0,
+  });
+
   const response = NextResponse.json(
     {
       authenticated: true,
@@ -342,6 +500,7 @@ export async function POST(request: NextRequest) {
       expiresAt: session.expiresAt,
       totpEnabled,
       deviceTrusted: trustedBrowser,
+      commentProfile: getAdminCommentProfile(),
     },
     { headers: NO_STORE_HEADERS },
   );

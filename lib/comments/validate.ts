@@ -58,6 +58,24 @@ export const commentPayloadSchema = z.object({
   /** Honeypot: a real visitor never sees this field, let alone fills it. */
   website: z.string().max(0).optional().nullable(),
   turnstileToken: z.string().trim().optional().nullable(),
+  asOwner: z.boolean().optional(),
+});
+
+export const ownerCommentPayloadSchema = z.object({
+  pageId: z
+    .string()
+    .trim()
+    .regex(/^[0-9a-f-]{32,36}$/i, "Invalid page id"),
+  content: z
+    .string()
+    .trim()
+    .min(COMMENT_MIN_LENGTH, "Comment is too short")
+    .max(
+      COMMENT_MAX_LENGTH,
+      `Comment must be under ${COMMENT_MAX_LENGTH} characters`,
+    ),
+  website: z.string().max(0).optional().nullable(),
+  asOwner: z.boolean().optional(),
 });
 
 export type CommentPayload = z.infer<typeof commentPayloadSchema>;

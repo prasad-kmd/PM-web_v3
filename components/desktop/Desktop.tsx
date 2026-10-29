@@ -31,6 +31,8 @@ import {
   type AppId,
 } from "@/lib/registry";
 import { getWallpaper } from "@/lib/wallpapers";
+import { CONTENT_TYPES } from "@/lib/content-types";
+import { LoadingView } from "@/components/system/states/LoadingView";
 import type { Area } from "@/lib/windows";
 import { DesktopContextMenuContent } from "./ContextMenu";
 import { DesktopIcons } from "./DesktopIcons";
@@ -160,6 +162,9 @@ export function Desktop({ children }: { children?: ReactNode }) {
     [],
   );
   const routePaths = useRef<Partial<Record<AppId, string>>>({});
+  const [launchingCollection, setLaunchingCollection] = useState<AppId | null>(
+    null,
+  );
   const shouldReduceMotion = useShouldReduceMotion();
   const { wallpaper, wallpaperIntensity } = useAppearance();
   const currentWallpaper = getWallpaper(wallpaper);
@@ -175,7 +180,49 @@ export function Desktop({ children }: { children?: ReactNode }) {
   const currentTopAppRef = useRef<AppId | null>(topAppId);
   currentTopAppRef.current = topAppId;
 
-  const openApp = useCallback((appId: AppId) => open(appId), [open]);
+  const openApp = useCallback(
+    (appId: AppId) => {
+      const isCollection = CONTENT_TYPES.some((type) => type === appId);
+      const isAlreadyOpen = manager.windows.some(
+        (windowState) => windowState.appId === appId && !windowState.exiting,
+      );
+
+      if (isCollection && !isAlreadyOpen) {
+        // Route memory belongs to a live window, not its desktop shortcut. A
+        // closed (or closing) collection always launches at its canonical index.
+        const listingPath = getPathnameForApp(appId);
+        routePaths.current[appId] = listingPath;
+        setSnapshots((current) => {
+          if (!current[appId]) return current;
+          const next = { ...current };
+          delete next[appId];
+          return next;
+        });
+        setLaunchingCollection(appId);
+        expectedRouteAppRef.current = appId;
+        handlingRouteChangeRef.current = true;
+        lastSyncedAppRef.current = appId;
+        open(appId);
+        // Navigate explicitly: app identity may be unchanged when reopening
+        // during the exit animation, so the focus-sync effect may not run.
+        router.push(listingPath, { scroll: false });
+        return;
+      }
+
+      open(appId);
+    },
+    [manager.windows, open, router],
+  );
+
+  useEffect(() => {
+    if (
+      launchingCollection &&
+      (topAppId !== launchingCollection ||
+        (pathname === getPathnameForApp(launchingCollection) && !search))
+    ) {
+      setLaunchingCollection(null);
+    }
+  }, [launchingCollection, pathname, search, topAppId]);
 
   const closeAdminWindows = useCallback(() => {
     closeApp("og-studio");
@@ -387,7 +434,19 @@ export function Desktop({ children }: { children?: ReactNode }) {
               manager={manager}
               isMobile={isMobileWindowMode}
               routeApp={routeApp}
-              routeContent={children}
+              routeContent={
+                launchingCollection &&
+                launchingCollection === routeApp &&
+                (pathname !== getPathnameForApp(launchingCollection) ||
+                  search) ? (
+                  <LoadingView
+                    label={APP_REGISTRY[launchingCollection].title}
+                    layout="listing"
+                  />
+                ) : (
+                  children
+                )
+              }
               snapshots={snapshots}
               captureSnapshot={captureSnapshot}
               hydrated={hydrated}

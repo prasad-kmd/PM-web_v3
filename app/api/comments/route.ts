@@ -1,4 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { getAdminSession } from "@/lib/admin/auth";
+import { getAdminCommentProfile } from "@/lib/admin/comment-profile";
 import { verifyTurnstile } from "@/lib/contact/security";
 import { createNotionClient } from "@/lib/notion-cms";
 import { resolveAvatar } from "@/lib/comments/avatar";
@@ -15,6 +17,7 @@ import { clientIp, sameOrigin } from "@/lib/comments/request-context";
 import type { CommentPage, CommentView } from "@/lib/comments/types";
 import {
   commentPayloadSchema,
+  ownerCommentPayloadSchema,
   storedEmail,
   toFieldError,
   validateCommentPayload,
@@ -125,11 +128,8 @@ export async function GET(request: NextRequest) {
 /**
  * POST /api/comments
  *
- * Order of checks: kill switch → same-origin → rate limits → shape → honeypot
- * and content filters → Turnstile → avatar → Notion.
- *
- * Turnstile is late because it is the only network round-trip that a bad request
- * would otherwise pay for; everything before it is local and cheap.
+ * Supports both guest comments (`PMc1`) and verified workspace-owner comments
+ * (`PMc2` with `role=owner`) when an authenticated admin session cookie is present.
  */
 export async function POST(request: NextRequest) {
   if (!commentConfig.enabled) {
@@ -148,6 +148,111 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  let body: unknown;
+  try {
+    body = await request.json();
+  } catch {
+    return noStore(
+      { error: { type: "validation", message: "Malformed request." } },
+      { status: 400 },
+    );
+  }
+
+  const adminSession = await getAdminSession(request);
+  const wantsOwnerMode =
+    adminSession !== null &&
+    (typeof body !== "object" ||
+      body === null ||
+      !("asOwner" in body) ||
+      (body as { asOwner?: unknown }).asOwner !== false);
+
+  // --- Authenticated Owner Path (`PMc2` with `role=owner`) ---
+  if (wantsOwnerMode) {
+    const parsedOwner = ownerCommentPayloadSchema.safeParse(body);
+    if (!parsedOwner.success) {
+      return noStore(
+        { error: toFieldError(parsedOwner.error) },
+        { status: 400 },
+      );
+    }
+    if (parsedOwner.data.website) {
+      return noStore(
+        { error: { type: "validation", message: "Comment rejected." } },
+        { status: 400 },
+      );
+    }
+    if (!notionToken()) {
+      return noStore(
+        {
+          error: {
+            type: "notion",
+            message: "Comments are not available on this deployment.",
+          },
+        },
+        { status: 503 },
+      );
+    }
+
+    const adminProfile = getAdminCommentProfile();
+    try {
+      const resolved = await resolveAvatar({
+        github: adminProfile.github || null,
+        twitter: adminProfile.twitter || null,
+        linkedin: adminProfile.linkedin || null,
+      });
+
+      const given = (
+        [
+          ["github", adminProfile.github],
+          ["twitter", adminProfile.twitter],
+          ["linkedin", adminProfile.linkedin],
+        ] as const
+      ).find(([, handle]) => Boolean(handle));
+
+      const commenter = {
+        name: adminProfile.name,
+        email: adminProfile.email,
+        avatar: resolved.avatar,
+        avatarSource: resolved.source ?? given?.[0] ?? null,
+        handle: resolved.handle ?? given?.[1] ?? null,
+      };
+
+      const text = formatComment(
+        commenter,
+        storedEmail(adminProfile.email),
+        parsedOwner.data.content,
+        "owner",
+      );
+
+      const notion = createNotionClient("no-store");
+      const created = await notion.comments.create({
+        parent: { page_id: parsedOwner.data.pageId },
+        markdown: text,
+      });
+
+      const createdTime =
+        "created_time" in created && typeof created.created_time === "string"
+          ? created.created_time
+          : new Date().toISOString();
+      const view = toCommentView(created.id, createdTime, text);
+
+      return noStore({ comment: view });
+    } catch (error) {
+      console.error("Unable to create owner comment:", error);
+      return noStore(
+        {
+          error: {
+            type: "notion",
+            message:
+              "The comment could not be saved. Please try again in a moment.",
+          },
+        },
+        { status: 502 },
+      );
+    }
+  }
+
+  // --- Guest Path (`PMc1`) ---
   const ip = clientIp(request);
   const burstWait = commentBurstLimit(ip);
   if (burstWait) {
@@ -172,16 +277,6 @@ export async function POST(request: NextRequest) {
         },
       },
       { status: 429, headers: { "Retry-After": String(dailyWait) } },
-    );
-  }
-
-  let body: unknown;
-  try {
-    body = await request.json();
-  } catch {
-    return noStore(
-      { error: { type: "validation", message: "Malformed request." } },
-      { status: 400 },
     );
   }
 
