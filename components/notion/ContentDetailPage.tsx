@@ -396,13 +396,13 @@ export async function ContentDetailPage({
               <ReaderOutline />
             </aside>
           </ReaderLayout>
+          <ReaderSections />
+          <ReaderScrollToTop />
           <ReaderFooter
             collectionLabel={meta.label}
             hasNext={Boolean(next)}
             hasPrev={Boolean(prev)}
           />
-          <ReaderSections />
-          <ReaderScrollToTop />
         </ReaderProvider>
       </DiscussionProvider>
     </main>

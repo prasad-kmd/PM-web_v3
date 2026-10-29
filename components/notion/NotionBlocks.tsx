@@ -15,6 +15,7 @@ import {
 import { MermaidDiagram } from "@/components/notion/MermaidDiagram";
 import { NotionQuiz, type QuizSpec } from "@/components/notion/NotionQuiz";
 import { TabbedContent } from "@/components/notion/TabbedContent";
+import { ToggleBlock } from "@/components/notion/ToggleBlock";
 import { inlineLinksToMarkdown, safeHref } from "@/lib/inline-links";
 import { contactEmail } from "@/lib/contact/email";
 import { CONTACT_PATH } from "@/lib/site";
@@ -470,6 +471,18 @@ function renderBlock(
       );
     }
     case "heading_1":
+      if (data.is_toggleable === true) {
+        return (
+          <ToggleBlock
+            key={block.id}
+            headingId={block.id}
+            headingLevel={2}
+            title={text}
+          >
+            {nested}
+          </ToggleBlock>
+        );
+      }
       return (
         <h2
           key={block.id}
@@ -480,6 +493,18 @@ function renderBlock(
         </h2>
       );
     case "heading_2":
+      if (data.is_toggleable === true) {
+        return (
+          <ToggleBlock
+            key={block.id}
+            headingId={block.id}
+            headingLevel={3}
+            title={text}
+          >
+            {nested}
+          </ToggleBlock>
+        );
+      }
       return (
         <h3
           key={block.id}
@@ -490,6 +515,18 @@ function renderBlock(
         </h3>
       );
     case "heading_3":
+      if (data.is_toggleable === true) {
+        return (
+          <ToggleBlock
+            key={block.id}
+            headingId={block.id}
+            headingLevel={4}
+            title={text}
+          >
+            {nested}
+          </ToggleBlock>
+        );
+      }
       return (
         <h4
           key={block.id}
@@ -779,33 +816,9 @@ function renderBlock(
       );
     case "toggle":
       return (
-        <details
-          key={block.id}
-          className="notion-toggle rounded-lg border border-border"
-        >
-          <summary className="flex cursor-pointer list-none items-start gap-3 rounded-lg px-4 py-3 font-medium text-foreground marker:hidden hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring">
-            <svg
-              className="notion-toggle-chevron mt-1 size-4 shrink-0"
-              viewBox="0 0 16 16"
-              fill="none"
-              aria-hidden="true"
-            >
-              <path
-                d="m6 3 5 5-5 5"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-            <span className="min-w-0">{text}</span>
-          </summary>
-          {nested ? (
-            <div className="mx-4 mb-4 ml-6 space-y-3 border-l border-border pl-5 pt-2">
-              {nested}
-            </div>
-          ) : null}
-        </details>
+        <ToggleBlock key={block.id} title={text}>
+          {nested}
+        </ToggleBlock>
       );
     case "column_list":
       return (

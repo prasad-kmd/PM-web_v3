@@ -626,6 +626,8 @@
 /* ---------- Command reader ------------------------------------------------ */
 .rdr-app {
   position: relative;
+  display: flex;
+  flex-direction: column;
 }
 .rdr-progress {
   position: sticky;
@@ -674,7 +676,9 @@
    rail fades and slides out. */
 .rdr-grid {
   display: grid;
+  width: 100%;
   max-width: 1080px;
+  flex: 1 0 auto;
   grid-template-columns: minmax(0, 1fr) 232px;
   gap: 48px;
   margin: 0 auto;
@@ -990,6 +994,7 @@
   min-height: 34px;
   align-items: center;
   gap: 16px;
+  margin-top: auto;
   padding: 4px 22px;
   border-top: 1px solid var(--border);
   background: color-mix(in oklab, var(--muted) 56%, var(--card));

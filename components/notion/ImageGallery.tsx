@@ -13,7 +13,8 @@ export function ImageGallery({ children }: { children: ReactNode }) {
   const root = useRef<HTMLDivElement>(null);
   const opener = useRef<HTMLElement | null>(null);
   const [images, setImages] = useState<GalleryImage[]>([]);
-  const [index, setIndex] = useState<number | null>(null);
+  const [open, setOpen] = useState(false);
+  const [index, setIndex] = useState(0);
   const [failed, setFailed] = useState(false);
   const [zoom, setZoom] = useState(1);
   useEffect(() => {
@@ -73,6 +74,7 @@ export function ImageGallery({ children }: { children: ReactNode }) {
       setFailed(false);
       setZoom(1);
       setIndex(elements.indexOf(image));
+      setOpen(true);
     }
     node.addEventListener("click", activate);
     node.addEventListener("keydown", activate);
@@ -92,24 +94,25 @@ export function ImageGallery({ children }: { children: ReactNode }) {
     };
   }, [children]);
   function navigate(direction: number) {
-    setIndex((current) =>
-      current === null
-        ? null
-        : (current + direction + images.length) % images.length,
+    if (!images.length) return;
+    setIndex(
+      (current) => (current + direction + images.length) % images.length,
     );
     setFailed(false);
     setZoom(1);
   }
-  const image = index === null ? null : images[index];
+  const image = images[index] ?? null;
   return (
     <div ref={root} className="contents">
       {children}
       <MediaViewer
-        open={image !== null}
-        onOpenChange={(open) => {
-          if (!open) setIndex(null);
-        }}
-        title={`Image ${index === null ? 0 : index + 1} of ${images.length}`}
+        open={open && image !== null}
+        onOpenChange={setOpen}
+        title={
+          images.length
+            ? `Image ${index + 1} of ${images.length}`
+            : "Expanded image"
+        }
         finalFocus={opener}
         onNavigate={images.length > 1 ? navigate : undefined}
         actions={
@@ -169,7 +172,10 @@ export function ImageGallery({ children }: { children: ReactNode }) {
       >
         {image ? (
           <figure className="media-image-figure">
-            <div className="media-image-scroll">
+            <div
+              className="media-image-scroll"
+              data-zoomed={zoom > 1 ? "" : undefined}
+            >
               {failed ? (
                 <p role="status">
                   This image could not be loaded. Close the viewer and try
@@ -183,11 +189,20 @@ export function ImageGallery({ children }: { children: ReactNode }) {
                   src={image.src}
                   alt={image.alt}
                   onError={() => setFailed(true)}
-                  style={{
-                    width: `${zoom * 100}%`,
-                    maxWidth: "none",
-                    height: zoom === 1 ? "100%" : "auto",
-                  }}
+                  style={
+                    zoom === 1
+                      ? {
+                          maxWidth: "100%",
+                          maxHeight: "100%",
+                          width: "auto",
+                          height: "auto",
+                        }
+                      : {
+                          width: `${zoom * 100}%`,
+                          maxWidth: "none",
+                          height: "auto",
+                        }
+                  }
                 />
               )}
             </div>

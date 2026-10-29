@@ -26,6 +26,7 @@ export function MermaidDiagram({
   const [svg, setSvg] = useState("");
   const [error, setError] = useState(false);
   const [scale, setScale] = useState(1);
+  const [viewerScale, setViewerScale] = useState(1);
   const [copied, setCopied] = useState(false);
   const [expanded, setExpanded] = useState(false);
   const expandButton = useRef<HTMLButtonElement>(null);
@@ -117,7 +118,7 @@ export function MermaidDiagram({
               aria-label="Expand diagram"
               disabled={!svg || error}
               onClick={() => {
-                setScale(1);
+                setViewerScale(1);
                 setExpanded(true);
               }}
             >
@@ -176,8 +177,10 @@ export function MermaidDiagram({
               variant="ghost"
               size="sm"
               aria-label="Zoom diagram out"
-              disabled={scale <= 0.25}
-              onClick={() => setScale((value) => Math.max(0.25, value - 0.25))}
+              disabled={viewerScale <= 0.25}
+              onClick={() =>
+                setViewerScale((value) => Math.max(0.25, value - 0.25))
+              }
             >
               −
             </Button>
@@ -185,16 +188,18 @@ export function MermaidDiagram({
               variant="ghost"
               size="sm"
               aria-label="Fit diagram to view"
-              onClick={() => setScale(1)}
+              onClick={() => setViewerScale(1)}
             >
-              {Math.round(scale * 100)}%
+              {Math.round(viewerScale * 100)}%
             </Button>
             <Button
               variant="ghost"
               size="sm"
               aria-label="Zoom diagram in"
-              disabled={scale >= 4}
-              onClick={() => setScale((value) => Math.min(4, value + 0.25))}
+              disabled={viewerScale >= 4}
+              onClick={() =>
+                setViewerScale((value) => Math.min(4, value + 0.25))
+              }
             >
               +
             </Button>
@@ -204,7 +209,9 @@ export function MermaidDiagram({
           </>
         }
       >
-        {svg ? <DiagramCanvas svg={svg} scale={scale} fullscreen /> : null}
+        {svg ? (
+          <DiagramCanvas svg={svg} scale={viewerScale} fullscreen />
+        ) : null}
       </MediaViewer>
     </figure>
   );
@@ -263,8 +270,10 @@ function DiagramCanvas({
     .map(Number);
   const ratio =
     box && box.length === 4 && box[2] > 0 && box[3] > 0 ? box[2] / box[3] : 1.6;
+  const inset = fullscreen ? 88 : 32;
   const width =
-    Math.max(1, Math.min(size.width - 32, (size.height - 32) * ratio)) * scale;
+    Math.max(1, Math.min(size.width - inset, (size.height - inset) * ratio)) *
+    scale;
   return (
     <div
       ref={viewport}
