@@ -327,12 +327,12 @@ const PRIVACY_SECTIONS: readonly LegalSection[] = [
         </p>
         <p>
           You can delete or block cookies and site storage in your browser
-          settings. The <strong>Reset this workspace</strong> control in
-          Settings clears this site’s named cookies and local storage and
-          removes visited offline pages and images. Reading public content does
-          not require accepting optional preferences, but blocking storage can
-          prevent appearance, window layout, saved items, reader preferences,
-          offline reading and commenter prefill from persisting.
+          settings. The <strong>Reset preferences on this device</strong>{" "}
+          control in Settings clears this site’s named cookies and local storage
+          and removes visited offline pages and images. Reading public content
+          does not require accepting optional preferences, but blocking storage
+          can prevent appearance, window layout, saved items, reader
+          preferences, offline reading and commenter prefill from persisting.
         </p>
       </>
     ),
@@ -577,8 +577,8 @@ const PRIVACY_SECTIONS: readonly LegalSection[] = [
         <p>
           For browser-held data, the quickest route is to use{" "}
           <strong>Forget me</strong> in the comment composer,{" "}
-          <strong>Reset this workspace</strong> in Settings, or your browser’s
-          site-data controls.
+          <strong>Reset preferences on this device</strong> in Settings, or your
+          browser’s site-data controls.
         </p>
         <p>
           If you are in Sri Lanka, you may also contact the Data Protection

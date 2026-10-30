@@ -17,6 +17,8 @@ export type OgImageOptions = {
   date?: string | null;
   /** Reading time in minutes. */
   read?: number | null;
+  /** Published entry count for taxonomy collection cards. */
+  count?: number | null;
   /** Same-origin `/api/notion-image?…` cover; anything else is ignored. */
   cover?: string | null;
 };
@@ -37,6 +39,13 @@ export function ogImagePath(
   if (options.date) query.set("date", options.date.slice(0, 40));
   if (options.read && Number.isFinite(options.read))
     query.set("read", String(Math.round(options.read)));
+  if (
+    options.count !== null &&
+    options.count !== undefined &&
+    Number.isFinite(options.count) &&
+    options.count >= 0
+  )
+    query.set("count", String(Math.round(options.count)));
   if (options.cover?.startsWith("/api/notion-image?"))
     query.set("cover", options.cover);
   return `/api/og?${query}`;

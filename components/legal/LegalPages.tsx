@@ -43,7 +43,7 @@ function buildLegalMetadata({
   route: string;
 }): Metadata {
   const url = `${getSiteUrl()}${route}`;
-  const image = ogImageUrl(title, description, "pages");
+  const image = ogImageUrl(title, description, "legal");
   return {
     title,
     description,

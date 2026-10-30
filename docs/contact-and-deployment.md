@@ -12,7 +12,7 @@ Set these environment variables in your hosting provider, never in the repositor
 
 The form fails closed in production if the server secret is missing or verification fails. A missing public site key disables the form and shows the direct email link. Development falls back to Cloudflare's public always-pass test keys when keys are not supplied; use real keys in production.
 
-Name, email, subject and message are required; phone and one PDF, PNG, JPEG or TXT attachment are optional. Attachment size is capped at 8 MiB, and the complete request at 10 MiB. The server validates text, file type and basic file signatures, rejects known disposable addresses and profane content using the same style of checks as v2, checks a honeypot and verifies Turnstile before forwarding. If Telegram receives the text but the attachment fails, the UI reports partial success: send the file separately rather than retrying the whole message blindly.
+Name, email, subject and message are required; phone and one PDF, PNG, JPEG or TXT attachment are optional. Attachment size is capped at 8 MiB, and the complete request at 10 MiB. The server validates text, file type and basic file signatures, rejects known disposable addresses and profane content using the same style of checks as v2, checks a honeypot and verifies Turnstile before forwarding. If Telegram receives the text but the attachment fails, a toast reports partial success: send the file separately rather than retrying the whole message blindly.
 
 A best-effort limit of three submissions per minute per IP is held **in memory per server instance**. It is not a distributed rate limiter, is lost on restart and depends on trustworthy proxy IP headers. Configure host/platform-level rate limiting or a shared store for stronger production protection. No Telegram secret is sent to the client. The form is a contact channel, not authentication.
 
@@ -24,17 +24,30 @@ Everywhere else links to the contact page instead: the resume, Spotlight (“Con
 
 ## Discovery and routing
 
-`/sitemap.xml`, `/robots.txt`, `/llms.txt`, `/feed.xml`, and the compatible `/rss.xml` derive their content from published collections. Robots generally allow crawlers, disallow utility/private API paths, and explicitly allow public OG and Notion-image routes. `/api/og` generates 1200×630 per-page images (Node runtime; fonts and wallpapers are read from `public/og/` and traced into the function via `outputFileTracingIncludes`). The default design is **Editorial split**; set `OG_STYLE=window` (or pass `?style=window`) to switch to the **Desktop window** design. Entry covers are only accepted as same-origin `/api/notion-image?…` paths (3 s timeout, PNG/JPEG ≤ 4 MB) and fall back to the type's wallpaper. It does not use `og-custom`.
+`/sitemap.xml`, `/robots.txt`, `/llms.txt`, `/feed.xml`, and the compatible `/rss.xml` derive their content from published collections. The sitemap also includes the canonical legal routes, the category/tag indexes and taxonomy terms with at least two published entries; singleton term pages remain reachable but are `noindex, follow` and stay out of the sitemap. `/llms.txt` lists the core pages, legal documents, indexable category/tag topics and every published entry by collection; if any collection or the taxonomy index is incomplete, it is served `no-store` rather than cached as a partial index. Robots generally allow crawlers, disallow utility/private API paths, and explicitly allow public OG and Notion-image routes.
+
+`/api/og` generates 1200×630 per-page images (Node runtime; fonts and wallpapers are read from `public/og/` and traced into the function via `outputFileTracingIncludes`). The default design is **Editorial split**; set `OG_STYLE=window` (or pass `?style=window`) to switch to the **Desktop window** design. Legal pages use the dedicated `legal` type with the policy version and effective date; taxonomy indexes and terms use `categories`/`tags`, and term images receive their published-entry count through the `count` query value. Entry covers are only accepted as same-origin `/api/notion-image?…` paths (3 s timeout, PNG/JPEG ≤ 4 MB) and fall back to the type's wallpaper. It does not use `og-custom`.
 
 The application root provides server-rendered collection surfaces for search engines and no-JavaScript reading before handing off to the existing native window manager. Inactive routed windows use inert visual snapshots and re-render their real route when focused; URLs, content and metadata follow the active window. Form state in an inactive routed window may be reset when it is re-opened. Bookmarks and reading settings are local to the browser.
 
 Production keeps the existing `X-Frame-Options: DENY` header. It is omitted in development only so the development server can be shown in an embedded workspace preview.
 
-## Apply and validate
+## Deploy and validate
 
-The accompanying ZIP is an overlay for the v3 base revision named in `PATCH-APPLY.md`. Back up your working tree, extract the archive at the repository root (retaining paths), install with the updated lockfile, configure `.env.local`, and run `pnpm build` plus your normal tests. No file deletion is needed. Do not overlay a local secrets file.
+Use Node 22.13+ and the repository-pinned pnpm 11.9.0. Configure `.env.local` (or the host's secret store), then run:
 
-This implementation passed TypeScript (`tsc --noEmit`); an initial development-server HTTP check returned 200 with server-rendered `/projects` content and a cross-origin contact request was rejected with 403. Isolated checks with mocked data covered Notion published-only filtering and pagination, nested blocks, listing filters and RSS escaping. The OG handler generated 1200×630 PNGs for both designs in a development server. The broader HTTP smoke check stalled in the constrained environment and was stopped. A production build, browser/window interaction, real Notion data, public metadata images, real RSS/sitemap content and live Telegram/Turnstile delivery **still require your validation**. In particular, verify Back/Forward, multiple window focus, same-collection navigation, resized windows, mobile layout, and behavior with JavaScript disabled.
+```bash
+pnpm install --frozen-lockfile
+pnpm typecheck
+pnpm lint
+pnpm format:check
+pnpm build
+pnpm start
+```
+
+Production builds require `NEXT_PUBLIC_SITE_URL` to be the public HTTPS origin. The PWA is enabled by default in production; set `NEXT_PUBLIC_PWA=off` only when using the rollback procedure in [PWA and boot](./pwa-and-boot.md).
+
+Before promoting a deployment, smoke-test `/`, one entry from each collection, `/categories`, one term page, `/legal` and each legal document, `/contact`, `/sitemap.xml`, `/robots.txt`, `/llms.txt`, `/feed.xml`, `/manifest.webmanifest` and `/sw.js`. Verify Back/Forward, multiple-window focus, same-collection navigation, resized windows, mobile layout, JavaScript-disabled reading, a real contact submission (including Turnstile and Telegram delivery), representative OG images in both styles, and the PWA/offline checklist in [PWA and boot](./pwa-and-boot.md).
 
 ## Animation and icons
 

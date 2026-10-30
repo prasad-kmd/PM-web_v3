@@ -1,6 +1,7 @@
 import { ImageResponse } from "next/og";
 import type { NextRequest } from "next/server";
 import { CONTENT_META, type ContentType } from "@/lib/content-types";
+import { LEGAL_EFFECTIVE_DATE, LEGAL_VERSION } from "@/lib/legal";
 import { OG_IMAGE_SIZE } from "@/lib/content-metadata";
 import { resumeProfile } from "@/lib/resume-data";
 import { getSiteUrl } from "@/lib/site";
@@ -26,9 +27,10 @@ import { WindowCard } from "@/lib/og/WindowCard";
  * Open Graph images (1200 × 630), inspired by v1's generator.
  *
  * Query: `title`, `description`, `type` (projects | blog | articles |
- * tutorials | glossary | news | pages | default), `kind` (detail | collection |
- * home), `date`, `read`, `cover` (same-origin `/api/notion-image?…` only),
- * `style` (editorial | window, default from `OG_STYLE`, else editorial).
+ * tutorials | glossary | news | legal | categories | tags | pages | default),
+ * `kind` (detail | collection | home), `date`, `read`, `count` (taxonomy
+ * entry count), `cover` (same-origin `/api/notion-image?…` only), `style`
+ * (editorial | window, default from `OG_STYLE`, else editorial).
  *
  * Node runtime: fonts and wallpapers are read from `public/` on disk.
  */
@@ -50,6 +52,7 @@ export async function GET(request: NextRequest) {
   const theme = OG_TYPES[type];
   const collection =
     type in CONTENT_META ? CONTENT_META[type as ContentType] : null;
+  const isTaxonomy = type === "categories" || type === "tags";
 
   let title = cleanText(params.get("title"), 120) || "Prasad M.";
   let description = cleanText(params.get("description"), 160);
@@ -59,6 +62,13 @@ export async function GET(request: NextRequest) {
     Number.isFinite(readValue) && readValue > 0 && readValue < 600
       ? `${readValue} min read`
       : "";
+  const countValue = Number.parseInt(params.get("count") || "", 10);
+  const count =
+    Number.isFinite(countValue) && countValue >= 0 && countValue <= 1_000_000
+      ? countValue
+      : null;
+  const countLabel =
+    count === null ? "" : `${count} ${count === 1 ? "entry" : "entries"}`;
 
   let eyebrow: string = theme.singular;
   let facts: OgCardData["facts"] = [];
@@ -75,12 +85,21 @@ export async function GET(request: NextRequest) {
     ];
     meta = [resumeProfile.location];
   } else if (kind === "collection") {
-    eyebrow = "Collection";
+    eyebrow = isTaxonomy ? "Browse by topic" : "Collection";
     facts = [
       { label: "Section", value: theme.collection },
-      ...(collection ? [{ label: "Format", value: collection.eyebrow }] : []),
+      ...(isTaxonomy
+        ? [{ label: "Scope", value: "All collections" }]
+        : collection
+          ? [{ label: "Format", value: collection.eyebrow }]
+          : []),
+      ...(countLabel ? [{ label: "Entries", value: countLabel }] : []),
     ];
-    meta = collection ? [collection.eyebrow] : [];
+    meta = isTaxonomy
+      ? ["All collections", countLabel].filter(Boolean)
+      : collection
+        ? [collection.eyebrow]
+        : [];
   } else if (kind === "detail") {
     facts = [
       { label: "Type", value: theme.singular },
@@ -88,6 +107,22 @@ export async function GET(request: NextRequest) {
       ...(read ? [{ label: "Reading time", value: read }] : []),
     ];
     meta = [date, read].filter(Boolean);
+  } else if (type === "legal") {
+    eyebrow = "Legal & privacy";
+    facts = [
+      { label: "Section", value: theme.collection },
+      { label: "Version", value: LEGAL_VERSION },
+      { label: "Effective", value: LEGAL_EFFECTIVE_DATE },
+    ];
+    meta = [`Version ${LEGAL_VERSION}`, LEGAL_EFFECTIVE_DATE];
+  } else if (isTaxonomy) {
+    eyebrow = "Browse by topic";
+    facts = [
+      { label: "Section", value: theme.collection },
+      { label: "Scope", value: "All collections" },
+      ...(countLabel ? [{ label: "Entries", value: countLabel }] : []),
+    ];
+    meta = ["All collections", countLabel].filter(Boolean);
   } else {
     eyebrow = "Workspace";
     facts = [

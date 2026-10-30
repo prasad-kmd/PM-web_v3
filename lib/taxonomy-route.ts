@@ -17,7 +17,7 @@ export type TaxonomyTermParams = Promise<{ slug: string }>;
 export function taxonomyIndexMetadata(kind: TaxonomyKind): Metadata {
   const meta = TAXONOMY_META[kind];
   const url = `${getSiteUrl()}/${kind}`;
-  const image = ogImageUrl(meta.label, meta.description, "pages", {
+  const image = ogImageUrl(meta.label, meta.description, kind, {
     kind: "collection",
   });
   return {
@@ -58,8 +58,9 @@ export async function taxonomyTermMetadata(
   const title = `${term.label} · ${meta.label}`;
   const description = `${term.count} published ${term.count === 1 ? "entry" : "entries"} filed under the ${meta.singular.toLowerCase()} “${term.label}”, across every collection in the workspace.`;
   const url = `${getSiteUrl()}/${kind}/${encodeURIComponent(term.slug)}`;
-  const image = ogImageUrl(term.label, description, "pages", {
+  const image = ogImageUrl(term.label, description, kind, {
     kind: "collection",
+    count: term.count,
   });
   return {
     title,

@@ -6,6 +6,8 @@ import {
   News01Icon,
   NewspaperIcon,
   Notebook01Icon,
+  Shield01Icon,
+  Tag01Icon,
 } from "@hugeicons/core-free-icons";
 
 /** OG image types accepted by `/api/og?type=`. Unknown values fall back to `default`. */
@@ -51,6 +53,27 @@ export const OG_TYPES = {
     accent: "#e0a43b",
     wallpaper: "news",
     icon: NewspaperIcon,
+  },
+  legal: {
+    singular: "Legal document",
+    collection: "Legal",
+    accent: "#6366f1",
+    wallpaper: "pages",
+    icon: Shield01Icon,
+  },
+  categories: {
+    singular: "Category",
+    collection: "Categories",
+    accent: "#3d6fe0",
+    wallpaper: "projects",
+    icon: Folder01Icon,
+  },
+  tags: {
+    singular: "Tag",
+    collection: "Tags",
+    accent: "#19a4b8",
+    wallpaper: "tutorials",
+    icon: Tag01Icon,
   },
   pages: {
     singular: "Page",
