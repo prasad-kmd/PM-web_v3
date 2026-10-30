@@ -6,6 +6,12 @@
       "sourceType": "github",
       "skillPath": "skills/animate-ui/SKILL.md",
       "computedHash": "72a6e281f5099c68e3728cc506725c3561d39ae65b42e7480e67c2ff04961908"
+    },
+    "pwa-development": {
+      "source": "alinaqi/maggy",
+      "sourceType": "github",
+      "skillPath": "skills/pwa-development/SKILL.md",
+      "computedHash": "2219041ce92f6361ba77eb06c9a927dc7a1ba48f40ff5132321a29c4154ebc7a"
     }
   }
 }
