@@ -14,6 +14,7 @@ import {
   Image02Icon,
   Invoice02Icon,
   ChartLineData02Icon,
+  Tag01Icon,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -35,6 +36,8 @@ function ShortcutGlyph({ appId }: { appId: AppId }) {
           tutorials: BookOpen01Icon,
           glossary: Book02Icon,
           news: NewspaperIcon,
+          categories: Folder01Icon,
+          tags: Tag01Icon,
           bookmarks: Bookmark01Icon,
           contact: Mail01Icon,
           "og-studio": Image02Icon,

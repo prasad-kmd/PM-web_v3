@@ -1,12 +1,14 @@
 import type { MetadataRoute } from "next";
 import { CONTENT_TYPES, getContentIndex } from "@/lib/notion-cms";
 import { getSiteUrl } from "@/lib/site";
+import { TAXONOMY_INDEX_MIN_ITEMS, getTaxonomyIndex } from "@/lib/taxonomy";
 export const revalidate = 3600;
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const base = getSiteUrl();
-  const indexes = await Promise.all(
-    CONTENT_TYPES.map((type) => getContentIndex(type)),
-  );
+  const [indexes, taxonomy] = await Promise.all([
+    Promise.all(CONTENT_TYPES.map((type) => getContentIndex(type))),
+    getTaxonomyIndex(),
+  ]);
   const staticPaths: MetadataRoute.Sitemap = [
     { url: base, changeFrequency: "weekly", priority: 1 },
     { url: `${base}/resume`, changeFrequency: "monthly", priority: 0.7 },
@@ -16,9 +18,26 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: "weekly" as const,
       priority: 0.8,
     })),
+    { url: `${base}/categories`, changeFrequency: "weekly", priority: 0.5 },
+    { url: `${base}/tags`, changeFrequency: "weekly", priority: 0.5 },
   ];
   return [
     ...staticPaths,
+    // Only terms with enough entries to be a useful landing page; singleton
+    // term pages stay reachable from entries but out of the sitemap/index.
+    ...(["categories", "tags"] as const).flatMap((kind) =>
+      taxonomy.terms[kind]
+        .filter((term) => term.count >= TAXONOMY_INDEX_MIN_ITEMS)
+        .map((term) => {
+          const time = Date.parse(term.lastModified || "");
+          return {
+            url: `${base}/${kind}/${encodeURIComponent(term.slug)}`,
+            ...(Number.isFinite(time) ? { lastModified: new Date(time) } : {}),
+            changeFrequency: "monthly" as const,
+            priority: 0.5,
+          };
+        }),
+    ),
     ...indexes.flatMap((index) =>
       index.items.map((item) => {
         const time = Date.parse(item.lastEditedTime || item.date || "");

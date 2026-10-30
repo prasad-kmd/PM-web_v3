@@ -21,6 +21,7 @@ import {
   ArrowUp01Icon,
   Bookmark01Icon,
   Calendar03Icon,
+  Folder01Icon,
   GridViewIcon,
   ListViewIcon,
   Search01Icon,
@@ -267,6 +268,27 @@ function CollectionBrowserView({
               aria-hidden
             />
             <span>Saved</span>
+          </Link>
+        </nav>
+        <p className="lib-group">Browse by topic</p>
+        <nav className="lib-sources" aria-label="Browse by topic">
+          <Link href="/categories" className="lib-source">
+            <HugeiconsIcon
+              icon={Folder01Icon}
+              size={15}
+              strokeWidth={1.8}
+              aria-hidden
+            />
+            <span>All categories</span>
+          </Link>
+          <Link href="/tags" className="lib-source">
+            <HugeiconsIcon
+              icon={Tag01Icon}
+              size={15}
+              strokeWidth={1.8}
+              aria-hidden
+            />
+            <span>All tags</span>
           </Link>
         </nav>
         {listing.categories.length ? (

@@ -25,6 +25,7 @@ import { collectLinks } from "@/lib/inline-links";
 import { entryOgImagePath } from "@/lib/og/url";
 import { WindowBreadcrumb } from "@/components/system/WindowBreadcrumb";
 import { AiAssistedDialog } from "./AiAssistedDialog";
+import { TaxonomyChip, TaxonomyGroups } from "./TaxonomyChips";
 import { DiscussionProvider } from "@/components/comments/DiscussionContext";
 import { DiscussionSheet } from "@/components/comments/DiscussionSheet";
 import { DiscussionToolbarButton } from "@/components/comments/DiscussionToolbarButton";
@@ -231,9 +232,14 @@ export async function ContentDetailPage({
               <article className="rdr-doc">
                 <header className="rdr-head">
                   <p className="rdr-chip">
-                    <span>
-                      {feed ? meta.label : item.categories[0] || meta.singular}
-                    </span>
+                    {feed || !item.categories[0] ? (
+                      <span>{feed ? meta.label : meta.singular}</span>
+                    ) : (
+                      <TaxonomyChip
+                        kind="categories"
+                        label={item.categories[0]}
+                      />
+                    )}
                     {item.aiAssisted ? (
                       <AiAssistedDialog contentTitle={item.title} />
                     ) : null}
@@ -345,13 +351,11 @@ export async function ContentDetailPage({
                 <DiscussionTrigger />
 
                 <footer className="rdr-end">
-                  {topics.length ? (
-                    <ul className="rdr-topics" aria-label="Topics">
-                      {topics.map((topic) => (
-                        <li key={topic}>{topic}</li>
-                      ))}
-                    </ul>
-                  ) : null}
+                  <TaxonomyGroups
+                    categories={item.categories}
+                    tags={item.tags}
+                    technical={item.technical}
+                  />
                   {item.author ? (
                     <div className="rdr-author">
                       {item.author.avatar ? (

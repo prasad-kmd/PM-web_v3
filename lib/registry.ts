@@ -7,6 +7,8 @@ export type AppId =
   | "tutorials"
   | "glossary"
   | "news"
+  | "categories"
+  | "tags"
   | "bookmarks"
   | "contact"
   | "og-studio"
@@ -78,6 +80,22 @@ export const APP_REGISTRY: Record<AppId, AppMeta> = {
     description: "Short updates from engineering, technology, and research",
     icon: "/icons/fluent-color/file.svg",
     route: "/news",
+  },
+  categories: {
+    id: "categories",
+    title: "Categories",
+    kind: "Browse by category",
+    description: "Content grouped by category across every collection",
+    icon: "/icons/fluent-color/folder.svg",
+    route: "/categories",
+  },
+  tags: {
+    id: "tags",
+    title: "Tags",
+    kind: "Browse by tag",
+    description: "Content grouped by tag and technical topic",
+    icon: "/icons/fluent-color/file.svg",
+    route: "/tags",
   },
   bookmarks: {
     id: "bookmarks",
@@ -158,6 +176,8 @@ const ROUTED_APPS: AppId[] = [
   "tutorials",
   "glossary",
   "news",
+  "categories",
+  "tags",
   "bookmarks",
   "contact",
 ];

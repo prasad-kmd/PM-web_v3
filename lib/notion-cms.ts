@@ -5,6 +5,7 @@ import { cache } from "react";
 
 import { CONTENT_META, CONTENT_TYPES, type ContentType } from "./content-types";
 import { resolveInlineLinks, stripInlineLinks } from "./inline-links";
+import { slugify } from "./slugify";
 
 export { CONTENT_META, CONTENT_TYPES, type ContentType };
 export { formatContentDate } from "./content-types";
@@ -201,17 +202,6 @@ function pageCoverUrl(cover: unknown): string | null {
   const external = asRecord(record.external);
   const url = file?.url ?? external?.url;
   return typeof url === "string" ? url : null;
-}
-
-function slugify(value: string): string {
-  return value
-    .normalize("NFKD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "")
-    .slice(0, 120);
 }
 
 function readStatus(properties: Record<string, unknown>): string {

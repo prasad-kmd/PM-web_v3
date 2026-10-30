@@ -24,6 +24,7 @@ import {
   Settings02Icon,
   SparklesIcon,
   SunMediumIcon,
+  Tag01Icon,
   UserCircleIcon,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
@@ -79,6 +80,8 @@ const APP_ICON: Record<AppId, typeof Folder01Icon> = {
   tutorials: BookOpen01Icon,
   glossary: Archive02Icon,
   news: NewsIcon,
+  categories: Folder01Icon,
+  tags: Tag01Icon,
   bookmarks: Bookmark01Icon,
   contact: Mail01Icon,
   settings: Settings02Icon,

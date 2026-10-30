@@ -17,10 +17,13 @@ export function describeRoute(pathname: string | null | undefined): {
   }
   const segments = (pathname ?? "").split("/").filter(Boolean);
   const isCollection = CONTENT_TYPES.some((type) => type === segments[0]);
-  const layout: LoadingLayout = !isCollection
-    ? "page"
-    : segments.length > 1
-      ? "reader"
-      : "listing";
+  const isTaxonomy = segments[0] === "categories" || segments[0] === "tags";
+  const layout: LoadingLayout = isTaxonomy
+    ? "listing"
+    : !isCollection
+      ? "page"
+      : segments.length > 1
+        ? "reader"
+        : "listing";
   return { label, layout };
 }
