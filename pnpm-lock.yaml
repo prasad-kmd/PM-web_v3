@@ -23,6 +23,9 @@ importers:
       '@hugeicons/react':
         specifier: ^1.1.10
         version: 1.1.10(react@19.2.8)
+      '@lottiefiles/dotlottie-web':
+        specifier: ^0.80.0
+        version: 0.80.0
       '@marsidev/react-turnstile':
         specifier: ^1.6.1
         version: 1.6.3(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
@@ -435,6 +438,10 @@ packages:
 
   '@jridgewell/trace-mapping@0.3.31':
     resolution: {integrity: sha512-zzNR+SdQSDJzc8joaeP8QQoCQr8NuYx2dIIytl1QeBEZHJ9uW6hebsrYgbz8hJwUQao3TWCMtmfV8Nu1twOLAw==}
+
+  '@lottiefiles/dotlottie-web@0.80.0':
+    resolution: {integrity: sha512-M00APgOJfP6xPZ3kAzZAUNATxluFiMU0wD3asp6HQSXDX8qLzSDh/Jmqbo0H7+WcqfpQkN8WYBu3aOzm2y/b4g==}
+    engines: {node: '>=18.17.0', npm: '>=9.5.0'}
 
   '@marsidev/react-turnstile@1.6.3':
     resolution: {integrity: sha512-JdMMArjEVDMs5jnGMBeXl3y6dkMuIXPG4Tu88Uo2Rkf8ujEw/iJ2Yp/3n4kDF3BjJ+bJB9WC19LPWc5a7/4srA==}
@@ -1983,6 +1990,8 @@ snapshots:
     dependencies:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.6.0
+
+  '@lottiefiles/dotlottie-web@0.80.0': {}
 
   '@marsidev/react-turnstile@1.6.3(react-dom@19.2.8(react@19.2.8))(react@19.2.8)':
     dependencies:
