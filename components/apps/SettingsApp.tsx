@@ -296,9 +296,7 @@ function AboutTab() {
   async function handlePwaInstall() {
     if (pwaInstall.installed || pwaInstall.installing) return;
     const outcome = await pwaInstall.promptInstall();
-    if (outcome === "accepted") {
-      toast.success("Installing workspace…");
-    } else if (outcome === "ios") {
+    if (outcome === "ios") {
       toast("Install from Share", {
         description: "Tap Share, then choose Add to Home Screen.",
       });

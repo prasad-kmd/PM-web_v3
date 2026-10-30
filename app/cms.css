@@ -227,17 +227,6 @@
   font-size: 12px;
   line-height: 1.6;
 }
-.contact-feedback {
-  margin: 0;
-  padding: 10px 12px;
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  background: var(--muted);
-  font-size: 12px;
-}
-.contact-feedback.is-error {
-  border-color: var(--destructive);
-}
 .contact-actions {
   display: flex;
   flex-wrap: wrap;

@@ -2511,6 +2511,11 @@ input:focus-visible {
     padding-inline: 7px;
   }
 
+  .menu-bar-explore-trigger,
+  .menu-bar-window-trigger {
+    display: none;
+  }
+
   .menu-bar-clock {
     max-width: 132px;
     overflow: hidden;

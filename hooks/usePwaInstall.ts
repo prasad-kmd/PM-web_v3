@@ -80,7 +80,7 @@ function initializePwaInstallCapture() {
 
   window.addEventListener("beforeinstallprompt", ((event: Event) => {
     // Keep Chrome's mini-infobar out of the way; the workspace exposes its
-    // own quiet install actions in the profile menu and Settings.
+    // own desktop install shortcut and a Settings action.
     event.preventDefault();
     deferredPrompt = event as BeforeInstallPromptEvent;
     refreshStatus();

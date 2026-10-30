@@ -1,5 +1,41 @@
-/* Phase 4 PWA — one-time install hint. The offline document carries its
-   own inline styles because it must not depend on this stylesheet. */
+/* Phase 4 PWA — desktop install shortcut and one-time install hint. The
+   offline document carries its own inline styles because it must not depend
+   on this stylesheet. */
+.desktop-install-shortcut:disabled {
+  cursor: wait;
+}
+
+.desktop-install-icon {
+  position: relative;
+  overflow: visible;
+}
+
+.desktop-install-icon img {
+  display: block;
+  width: 30px;
+  height: 30px;
+  border-radius: 7px;
+}
+
+.desktop-install-badge {
+  position: absolute;
+  right: -5px;
+  bottom: -5px;
+  display: grid;
+  width: 16px;
+  height: 16px;
+  place-items: center;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--primary);
+  color: var(--primary-foreground);
+}
+
+.desktop-install-badge svg {
+  width: 10px;
+  height: 10px;
+}
+
 .pwa-install-hint {
   position: fixed;
   left: max(16px, env(safe-area-inset-left));

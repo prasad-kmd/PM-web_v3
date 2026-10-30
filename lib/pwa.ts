@@ -16,6 +16,7 @@ export const PWA_CACHE_NAMES = [
 ] as const;
 
 export const PWA_INSTALL_HINT_KEY = "pm-pwa-install-hint-v1";
+export const PWA_INSTALL_TOAST_ID = "pm-pwa-install";
 export const PWA_UPDATE_TOAST_ID = "pm-pwa-update";
 
 export type PwaCacheSummary = {

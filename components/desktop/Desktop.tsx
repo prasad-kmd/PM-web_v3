@@ -37,6 +37,7 @@ import { getWallpaper } from "@/lib/wallpapers";
 import { CONTENT_TYPES } from "@/lib/content-types";
 import { BootSequence } from "@/components/system/BootSequence";
 import { InstallPrompt } from "@/components/system/InstallPrompt";
+import { PwaInstallToasts } from "@/components/system/PwaInstallToasts";
 import { ServiceWorkerRegistrar } from "@/components/system/ServiceWorkerRegistrar";
 import { LoadingView } from "@/components/system/states/LoadingView";
 import type { Area } from "@/lib/windows";
@@ -502,6 +503,7 @@ export function Desktop({ children }: { children?: ReactNode }) {
         }}
       />
       <ServiceWorkerRegistrar />
+      <PwaInstallToasts />
       <InstallPrompt />
       <CommandPalette
         open={paletteOpen}

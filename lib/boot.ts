@@ -9,6 +9,12 @@
  * - `short`: the proposal-05 status card for refreshes. Operating-system
  *   reduced-motion requests also use this shorter form; CSS suppresses the
  *   movement while the mandatory opening screen remains visible.
+ *
+ * Initial runs are readiness-driven: they begin exiting as soon as Desktop
+ * reports ready instead of waiting for an artificial minimum duration. The
+ * `maxMs` values are only safety caps. Settings Preview is the exception—it
+ * uses `previewMs` so the deliberate replay can play the normal CSS timeline
+ * even though the already-open Desktop is ready immediately.
  */
 export type BootVariant = "full" | "short";
 
@@ -17,10 +23,10 @@ export const BOOT_PREVIEW_EVENT = "pm:boot-preview";
 
 export const BOOT_TIMING: Record<
   BootVariant,
-  { minMs: number; maxMs: number; exitMs: number }
+  { previewMs: number; maxMs: number; exitMs: number }
 > = {
-  full: { minMs: 2000, maxMs: 2600, exitMs: 350 },
-  short: { minMs: 1200, maxMs: 1700, exitMs: 250 },
+  full: { previewMs: 2000, maxMs: 2600, exitMs: 350 },
+  short: { previewMs: 1100, maxMs: 1700, exitMs: 250 },
 };
 
 export function resolveBootVariant(

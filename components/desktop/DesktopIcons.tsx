@@ -21,6 +21,7 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { APP_REGISTRY, DESKTOP_APPS, type AppId } from "@/lib/registry";
 import { ShortcutContextMenu } from "./ContextMenu";
+import { DesktopInstallShortcut } from "./DesktopInstallShortcut";
 
 type Marquee = { x1: number; y1: number; x2: number; y2: number };
 
@@ -129,6 +130,7 @@ export function DesktopIcons({ onOpen }: { onOpen: (appId: AppId) => void }) {
 
   return (
     <div className="desktop-grid" ref={layerRef} onPointerDown={beginMarquee}>
+      <DesktopInstallShortcut />
       {DESKTOP_APPS.map((appId) => {
         const meta = APP_REGISTRY[appId];
         const label = meta.title;

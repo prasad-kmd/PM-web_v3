@@ -2,6 +2,9 @@
 import Link from "next/link";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { Turnstile, type TurnstileInstance } from "@marsidev/react-turnstile";
+import { ArrowUpRight01Icon } from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { toast } from "sonner";
 import { Field, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -14,8 +17,6 @@ export function ContactForm({ siteKey }: { siteKey: string }) {
   const [token, setToken] = useState(""),
     [busy, setBusy] = useState(false),
     [length, setLength] = useState(0),
-    [error, setError] = useState(""),
-    [success, setSuccess] = useState(""),
     [errors, setErrors] = useState<Errors>({});
   // Links elsewhere on the site (e.g. "Send a correction") open
   // /contact?subject=… so the visitor lands with the subject filled in.
@@ -35,16 +36,14 @@ export function ContactForm({ siteKey }: { siteKey: string }) {
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (busy) return;
-    setError("");
-    setSuccess("");
     if (!token) {
-      setError("Complete the security check before sending.");
+      toast.error("Complete the security check before sending.");
       return;
     }
     const data = new FormData(event.currentTarget),
       file = data.get("attachment");
     if (file instanceof File && file.size > 8 * 1024 * 1024) {
-      setError("Attachments must be under 8 MB.");
+      toast.error("Attachments must be under 8 MB.");
       return;
     }
     data.set("turnstileToken", token);
@@ -60,17 +59,17 @@ export function ContactForm({ siteKey }: { siteKey: string }) {
         warning?: string;
       };
       if (!response.ok || !result.ok) {
-        setError(result.error || "Your message could not be sent.");
+        toast.error(result.error || "Your message could not be sent.");
         return;
       }
-      setSuccess(
+      toast.success(
         result.warning || "Message delivered. Thank you for getting in touch.",
       );
       formRef.current?.reset();
       setLength(0);
       setErrors({});
     } catch {
-      setError(
+      toast.error(
         "Connection interrupted. Please try again or use the direct email link.",
       );
     } finally {
@@ -251,7 +250,7 @@ export function ContactForm({ siteKey }: { siteKey: string }) {
             onExpire={() => setToken("")}
             onError={() => {
               setToken("");
-              setError("Security check failed. Please retry.");
+              toast.error("Security check failed. Please retry.");
             }}
             options={{ theme: "auto" }}
           />
@@ -262,20 +261,21 @@ export function ContactForm({ siteKey }: { siteKey: string }) {
           </p>
         )}
       </div>
-      {error ? (
-        <p className="contact-feedback is-error" role="alert">
-          {error}
-        </p>
-      ) : null}
-      {success ? (
-        <p className="contact-feedback" role="status">
-          {success}
-        </p>
-      ) : null}
       <div className="contact-actions">
         <span>Fields marked * are required.</span>
-        <Button type="submit" disabled={busy || !siteKey || !token}>
-          {busy ? "Sending…" : "Send message"} <span aria-hidden="true">↗</span>
+        <Button
+          type="submit"
+          size="sm"
+          loading={busy}
+          disabled={!siteKey || !token}
+        >
+          Send message
+          <HugeiconsIcon
+            icon={ArrowUpRight01Icon}
+            strokeWidth={2}
+            size={13}
+            aria-hidden
+          />
         </Button>
       </div>
     </form>

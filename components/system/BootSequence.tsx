@@ -46,6 +46,7 @@ export function BootSequence({ ready }: { ready: boolean }) {
   const variantRef = useRef<BootVariant>("full");
   const readyRef = useRef(ready);
   const startedAtRef = useRef(0);
+  const previewRunRef = useRef(false);
   const timersRef = useRef<number[]>([]);
 
   phaseRef.current = phase;
@@ -101,8 +102,14 @@ export function BootSequence({ ready }: { ready: boolean }) {
     }
 
     later(() => beginExit(), timing.maxMs - elapsed);
-    if (readyRef.current) {
-      later(() => beginExit(), timing.minMs - elapsed);
+    if (previewRunRef.current) {
+      // A deliberate Settings replay plays the normal CSS timeline even
+      // though Desktop is already ready.
+      later(() => beginExit(), timing.previewMs - elapsed);
+    } else if (readyRef.current) {
+      // Initial boot has no artificial minimum hold: exit as soon as the
+      // Desktop reports that it is ready.
+      later(() => beginExit(), 0);
     }
   }, [beginExit, later]);
 
@@ -110,11 +117,15 @@ export function BootSequence({ ready }: { ready: boolean }) {
     (
       nextVariant: BootVariant,
       startedAt: number,
-      restartAnimations = false,
+      {
+        restartAnimations = false,
+        isPreview = false,
+      }: { restartAnimations?: boolean; isPreview?: boolean } = {},
     ) => {
       clearTimers();
       variantRef.current = nextVariant;
       startedAtRef.current = startedAt;
+      previewRunRef.current = isPreview;
       phaseRef.current = "playing";
       setVariant(nextVariant);
       setStatus("starting");
@@ -162,12 +173,10 @@ export function BootSequence({ ready }: { ready: boolean }) {
 
   useEffect(() => {
     readyRef.current = ready;
-    if (!ready || phaseRef.current !== "playing") return;
-    const timing = BOOT_TIMING[variantRef.current];
-    later(
-      () => beginExit(),
-      timing.minMs - (performance.now() - startedAtRef.current),
-    );
+    if (!ready || phaseRef.current !== "playing" || previewRunRef.current) {
+      return;
+    }
+    later(() => beginExit(), 0);
   }, [beginExit, later, ready]);
 
   useEffect(() => {
@@ -180,7 +189,10 @@ export function BootSequence({ ready }: { ready: boolean }) {
       const root = document.documentElement;
       root.dataset.bootState = "pending";
       root.dataset.bootVariant = nextVariant;
-      startRun(nextVariant, performance.now(), true);
+      startRun(nextVariant, performance.now(), {
+        restartAnimations: true,
+        isPreview: true,
+      });
     };
 
     window.addEventListener(BOOT_PREVIEW_EVENT, onPreview);
