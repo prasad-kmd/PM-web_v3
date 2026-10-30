@@ -41,6 +41,7 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { CookieNoticeButton } from "@/components/legal/CookieNotice";
 import { useAppearance } from "@/lib/appearance";
+import { requestBootPreview } from "@/lib/boot";
 import { BUILD_INFO, STACK_INFO } from "@/lib/build-info";
 import { COOKIE_COMMENTER, getClientCookie } from "@/lib/cookies";
 import {
@@ -745,6 +746,37 @@ export function SettingsApp() {
                     </span>
                   </button>
                 ))}
+              </div>
+            </div>
+
+            <div className="settings-group">
+              <p className="settings-group-title">Opening animation</p>
+              <div className="settings-card settings-control-card">
+                <div className="settings-control-row">
+                  <div className="settings-option-copy">
+                    <span className="settings-option-title">
+                      Workspace opening
+                    </span>
+                    <span className="settings-option-description">
+                      Plays automatically when the home workspace opens or
+                      refreshes.
+                    </span>
+                  </div>
+
+                  <button
+                    type="button"
+                    className="settings-action-btn"
+                    onClick={requestBootPreview}
+                    aria-label="Preview opening animation"
+                  >
+                    Preview
+                    <HugeiconsIcon
+                      icon={ArrowRight01Icon}
+                      strokeWidth={2}
+                      size={13}
+                    />
+                  </button>
+                </div>
               </div>
             </div>
 

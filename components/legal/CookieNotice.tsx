@@ -14,6 +14,7 @@ import { Shield01Icon, Settings02Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { useAdminAuth } from "@/components/admin/AdminAuthProvider";
 import { Button } from "@/components/ui/button";
+import { BOOT_DONE_EVENT } from "@/lib/boot";
 import {
   COOKIE_COOKIE_NOTICE,
   getClientCookie,
@@ -80,6 +81,7 @@ export function CookieNotice({
   const { lockOpen } = useAdminAuth();
   const [visible, setVisible] = useState(false);
   const [forcedOpen, setForcedOpen] = useState(false);
+  const [bootSettled, setBootSettled] = useState(false);
   const dismissedForPageSessionRef = useRef(false);
   const titleId = useId();
   const descriptionId = useId();
@@ -89,16 +91,36 @@ export function CookieNotice({
   const isLegalRoute = pathname ? LEGAL_ROUTE_SET.has(pathname) : false;
 
   useEffect(() => {
-    const open = () => {
-      dismissedForPageSessionRef.current = false;
-      setForcedOpen(true);
-      setVisible(true);
+    const syncBootState = () => {
+      const state = document.documentElement.dataset.bootState;
+      setBootSettled(!state || state === "done" || state === "inactive");
     };
-    window.addEventListener(COOKIE_NOTICE_OPEN_EVENT, open);
-    return () => window.removeEventListener(COOKIE_NOTICE_OPEN_EVENT, open);
+    syncBootState();
+    window.addEventListener(BOOT_DONE_EVENT, syncBootState);
+    // The layout script also has a hard failsafe; this final read keeps the
+    // notice from waiting forever if an event was missed during hydration.
+    const fallback = window.setTimeout(syncBootState, 3800);
+    return () => {
+      window.removeEventListener(BOOT_DONE_EVENT, syncBootState);
+      window.clearTimeout(fallback);
+    };
   }, []);
 
   useEffect(() => {
+    const open = () => {
+      dismissedForPageSessionRef.current = false;
+      setForcedOpen(true);
+      if (bootSettled) setVisible(true);
+    };
+    window.addEventListener(COOKIE_NOTICE_OPEN_EVENT, open);
+    return () => window.removeEventListener(COOKIE_NOTICE_OPEN_EVENT, open);
+  }, [bootSettled]);
+
+  useEffect(() => {
+    if (!bootSettled) {
+      setVisible(false);
+      return;
+    }
     if (lockOpen || isAdminRoute || dismissedForPageSessionRef.current) return;
     if (forcedOpen) {
       setVisible(true);
@@ -113,11 +135,10 @@ export function CookieNotice({
       return;
     }
 
-    // Let the workspace/window settle first. Phase 3 can hold this timer until
-    // the boot sequence reports completion without changing the notice state.
+    // Start this settle delay only after the opening sequence is complete.
     const timer = window.setTimeout(() => setVisible(true), 700);
     return () => window.clearTimeout(timer);
-  }, [forcedOpen, isAdminRoute, isLegalRoute, lockOpen, pathname]);
+  }, [bootSettled, forcedOpen, isAdminRoute, isLegalRoute, lockOpen, pathname]);
 
   const hideForPageSession = useCallback(() => {
     dismissedForPageSessionRef.current = true;

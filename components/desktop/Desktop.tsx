@@ -35,6 +35,7 @@ import {
 import { requestSettingsSection } from "@/lib/settings-navigation";
 import { getWallpaper } from "@/lib/wallpapers";
 import { CONTENT_TYPES } from "@/lib/content-types";
+import { BootSequence } from "@/components/system/BootSequence";
 import { LoadingView } from "@/components/system/states/LoadingView";
 import type { Area } from "@/lib/windows";
 import { DesktopContextMenuContent } from "./ContextMenu";
@@ -491,6 +492,7 @@ export function Desktop({ children }: { children?: ReactNode }) {
       </div>
       {/* Outside `.desktop-root` so portalled windows and the workstation lock
           curtain share the root stacking context cleanly beneath the 40px bar. */}
+      <BootSequence ready={hydrated} />
       <CookieNotice
         onOpenSettings={() => {
           requestSettingsSection("privacy-storage");
