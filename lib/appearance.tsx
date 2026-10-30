@@ -5,7 +5,9 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useLayoutEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
 import {
@@ -57,6 +59,19 @@ type AppearanceValue = {
 };
 
 const AppearanceContext = createContext<AppearanceValue | null>(null);
+
+const useIsomorphicLayoutEffect =
+  typeof window !== "undefined" ? useLayoutEffect : useEffect;
+
+function readStoredPreference(name: string): string | null {
+  const fromCookie = getClientCookie(name);
+  if (fromCookie !== null) return fromCookie;
+  try {
+    return window.localStorage.getItem(name);
+  } catch {
+    return null;
+  }
+}
 
 function persistTheme(nextTheme: Theme) {
   setClientCookie(COOKIE_THEME, nextTheme);
@@ -135,56 +150,71 @@ export function AppearanceProvider({
         ? resolveSlideshowInterval(initialAppearance.slideshowInterval)
         : DEFAULT_SLIDESHOW_INTERVAL,
     );
+  const hydratedPrefsRef = useRef(false);
 
-  // One-time migration/reconciliation on client mount: if a browser cookie was
-  // missing on the very first visit after upgrading from localStorage-only builds,
-  // adopt any valid localStorage preference into cookies without clobbering cookies.
-  useEffect(() => {
+  // Synchronously reconcile saved preferences from cookies / localStorage
+  // before the browser's first paint after hydration, keeping RootLayout 100%
+  // static without hydration mismatches or theme/wallpaper flashes.
+  useIsomorphicLayoutEffect(() => {
     try {
-      const cookieTheme = getClientCookie(COOKIE_THEME);
-      if (!cookieTheme) {
-        const legacyTheme = window.localStorage.getItem(COOKIE_THEME);
-        if (legacyTheme === "light" || legacyTheme === "dark") {
-          setThemeState(legacyTheme);
-          persistTheme(legacyTheme);
+      const rawTheme = readStoredPreference(COOKIE_THEME);
+      const nextTheme: Theme = rawTheme === "light" ? "light" : "dark";
+      setThemeState(nextTheme);
+      if (!getClientCookie(COOKIE_THEME) && rawTheme === "light") {
+        persistTheme("light");
+      }
+
+      const rawWall = readStoredPreference(COOKIE_WALLPAPER);
+      const nextWall = isWallpaperId(rawWall) ? rawWall : DEFAULT_WALLPAPER;
+      setWallpaperState(nextWall);
+      if (!getClientCookie(COOKIE_WALLPAPER)) {
+        persistWallpaper(nextWall);
+      }
+
+      const rawIntensity = readStoredPreference(COOKIE_WALLPAPER_INTENSITY);
+      const nextIntensity = resolveWallpaperIntensity(rawIntensity);
+      setWallpaperIntensityState(nextIntensity);
+      if (!getClientCookie(COOKIE_WALLPAPER_INTENSITY) && rawIntensity) {
+        persistIntensity(nextIntensity);
+      }
+
+      const rawSlideshow = readStoredPreference(COOKIE_SLIDESHOW_ENABLED);
+      if (rawSlideshow === "1" || rawSlideshow === "0") {
+        const enabled = rawSlideshow === "1";
+        setSlideshowEnabledState(enabled);
+        if (!getClientCookie(COOKIE_SLIDESHOW_ENABLED)) {
+          persistSlideshowEnabled(enabled);
         }
       }
 
-      const cookieWall = getClientCookie(COOKIE_WALLPAPER);
-      if (!cookieWall) {
-        const legacyWall = window.localStorage.getItem(COOKIE_WALLPAPER);
-        if (isWallpaperId(legacyWall)) {
-          setWallpaperState(legacyWall);
-          persistWallpaper(legacyWall);
-        } else {
-          persistWallpaper(wallpaper);
+      const rawInterval = readStoredPreference(COOKIE_SLIDESHOW_INTERVAL);
+      if (rawInterval) {
+        const resolvedInterval = resolveSlideshowInterval(rawInterval);
+        setSlideshowIntervalState(resolvedInterval);
+        if (!getClientCookie(COOKIE_SLIDESHOW_INTERVAL)) {
+          persistSlideshowInterval(resolvedInterval);
         }
       }
 
-      const cookieIntensity = getClientCookie(COOKIE_WALLPAPER_INTENSITY);
-      if (!cookieIntensity) {
-        const legacyIntensity = window.localStorage.getItem(
-          COOKIE_WALLPAPER_INTENSITY,
-        );
-        if (legacyIntensity) {
-          const resolved = resolveWallpaperIntensity(legacyIntensity);
-          setWallpaperIntensityState(resolved);
-          persistIntensity(resolved);
-        }
-      }
+      document.documentElement.classList.toggle("dark", nextTheme === "dark");
+      document.documentElement.style.colorScheme = nextTheme;
+      document.documentElement.dataset.wallpaperIntensity = nextIntensity;
     } catch {
       // Storage access is optional.
+    } finally {
+      hydratedPrefsRef.current = true;
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Keep <html> attributes synchronized with live theme and wallpaper intensity.
   useEffect(() => {
+    if (!hydratedPrefsRef.current) return;
     document.documentElement.classList.toggle("dark", theme === "dark");
     document.documentElement.style.colorScheme = theme;
   }, [theme]);
 
   useEffect(() => {
+    if (!hydratedPrefsRef.current) return;
     document.documentElement.dataset.wallpaperIntensity = wallpaperIntensity;
   }, [wallpaperIntensity]);
 

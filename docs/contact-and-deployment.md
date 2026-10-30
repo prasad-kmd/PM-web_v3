@@ -52,7 +52,3 @@ Before promoting a deployment, smoke-test `/`, one entry from each collection, `
 ## Animation and icons
 
 Project components import animation primitives from `motion/react` and use the existing `@hugeicons` packages for icons. `framer-motion` remains a transitive dependency of `motion`, but is not a direct dependency or imported directly. `lucide-react` is not required. After the migration, TypeScript and an offline frozen-lockfile install passed; the selected Hugeicons exports, Motion exports and accessible spinner were checked in isolation. Browser testing was not repeated.
-
-## Development routes
-
-`/dev/states` previews the loading, not-found, error and global-error screens with sample data. It is available in development and returns 404 in production unless `ENABLE_DEV_ROUTES=1` is set; it is always `noindex`.

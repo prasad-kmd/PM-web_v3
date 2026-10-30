@@ -78,7 +78,7 @@ export function CookieNotice({
   onOpenSettings: () => void;
 }) {
   const pathname = usePathname();
-  const { lockOpen } = useAdminAuth();
+  const { authenticated, lockOpen } = useAdminAuth();
   const [visible, setVisible] = useState(false);
   const [forcedOpen, setForcedOpen] = useState(false);
   const [bootSettled, setBootSettled] = useState(false);
@@ -87,7 +87,7 @@ export function CookieNotice({
   const descriptionId = useId();
 
   const firstSegment = pathname?.split("/").filter(Boolean)[0] ?? "";
-  const isAdminRoute = ADMIN_ROUTE_SEGMENTS.has(firstSegment);
+  const isAdminRoute = authenticated && ADMIN_ROUTE_SEGMENTS.has(firstSegment);
   const isLegalRoute = pathname ? LEGAL_ROUTE_SET.has(pathname) : false;
 
   useEffect(() => {

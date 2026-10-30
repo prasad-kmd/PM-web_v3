@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  Suspense,
   useCallback,
   useEffect,
   useLayoutEffect,
@@ -68,11 +69,41 @@ function useMobileWindowMode() {
   return isMobile;
 }
 
+function resolveVisibleRouteApp(
+  pathname: string | null | undefined,
+  authenticated: boolean,
+): AppId | null {
+  const candidate = getAppIdFromPathname(pathname);
+  if (candidate && isAdminOnlyApp(candidate) && !authenticated) {
+    return null;
+  }
+  return candidate;
+}
+
 /**
- * Handles owner studio hotkeys (`⌘⇧L`, `⌘⇧G`, `⌘⇧I`) and protects direct URL
- * visits or Back/Forward entries to `/og-studio` and `/invoices` when signed out:
- * closes the restricted window, prompts sign-in on the lock curtain, and
- * reopens the requested studio automatically upon unlock.
+ * Isolated inside `<Suspense fallback={null}>` so `Desktop` never calls
+ * `useSearchParams()` outside a Suspense boundary during static prerendering.
+ */
+function DesktopSearchParamsSync({
+  onChange,
+}: {
+  onChange: (value: string) => void;
+}) {
+  const searchParams = useSearchParams();
+  const serialized = searchParams.toString();
+
+  useEffect(() => {
+    onChange(serialized);
+  }, [onChange, serialized]);
+
+  return null;
+}
+
+/**
+ * Handles owner studio hotkeys (`⌘⇧L`, `⌘⇧G`, `⌘⇧I`, `⌘⇧A`) and ensures any
+ * open admin studio windows are closed if the session becomes unauthenticated.
+ * Under Decision 2B, unauthenticated direct visits to `/og-studio`, `/invoices`,
+ * or `/insights` render a stealth 404 and never auto-open the lock curtain.
  */
 function AdminWorkspaceBridge({
   windows,
@@ -85,43 +116,16 @@ function AdminWorkspaceBridge({
 }) {
   const { authenticated, ready, lockOpen, openLockCurtain, closeLockCurtain } =
     useAdminAuth();
-  const pendingProtectedAppRef = useRef<AppId | null>(null);
 
   useEffect(() => {
-    if (!ready) return;
-
-    if (!authenticated) {
-      const activeProtected = windows
-        .filter((w) => !w.exiting && isAdminOnlyApp(w.appId))
-        .sort((a, b) => b.z - a.z)[0];
-
-      if (activeProtected) {
-        pendingProtectedAppRef.current = activeProtected.appId;
-        onCloseAdminWindows();
-        openLockCurtain();
-      }
-      return;
+    if (!ready || authenticated) return;
+    const hasOpenProtected = windows.some(
+      (w) => !w.exiting && isAdminOnlyApp(w.appId),
+    );
+    if (hasOpenProtected) {
+      onCloseAdminWindows();
     }
-
-    if (pendingProtectedAppRef.current) {
-      const target = pendingProtectedAppRef.current;
-      pendingProtectedAppRef.current = null;
-      onOpenApp(target);
-    }
-  }, [
-    authenticated,
-    onCloseAdminWindows,
-    onOpenApp,
-    openLockCurtain,
-    ready,
-    windows,
-  ]);
-
-  useEffect(() => {
-    if (!lockOpen && !authenticated) {
-      pendingProtectedAppRef.current = null;
-    }
-  }, [authenticated, lockOpen]);
+  }, [authenticated, onCloseAdminWindows, ready, windows]);
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
@@ -151,7 +155,14 @@ function AdminWorkspaceBridge({
   return null;
 }
 
-export function Desktop({ children }: { children?: ReactNode }) {
+function DesktopWorkspace({
+  children,
+  registerSignOutHandler,
+}: {
+  children?: ReactNode;
+  registerSignOutHandler: (fn: () => void) => void;
+}) {
+  const { authenticated, ready } = useAdminAuth();
   const [hydrated, setHydrated] = useState(false);
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [area, setArea] = useState<Area>({ w: 1280, h: 720, left: 0, top: 40 });
@@ -159,11 +170,15 @@ export function Desktop({ children }: { children?: ReactNode }) {
     link: string | null;
     image: string | null;
   }>({ link: null, image: null });
+  const [search, setSearch] = useState("");
   const workRef = useRef<HTMLDivElement>(null);
   const pathname = usePathname();
   const router = useRouter();
-  const search = useSearchParams().toString();
-  const routeApp = getAppIdFromPathname(pathname);
+  const routeApp = resolveVisibleRouteApp(pathname, authenticated);
+  const authenticatedRef = useRef(authenticated);
+  authenticatedRef.current = authenticated;
+  const sawSignedOutAdminRouteRef = useRef(false);
+
   const [snapshots, setSnapshots] = useState<
     Partial<Record<AppId, HTMLElement>>
   >({});
@@ -193,6 +208,8 @@ export function Desktop({ children }: { children?: ReactNode }) {
 
   const openApp = useCallback(
     (appId: AppId) => {
+      if (isAdminOnlyApp(appId) && !authenticatedRef.current) return;
+
       const isCollection = CONTENT_TYPES.some((type) => type === appId);
       const isAlreadyOpen = manager.windows.some(
         (windowState) => windowState.appId === appId && !windowState.exiting,
@@ -239,11 +256,20 @@ export function Desktop({ children }: { children?: ReactNode }) {
     closeApp("og-studio");
     closeApp("invoices");
     closeApp("insights");
-  }, [closeApp]);
+    const activeUrlApp = getAppIdFromPathname(window.location.pathname);
+    if (activeUrlApp && isAdminOnlyApp(activeUrlApp)) {
+      lastSyncedAppRef.current = null;
+      router.replace("/", { scroll: false });
+    }
+  }, [closeApp, router]);
+
+  useEffect(() => {
+    registerSignOutHandler(closeAdminWindows);
+  }, [closeAdminWindows, registerSignOutHandler]);
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
-      if (!(event.metaKey || event.ctrlKey) || event.altKey) return;
+      if (!(event.metaKey || event.ctrlKey) || !event.altKey) return;
       const key = event.key.toLowerCase();
       if (!event.shiftKey && key === "k") {
         event.preventDefault();
@@ -267,8 +293,8 @@ export function Desktop({ children }: { children?: ReactNode }) {
     });
   }, []);
 
-  // Measure workspace geometry and open any direct-URL app (e.g. /resume, /settings,
-  // /og-studio, /invoices) inside the DesktopOS shell before first paint.
+  // Measure workspace geometry and open any public direct-URL app (e.g. /resume,
+  // /settings) inside the DesktopOS shell before first paint.
   useLayoutEffect(() => {
     const element = workRef.current;
     if (!element) return;
@@ -300,7 +326,10 @@ export function Desktop({ children }: { children?: ReactNode }) {
     updateArea(initialArea);
 
     if (!initializedRef.current) {
-      const initialApp = getAppIdFromPathname(window.location.pathname);
+      const initialApp = resolveVisibleRouteApp(
+        window.location.pathname,
+        authenticatedRef.current,
+      );
       lastSyncedAppRef.current = initialApp;
       if (initialApp) {
         routePaths.current[initialApp] =
@@ -338,11 +367,32 @@ export function Desktop({ children }: { children?: ReactNode }) {
     }
   }, [pathname, routeApp, search]);
 
+  // Track if an admin path was viewed while signed out; if the owner unlocks via
+  // `⌘⇧L` on that 404 screen, refresh the server payload and open the studio.
+  useEffect(() => {
+    const rawCandidate = getAppIdFromPathname(pathname);
+    if (!rawCandidate || !isAdminOnlyApp(rawCandidate)) {
+      sawSignedOutAdminRouteRef.current = false;
+      return;
+    }
+    if (ready && !authenticated) {
+      sawSignedOutAdminRouteRef.current = true;
+      return;
+    }
+    if (ready && authenticated && sawSignedOutAdminRouteRef.current) {
+      sawSignedOutAdminRouteRef.current = false;
+      router.refresh();
+    }
+  }, [authenticated, pathname, ready, router]);
+
   // Window focus changes use the App Router, not just pushState: server content
   // and generateMetadata must refresh as well as the URL.
   useEffect(() => {
     if (!initializedRef.current) return;
-    if (!usesRouteContent(topAppId)) {
+    if (
+      !usesRouteContent(topAppId) &&
+      (topAppId !== null || window.location.pathname === "/")
+    ) {
       document.title = getDocumentTitleForApp(topAppId);
     }
     if (handlingRouteChangeRef.current) {
@@ -352,19 +402,28 @@ export function Desktop({ children }: { children?: ReactNode }) {
       }
       return;
     }
-    const currentApp = getAppIdFromPathname(window.location.pathname);
+    const currentApp = resolveVisibleRouteApp(
+      window.location.pathname,
+      authenticated,
+    );
     if (currentApp === topAppId) return;
     const desired = topAppId
       ? routePaths.current[topAppId] || getPathnameForApp(topAppId)
       : "/";
+    if (!topAppId) {
+      document.title = getDocumentTitleForApp(null);
+    }
     lastSyncedAppRef.current = topAppId;
     router.push(desired, { scroll: false });
-  }, [router, topAppId]);
+  }, [authenticated, router, topAppId]);
 
   // Browser Back/Forward must focus the correct existing window.
   useEffect(() => {
     const handlePopState = () => {
-      const nextApp = getAppIdFromPathname(window.location.pathname);
+      const nextApp = resolveVisibleRouteApp(
+        window.location.pathname,
+        authenticatedRef.current,
+      );
       if (nextApp)
         routePaths.current[nextApp] =
           window.location.pathname + window.location.search;
@@ -379,10 +438,10 @@ export function Desktop({ children }: { children?: ReactNode }) {
     return () => window.removeEventListener("popstate", handlePopState);
   }, [syncToRoute]);
 
-  // Also respond to Next Link/navigation, including nested content routes.
+  // Also respond to Next Link/navigation and owner auth resolution on studio routes.
   useEffect(() => {
     if (!initializedRef.current || handlingRouteChangeRef.current) return;
-    const nextApp = getAppIdFromPathname(pathname);
+    const nextApp = resolveVisibleRouteApp(pathname, authenticated);
     if (nextApp)
       routePaths.current[nextApp] =
         window.location.pathname + window.location.search;
@@ -394,10 +453,13 @@ export function Desktop({ children }: { children?: ReactNode }) {
         syncToRoute(nextApp);
       }
     }
-  }, [pathname, syncToRoute]);
+  }, [authenticated, pathname, syncToRoute]);
 
   return (
-    <AdminAuthProvider onSignedOut={closeAdminWindows}>
+    <>
+      <Suspense fallback={null}>
+        <DesktopSearchParamsSync onChange={setSearch} />
+      </Suspense>
       <AdminWorkspaceBridge
         windows={manager.windows}
         onOpenApp={openApp}
@@ -418,7 +480,9 @@ export function Desktop({ children }: { children?: ReactNode }) {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={
-                shouldReduceMotion ? { duration: 0 } : WALLPAPER_CROSSFADE
+                shouldReduceMotion || !hydrated
+                  ? { duration: 0 }
+                  : WALLPAPER_CROSSFADE
               }
             />
           </AnimatePresence>
@@ -521,6 +585,24 @@ export function Desktop({ children }: { children?: ReactNode }) {
         <WorkstationLockCurtain />
       </DesktopContextMenu>
       <Toaster position="bottom-right" closeButton />
+    </>
+  );
+}
+
+export function Desktop({ children }: { children?: ReactNode }) {
+  const signOutHandlerRef = useRef<(() => void) | null>(null);
+  const registerSignOutHandler = useCallback((fn: () => void) => {
+    signOutHandlerRef.current = fn;
+  }, []);
+  const handleSignedOut = useCallback(() => {
+    signOutHandlerRef.current?.();
+  }, []);
+
+  return (
+    <AdminAuthProvider onSignedOut={handleSignedOut}>
+      <DesktopWorkspace registerSignOutHandler={registerSignOutHandler}>
+        {children}
+      </DesktopWorkspace>
     </AdminAuthProvider>
   );
 }

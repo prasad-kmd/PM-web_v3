@@ -29,16 +29,13 @@ import { suggestEntries, type SuggestionEntry } from "@/lib/suggestions";
  */
 export function NotFoundView({
   entries,
-  path,
 }: {
   entries: SuggestionEntry[];
-  /** Overrides the current pathname (used by /dev/states). */
-  path?: string;
 }) {
-  const currentPath = usePathname();
-  const pathname = path ?? currentPath ?? "/";
+  const pathname = usePathname() ?? "/";
   const appId = getAppIdFromPathname(pathname);
-  const app = appId ? APP_REGISTRY[appId] : null;
+  const candidateApp = appId ? APP_REGISTRY[appId] : null;
+  const app = candidateApp && !candidateApp.adminOnly ? candidateApp : null;
   const suggestions = useMemo(
     () => suggestEntries(pathname, entries),
     [pathname, entries],
@@ -47,7 +44,7 @@ export function NotFoundView({
     ...(app ? [{ label: app.title, href: app.route }] : []),
     { label: "Not found" },
   ];
-  const browse = appId && appId in CONTENT_META ? app : null;
+  const browse = app && appId && appId in CONTENT_META ? app : null;
 
   return (
     <main className="state-doc" aria-labelledby="state-nf-title">

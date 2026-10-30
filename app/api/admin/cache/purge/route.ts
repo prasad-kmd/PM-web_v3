@@ -18,16 +18,21 @@ export async function POST(request: NextRequest) {
   revalidateTag("notion-cms", "max");
   revalidateTag("reads", "max");
   for (const path of [
+    "/",
     "/projects",
     "/blog",
     "/articles",
     "/tutorials",
     "/glossary",
     "/news",
+    "/categories",
+    "/tags",
     "/api/latest",
     "/api/search-index",
     "/llms.txt",
     "/feed.xml",
+    "/rss.xml",
+    "/sitemap.xml",
   ]) {
     revalidatePath(path);
   }
