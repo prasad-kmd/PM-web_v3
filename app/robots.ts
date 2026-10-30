@@ -10,6 +10,7 @@ export default function robots(): MetadataRoute.Robots {
           "/api/",
           "/bookmarks",
           "/settings",
+          "/~offline",
           "/og-studio",
           "/invoices",
           "/insights",

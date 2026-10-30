@@ -307,12 +307,18 @@ const PRIVACY_SECTIONS: readonly LegalSection[] = [
     body: (
       <>
         <p>
-          Cookies are small files stored by your browser. Local storage and
-          session storage are browser storage areas controlled by this site’s
-          code. The site uses the following first-party items for functionality,
-          remembered preferences and security:
+          Cookies are small files stored by your browser. Local storage, session
+          storage and Cache Storage are browser storage areas controlled by this
+          site’s code. The site uses the following first-party items for
+          functionality, remembered preferences, offline reading and security:
         </p>
         <StorageRegisterTable />
+        <p>
+          The service-worker caches contain copies of public pages and assets
+          already delivered to your browser. API responses, form submissions,
+          the Bookmarks page and owner tools are not stored in or served from
+          those caches.
+        </p>
         <p>
           The site does not use first-party advertising or cross-site tracking
           cookies. Third-party media or avatar hosts may use their own
@@ -322,10 +328,11 @@ const PRIVACY_SECTIONS: readonly LegalSection[] = [
         <p>
           You can delete or block cookies and site storage in your browser
           settings. The <strong>Reset this workspace</strong> control in
-          Settings clears this site’s named cookies and local storage. Reading
-          public content does not require accepting optional preferences, but
-          blocking storage can prevent appearance, window layout, saved items,
-          reader preferences and commenter prefill from persisting.
+          Settings clears this site’s named cookies and local storage and
+          removes visited offline pages and images. Reading public content does
+          not require accepting optional preferences, but blocking storage can
+          prevent appearance, window layout, saved items, reader preferences,
+          offline reading and commenter prefill from persisting.
         </p>
       </>
     ),

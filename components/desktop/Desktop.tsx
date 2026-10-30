@@ -36,6 +36,8 @@ import { requestSettingsSection } from "@/lib/settings-navigation";
 import { getWallpaper } from "@/lib/wallpapers";
 import { CONTENT_TYPES } from "@/lib/content-types";
 import { BootSequence } from "@/components/system/BootSequence";
+import { InstallPrompt } from "@/components/system/InstallPrompt";
+import { ServiceWorkerRegistrar } from "@/components/system/ServiceWorkerRegistrar";
 import { LoadingView } from "@/components/system/states/LoadingView";
 import type { Area } from "@/lib/windows";
 import { DesktopContextMenuContent } from "./ContextMenu";
@@ -499,6 +501,8 @@ export function Desktop({ children }: { children?: ReactNode }) {
           openApp("settings");
         }}
       />
+      <ServiceWorkerRegistrar />
+      <InstallPrompt />
       <CommandPalette
         open={paletteOpen}
         onOpenChange={setPaletteOpen}

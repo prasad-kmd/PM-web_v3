@@ -5,6 +5,7 @@ import "./cms.css";
 import "./library.css";
 import "./system-states.css";
 import "./boot.css";
+import "./pwa.css";
 import "katex/dist/katex.min.css";
 import { Desktop } from "@/components/desktop/Desktop";
 import { InterfaceProvider } from "@/components/providers/InterfaceProvider";
@@ -27,6 +28,13 @@ import {
 
 export const metadata: Metadata = {
   metadataBase: new URL(getSiteUrl()),
+  applicationName: SITE_NAME,
+  manifest: "/manifest.webmanifest",
+  appleWebApp: {
+    capable: true,
+    title: "Prasad M.",
+    statusBarStyle: "default",
+  },
   alternates: { types: { "application/rss+xml": "/feed.xml" } },
   title: {
     default: "Prasad M. — Desktop Workspace",
@@ -69,7 +77,21 @@ export const metadata: Metadata = {
       }),
     ],
   },
-  icons: { icon: "/favicon-pm.svg" },
+  icons: {
+    icon: [
+      { url: "/favicon-pm.svg", type: "image/svg+xml" },
+      { url: "/pwa/icon-192.png", sizes: "192x192", type: "image/png" },
+      { url: "/pwa/icon-512.png", sizes: "512x512", type: "image/png" },
+    ],
+    shortcut: ["/favicon-pm.svg"],
+    apple: [
+      {
+        url: "/pwa/apple-touch-icon.png",
+        sizes: "180x180",
+        type: "image/png",
+      },
+    ],
+  },
 };
 
 export const viewport: Viewport = {

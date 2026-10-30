@@ -7,6 +7,13 @@ import {
   COOKIE_WALLPAPER,
   COOKIE_WALLPAPER_INTENSITY,
 } from "./cookies";
+import {
+  PWA_CORE_CACHE,
+  PWA_IMAGES_CACHE,
+  PWA_INSTALL_HINT_KEY,
+  PWA_PAGES_CACHE,
+  PWA_STATIC_CACHE,
+} from "./pwa";
 
 /**
  * Canonical legal metadata and the shared cookie/browser-storage register.
@@ -15,19 +22,19 @@ import {
  * disclosure and the in-workspace control surface cannot quietly drift apart.
  * Bump COOKIE_NOTICE_VERSION only for a material storage/privacy change.
  */
-export const LEGAL_VERSION = "1.0";
+export const LEGAL_VERSION = "1.1";
 export const LEGAL_EFFECTIVE_DATE = "30 October 2026";
 export const LEGAL_EFFECTIVE_DATE_ISO = "2026-10-30";
 export const LEGAL_LAST_UPDATED = LEGAL_EFFECTIVE_DATE;
 export const LEGAL_LAST_UPDATED_ISO = LEGAL_EFFECTIVE_DATE_ISO;
-export const COOKIE_NOTICE_VERSION = 1;
+export const COOKIE_NOTICE_VERSION = 2;
 export const COOKIE_NOTICE_OPEN_EVENT = "pm:open-cookie-notice";
 
 export const COOKIE_NOTICE_TITLE = "Cookies & browser storage";
 export const COOKIE_NOTICE_BODY =
-  "This workspace uses first-party storage to remember appearance, window layout, saved items and reader preferences. If you comment, it can also remember your name, email and handles on this device. There are no advertising cookies or third-party analytics scripts. Entry pages record aggregate read counts; the Privacy Policy lists every cookie and storage key.";
+  "This workspace uses first-party storage to remember appearance, window layout, saved items and reader preferences. Its service worker also keeps public pages and assets you visit in Cache Storage for offline use; APIs and owner tools are never cached. If you comment, it can also remember your name, email and handles on this device. There are no advertising cookies or third-party analytics scripts. Entry pages record aggregate read counts; the Privacy Policy lists every cookie and storage key.";
 export const COOKIE_NOTICE_BODY_COMPACT =
-  "First-party storage remembers this workspace’s appearance, windows, saved items and reader preferences. No advertising cookies or third-party analytics scripts are used.";
+  "First-party storage remembers appearance, windows, saved items and reader preferences, and keeps visited public pages available offline. No advertising cookies or third-party analytics scripts are used.";
 
 export type LegalDocumentId = "privacy" | "terms" | "disclaimer";
 
@@ -90,6 +97,7 @@ export type StorageRegisterEntry = {
     | "Cookie + local storage"
     | "Local storage"
     | "Session storage"
+    | "Cache Storage"
     | "HttpOnly cookies";
   purpose: string;
   duration: string;
@@ -201,6 +209,47 @@ export const STORAGE_REGISTER: readonly StorageRegisterEntry[] = [
     type: "Session storage",
     purpose: "Avoids repeating the read pulse for an entry in the same session",
     duration: "Browser session/tab lifetime",
+    scope: "visitor",
+  },
+  {
+    name: PWA_CORE_CACHE,
+    type: "Cache Storage",
+    purpose: "Essential offline page, app manifest, font and core icons",
+    duration:
+      "Until cache-version cleanup, Settings clear, or browser eviction",
+    scope: "visitor",
+  },
+  {
+    name: PWA_STATIC_CACHE,
+    type: "Cache Storage",
+    purpose:
+      "Same-origin scripts, styles, fonts and public text assets needed to reopen cached pages",
+    duration:
+      "Until cache cap/version cleanup, Settings clear, or browser eviction",
+    scope: "visitor",
+  },
+  {
+    name: PWA_PAGES_CACHE,
+    type: "Cache Storage",
+    purpose: "Public HTML pages you have visited, for offline reading",
+    duration:
+      "Until cache cap/version cleanup, Settings clear, or browser eviction",
+    scope: "visitor",
+  },
+  {
+    name: PWA_IMAGES_CACHE,
+    type: "Cache Storage",
+    purpose: "Public same-origin images shown on pages you have visited",
+    duration:
+      "Until cache cap/version cleanup, Settings clear, or browser eviction",
+    scope: "visitor",
+  },
+  {
+    name: PWA_INSTALL_HINT_KEY,
+    type: "Local storage",
+    purpose:
+      "Counts workspace visits and remembers whether the one-time install hint was dismissed",
+    duration: "Until cleared",
     scope: "visitor",
   },
   {

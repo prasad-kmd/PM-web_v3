@@ -3,6 +3,7 @@
 import {
   ChartLineData02Icon,
   Copy01Icon,
+  Download04Icon,
   Image02Icon,
   Invoice02Icon,
   Login01Icon,
@@ -32,6 +33,7 @@ import {
   MenubarTrigger,
 } from "@/components/ui/menubar";
 import { WorkspaceTooltip } from "@/components/ui/tooltip";
+import { usePwaInstall } from "@/hooks/usePwaInstall";
 import { useAppearance } from "@/lib/appearance";
 import { APP_REGISTRY, DESKTOP_APPS, type AppId } from "@/lib/registry";
 import { ClockPopover } from "./ClockPopover";
@@ -54,6 +56,7 @@ export function MenuBar({
     forgetTrustedDevice,
     refreshContentCache,
   } = useAdminAuth();
+  const { installed, installing, promptInstall } = usePwaInstall();
 
   const openResumeSection = (section?: string) => {
     onOpenApp("resume");
@@ -64,6 +67,23 @@ export function MenuBar({
         block: "start",
       });
     }, 140);
+  };
+
+  const handleInstallWorkspace = async () => {
+    if (installed || installing) return;
+    const outcome = await promptInstall();
+    if (outcome === "accepted") {
+      toast.success("Installing workspace…");
+    } else if (outcome === "ios") {
+      toast("Install from Share", {
+        description: "Tap Share, then choose Add to Home Screen.",
+      });
+    } else if (outcome === "unavailable") {
+      toast("Install from your browser menu", {
+        description:
+          "If “Install app” or “Add to Home Screen” appears there, your browser can install this workspace.",
+      });
+    }
   };
 
   const handleCopyWorkspaceLink = async () => {
@@ -121,6 +141,30 @@ export function MenuBar({
                   </p>
                 </div>
               </div>
+
+              <MenubarSeparator />
+
+              <MenubarGroup>
+                <MenubarLabel>App</MenubarLabel>
+                <MenubarItem
+                  disabled={installed || installing}
+                  onClick={() => void handleInstallWorkspace()}
+                >
+                  <HugeiconsIcon
+                    icon={Download04Icon}
+                    strokeWidth={1.9}
+                    size={15}
+                  />
+                  <span>
+                    {installed
+                      ? "Workspace installed"
+                      : installing
+                        ? "Installing workspace…"
+                        : "Install workspace…"}
+                  </span>
+                  {installed && <MenubarShortcut>Installed</MenubarShortcut>}
+                </MenubarItem>
+              </MenubarGroup>
 
               <MenubarSeparator />
 

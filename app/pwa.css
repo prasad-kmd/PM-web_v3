@@ -1,0 +1,128 @@
+/* Phase 4 PWA — one-time install hint. The offline document carries its
+   own inline styles because it must not depend on this stylesheet. */
+.pwa-install-hint {
+  position: fixed;
+  left: max(16px, env(safe-area-inset-left));
+  bottom: max(16px, env(safe-area-inset-bottom));
+  z-index: 44;
+  display: flex;
+  width: min(370px, calc(100vw - 32px));
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--popover);
+  color: var(--popover-foreground);
+  box-shadow: 0 16px 40px oklch(0.145 0 0 / 22%);
+  animation: pwa-install-hint-in 180ms ease-out;
+}
+
+.pwa-install-hint-icon {
+  display: grid;
+  width: 36px;
+  height: 36px;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 8px;
+  background: var(--muted);
+  color: var(--foreground);
+}
+
+.pwa-install-hint-copy {
+  min-width: 0;
+  flex: 1;
+}
+
+.pwa-install-hint-copy h2 {
+  margin: 1px 24px 0 0;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.4;
+  letter-spacing: -0.01em;
+}
+
+.pwa-install-hint-copy p {
+  margin: 4px 0 0;
+  color: var(--muted-foreground);
+  font-size: 12.5px;
+  line-height: 1.55;
+}
+
+.pwa-install-hint-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.pwa-install-hint-actions button {
+  min-height: 32px;
+  padding: 0 11px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--foreground);
+  font-size: 12.5px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.pwa-install-hint-actions button:hover {
+  background: var(--accent);
+  color: var(--accent-foreground);
+}
+
+.pwa-install-hint-actions .pwa-install-hint-primary {
+  border-color: transparent;
+  background: var(--primary);
+  color: var(--primary-foreground);
+}
+
+.pwa-install-hint-actions .pwa-install-hint-primary:hover {
+  background: var(--primary);
+  color: var(--primary-foreground);
+  opacity: 0.9;
+}
+
+.pwa-install-hint-actions button:focus-visible,
+.pwa-install-hint-close:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+.pwa-install-hint-close {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: grid;
+  width: 28px;
+  height: 28px;
+  place-items: center;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--muted-foreground);
+  cursor: pointer;
+}
+
+.pwa-install-hint-close:hover {
+  background: var(--accent);
+  color: var(--accent-foreground);
+}
+
+@keyframes pwa-install-hint-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pwa-install-hint {
+    animation: none;
+  }
+}

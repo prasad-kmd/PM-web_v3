@@ -2,12 +2,13 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useId, useMemo, useState } from "react";
+import { useCallback, useEffect, useId, useMemo, useState } from "react";
 import {
   Alert02Icon,
   ArrowRight01Icon,
   ArrowUpRight01Icon,
   Delete02Icon,
+  Download04Icon,
   Folder01Icon,
   InformationCircleIcon,
   Link01Icon,
@@ -18,6 +19,7 @@ import {
   UserAccountIcon,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
+import { toast } from "sonner";
 import {
   Tabs,
   TabsContent,
@@ -40,6 +42,18 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { CookieNoticeButton } from "@/components/legal/CookieNotice";
+import { usePwaInstall } from "@/hooks/usePwaInstall";
+import {
+  PWA_CACHE_VERSION,
+  PWA_IMAGES_CACHE,
+  PWA_PAGES_CACHE,
+  activateWaitingServiceWorker,
+  clearPwaCaches,
+  formatBytes,
+  getPwaCacheSummary,
+  isPwaDisabledByEnv,
+  type PwaCacheSummary,
+} from "@/lib/pwa";
 import { useAppearance } from "@/lib/appearance";
 import { requestBootPreview } from "@/lib/boot";
 import { BUILD_INFO, STACK_INFO } from "@/lib/build-info";
@@ -180,6 +194,13 @@ function AboutTab() {
   const [system, setSystem] = useState<SystemInfo | null>(null);
   const [failed, setFailed] = useState(false);
   const [commenter, setCommenter] = useState<string | null>(null);
+  const pwaInstall = usePwaInstall();
+  const [pwaCacheSummary, setPwaCacheSummary] =
+    useState<PwaCacheSummary | null>(null);
+  const [serviceWorkerStatus, setServiceWorkerStatus] = useState("Checking…");
+  const [pwaUpdateReady, setPwaUpdateReady] = useState(false);
+  const [clearingPwaCache, setClearingPwaCache] = useState(false);
+  const [checkingPwaUpdate, setCheckingPwaUpdate] = useState(false);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -191,6 +212,56 @@ function AboutTab() {
       });
     return () => controller.abort();
   }, []);
+
+  const refreshPwaStatus = useCallback(async () => {
+    setPwaCacheSummary(await getPwaCacheSummary());
+
+    if (isPwaDisabledByEnv()) {
+      setServiceWorkerStatus("Disabled by site setting");
+      setPwaUpdateReady(false);
+      return;
+    }
+    if (process.env.NODE_ENV !== "production") {
+      setServiceWorkerStatus("Disabled in development");
+      setPwaUpdateReady(false);
+      return;
+    }
+    if (!("serviceWorker" in navigator)) {
+      setServiceWorkerStatus("Unsupported in this browser");
+      setPwaUpdateReady(false);
+      return;
+    }
+
+    try {
+      const registration = await navigator.serviceWorker.getRegistration("/");
+      const updateReady = Boolean(
+        registration?.waiting && navigator.serviceWorker.controller,
+      );
+      setPwaUpdateReady(updateReady);
+      setServiceWorkerStatus(
+        updateReady
+          ? "Update ready"
+          : registration?.active
+            ? "Active"
+            : registration?.installing
+              ? "Installing…"
+              : "Not registered yet",
+      );
+    } catch {
+      setServiceWorkerStatus("Unavailable");
+      setPwaUpdateReady(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    void refreshPwaStatus();
+    const onVisibilityChange = () => {
+      if (document.visibilityState === "visible") void refreshPwaStatus();
+    };
+    document.addEventListener("visibilitychange", onVisibilityChange);
+    return () =>
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+  }, [refreshPwaStatus]);
 
   useEffect(() => {
     const raw = getClientCookie(COOKIE_COMMENTER);
@@ -222,7 +293,79 @@ function AboutTab() {
   const environment = system?.build.environment || BUILD_INFO.environment;
   const commit = system?.build.commit || BUILD_INFO.commit;
 
-  function resetDevice() {
+  async function handlePwaInstall() {
+    if (pwaInstall.installed || pwaInstall.installing) return;
+    const outcome = await pwaInstall.promptInstall();
+    if (outcome === "accepted") {
+      toast.success("Installing workspace…");
+    } else if (outcome === "ios") {
+      toast("Install from Share", {
+        description: "Tap Share, then choose Add to Home Screen.",
+      });
+    } else if (outcome === "unavailable") {
+      toast("Install from your browser menu", {
+        description:
+          "If “Install app” or “Add to Home Screen” appears there, your browser can install this workspace.",
+      });
+    }
+    void refreshPwaStatus();
+  }
+
+  async function handlePwaUpdate() {
+    if (pwaUpdateReady) {
+      const activated = await activateWaitingServiceWorker();
+      if (!activated) await refreshPwaStatus();
+      return;
+    }
+
+    if (isPwaDisabledByEnv() || process.env.NODE_ENV !== "production") {
+      toast("Offline updates are disabled in this build.");
+      return;
+    }
+    if (!("serviceWorker" in navigator)) {
+      toast.error("Service workers are not supported in this browser.");
+      return;
+    }
+
+    setCheckingPwaUpdate(true);
+    try {
+      const registration = await navigator.serviceWorker.getRegistration("/");
+      if (!registration) {
+        toast("The offline worker has not registered yet.");
+        return;
+      }
+      await registration.update();
+      await refreshPwaStatus();
+      if (registration.waiting && navigator.serviceWorker.controller) {
+        setPwaUpdateReady(true);
+        setServiceWorkerStatus("Update ready");
+        toast.success("Workspace update ready — reload when it suits you.");
+      } else {
+        toast.success("You're on the latest workspace version.");
+      }
+    } catch {
+      toast.error("Could not check for a workspace update.");
+    } finally {
+      setCheckingPwaUpdate(false);
+    }
+  }
+
+  async function handleClearPwaCache() {
+    setClearingPwaCache(true);
+    try {
+      await clearPwaCaches();
+      // Give the worker a moment to restore only its essential core files.
+      await new Promise((resolve) => window.setTimeout(resolve, 400));
+      await refreshPwaStatus();
+      toast.success("Visited offline pages and images cleared.");
+    } catch {
+      toast.error("Could not clear the offline cache.");
+    } finally {
+      setClearingPwaCache(false);
+    }
+  }
+
+  async function resetDevice() {
     if (typeof document === "undefined") return;
     for (const cookie of COOKIE_TABLE) {
       document.cookie = `${encodeURIComponent(cookie.name)}=; path=/; max-age=0; SameSite=Lax`;
@@ -232,8 +375,34 @@ function AboutTab() {
     } catch {
       // Optional mirror only.
     }
+    try {
+      await clearPwaCaches();
+    } catch {
+      // The reload below still resets cookies and local preferences.
+    }
     window.location.reload();
   }
+
+  const pwaInstallStatusLabel = pwaInstall.installed
+    ? "Installed"
+    : pwaInstall.installing
+      ? "Installing…"
+      : pwaInstall.canInstall
+        ? "Ready to install"
+        : pwaInstall.isIos
+          ? "Add from Share"
+          : pwaInstall.status === "checking"
+            ? "Checking…"
+            : "Browser managed";
+  const cachedContentEntries = pwaCacheSummary
+    ? (pwaCacheSummary.entriesByCache[PWA_PAGES_CACHE] ?? 0) +
+      (pwaCacheSummary.entriesByCache[PWA_IMAGES_CACHE] ?? 0)
+    : null;
+  const pwaCacheStatusLabel = !pwaCacheSummary
+    ? "Checking…"
+    : !pwaCacheSummary.supported
+      ? "Unsupported"
+      : `${cachedContentEntries} page/image ${cachedContentEntries === 1 ? "entry" : "entries"}`;
 
   return (
     <>
@@ -467,6 +636,96 @@ function AboutTab() {
         </div>
 
         <div className="settings-group">
+          <div className="settings-group-header">
+            <p className="settings-group-title">App &amp; offline</p>
+            <span className="settings-group-count">
+              Cache v{PWA_CACHE_VERSION}
+            </span>
+          </div>
+          <div className="settings-card">
+            <div className="settings-list-row">
+              <span className="settings-list-key">Installation</span>
+              <span className="settings-list-value" aria-live="polite">
+                {pwaInstallStatusLabel}
+              </span>
+            </div>
+            <div className="settings-list-row">
+              <span className="settings-list-key">Service worker</span>
+              <span className="settings-list-value" aria-live="polite">
+                {serviceWorkerStatus}
+              </span>
+            </div>
+            <div className="settings-list-row">
+              <span className="settings-list-key">Cached content</span>
+              <span className="settings-list-value">{pwaCacheStatusLabel}</span>
+            </div>
+            <div className="settings-list-row">
+              <span className="settings-list-key">Site storage estimate</span>
+              <span className="settings-list-value">
+                {formatBytes(pwaCacheSummary?.estimatedUsageBytes ?? null)}
+              </span>
+            </div>
+          </div>
+          <p className="settings-about-note">
+            Public pages you visit can reopen offline. API calls, form
+            submissions, comment actions and owner tools always stay
+            network-only and are never served from this cache.
+          </p>
+          <div
+            style={{
+              display: "flex",
+              flexWrap: "wrap",
+              gap: 8,
+              marginTop: 10,
+            }}
+          >
+            <button
+              type="button"
+              className="settings-action-btn"
+              onClick={() => void handlePwaInstall()}
+              disabled={pwaInstall.installed || pwaInstall.installing}
+            >
+              <HugeiconsIcon icon={Download04Icon} strokeWidth={2} size={13} />
+              {pwaInstall.installed
+                ? "Workspace installed"
+                : pwaInstall.installing
+                  ? "Installing workspace…"
+                  : "Install workspace"}
+            </button>
+            <button
+              type="button"
+              className="settings-action-btn"
+              onClick={() => void handlePwaUpdate()}
+              disabled={checkingPwaUpdate}
+            >
+              <HugeiconsIcon icon={RepeatIcon} strokeWidth={2} size={13} />
+              {pwaUpdateReady
+                ? "Reload to update"
+                : checkingPwaUpdate
+                  ? "Checking…"
+                  : "Check for updates"}
+            </button>
+            <button
+              type="button"
+              className="settings-danger-btn"
+              onClick={() => void handleClearPwaCache()}
+              disabled={
+                clearingPwaCache ||
+                !pwaCacheSummary?.supported ||
+                pwaCacheSummary.entries === 0
+              }
+            >
+              <HugeiconsIcon icon={Delete02Icon} strokeWidth={2} size={13} />
+              {clearingPwaCache ? "Clearing…" : "Clear offline cache"}
+            </button>
+          </div>
+          <p className="settings-about-note">
+            Clearing removes visited pages, images and static copies. The small
+            essential offline fallback is restored automatically.
+          </p>
+        </div>
+
+        <div className="settings-group">
           <p className="settings-group-title">Keyboard</p>
           <div className="settings-card">
             {KEYBOARD_GROUPS.map((group) => (
@@ -504,7 +763,8 @@ function AboutTab() {
           <p className="settings-about-note" style={{ marginBottom: 10 }}>
             Visitor cookies are listed below. Entry pages also record aggregate
             reads by entry, day, country and referring host; the Privacy Policy
-            explains that first-party count and every local/session key.
+            explains that first-party count, every local/session key and the
+            offline caches listed above.
           </p>
           <div className="settings-card">
             {COOKIE_TABLE.map((row) => (
@@ -535,7 +795,7 @@ function AboutTab() {
             <button
               type="button"
               className="settings-danger-btn"
-              onClick={resetDevice}
+              onClick={() => void resetDevice()}
             >
               <HugeiconsIcon icon={Delete02Icon} strokeWidth={2} size={13} />
               Reset preferences on this device

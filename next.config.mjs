@@ -146,6 +146,28 @@ const nextConfig = {
           },
         ],
       },
+      {
+        // The worker script must revalidate so an emergency replacement or
+        // kill-switch build reaches installed clients promptly. Its root
+        // scope is explicit even though /sw.js already lives at the root.
+        source: "/sw.js",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "public, max-age=0, must-revalidate",
+          },
+          { key: "Service-Worker-Allowed", value: "/" },
+        ],
+      },
+      {
+        source: "/manifest.webmanifest",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "public, max-age=0, must-revalidate",
+          },
+        ],
+      },
     ];
   },
 };
