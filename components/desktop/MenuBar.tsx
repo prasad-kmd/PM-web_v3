@@ -365,6 +365,9 @@ export function MenuBar({
               <MenubarItem onClick={() => onOpenApp("contact")}>
                 Contact
               </MenubarItem>
+              <MenubarItem onClick={() => onOpenApp("legal")}>
+                Legal
+              </MenubarItem>
             </MenubarContent>
           </MenubarMenu>
         </Menubar>

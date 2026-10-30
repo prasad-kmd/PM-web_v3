@@ -5,6 +5,8 @@ export const COOKIE_SLIDESHOW_ENABLED = "pm-wallpaper-slideshow";
 export const COOKIE_SLIDESHOW_INTERVAL = "pm-wallpaper-interval";
 /** Guest comment identity (name, email, handles) — see components/comments. */
 export const COOKIE_COMMENTER = "pm_commenter";
+/** Versioned acknowledgement for the first-party cookie/storage notice. */
+export const COOKIE_COOKIE_NOTICE = "pm-cookie-notice";
 /** Owner workstation session cookies (HttpOnly, server-managed). */
 export const COOKIE_ADMIN_DEV = "pm_admin";
 export const COOKIE_ADMIN_PROD = "__Host-pm_admin";

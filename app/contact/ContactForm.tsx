@@ -1,4 +1,5 @@
 "use client";
+import Link from "next/link";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { Turnstile, type TurnstileInstance } from "@marsidev/react-turnstile";
 import { Field, FieldLabel } from "@/components/ui/field";
@@ -238,8 +239,9 @@ export function ContactForm({ siteKey }: { siteKey: string }) {
       </div>
       <div className="contact-security">
         <p>
-          Your email is used only to reply. This form is protected by an
-          automated spam check and delivers your message privately.
+          Your message and any attachment are relayed to me through Telegram so
+          I can reply. This form is protected by an automated spam check. See
+          the <Link href="/privacy-policy">Privacy Policy</Link>.
         </p>
         {siteKey ? (
           <Turnstile

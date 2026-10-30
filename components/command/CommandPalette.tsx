@@ -22,6 +22,7 @@ import {
   RefreshIcon,
   Search01Icon,
   Settings02Icon,
+  Shield01Icon,
   SparklesIcon,
   SunMediumIcon,
   Tag01Icon,
@@ -42,6 +43,7 @@ import { useAdminAuth } from "@/components/admin/AdminAuthProvider";
 import { useContentBookmarks } from "@/components/notion/ContentBookmarksProvider";
 import { useAppearance } from "@/lib/appearance";
 import { CONTENT_META, type ContentType } from "@/lib/content-types";
+import { LEGAL_DOCUMENTS } from "@/lib/legal";
 import { APP_REGISTRY, DESKTOP_APPS, type AppId } from "@/lib/registry";
 import {
   scoreSearchCandidate,
@@ -84,6 +86,7 @@ const APP_ICON: Record<AppId, typeof Folder01Icon> = {
   tags: Tag01Icon,
   bookmarks: Bookmark01Icon,
   contact: Mail01Icon,
+  legal: Shield01Icon,
   settings: Settings02Icon,
   "og-studio": Image02Icon,
   invoices: Invoice02Icon,
@@ -254,6 +257,49 @@ export function CommandPalette({
         keywords: [app.kind, app.description, appId, "window", "open", "app"],
         subtitle: app.description,
         onSelect: () => closeAndRun(() => onOpenApp(appId)),
+      });
+    }
+
+    items.push({
+      id: "app:legal",
+      group: "Workspace",
+      icon: APP_ICON.legal,
+      title: APP_REGISTRY.legal.title,
+      meta: APP_REGISTRY.legal.kind,
+      keywords: [
+        APP_REGISTRY.legal.kind,
+        APP_REGISTRY.legal.description,
+        "legal",
+        "privacy",
+        "terms",
+        "disclaimer",
+        "cookies",
+        "window",
+        "open",
+        "app",
+      ],
+      subtitle: APP_REGISTRY.legal.description,
+      onSelect: () => closeAndRun(() => onOpenApp("legal")),
+    });
+
+    for (const document of LEGAL_DOCUMENTS) {
+      items.push({
+        id: `legal:${document.id}`,
+        group: "Workspace",
+        icon: APP_ICON.legal,
+        title: document.title,
+        meta: "Legal",
+        keywords: [
+          "legal",
+          document.id,
+          document.description,
+          ...(document.id === "privacy"
+            ? ["cookies", "storage", "comments", "readership"]
+            : []),
+        ],
+        subtitle: document.description,
+        onSelect: () =>
+          closeAndRun(() => router.push(document.route, { scroll: false })),
       });
     }
 

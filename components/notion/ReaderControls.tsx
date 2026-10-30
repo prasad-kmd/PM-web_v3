@@ -435,6 +435,37 @@ export function ReaderToolbarActions({
   );
 }
 
+/** Reader actions for a static document that has no bookmark/citation item. */
+export function ReaderDocumentActions() {
+  const { outline, toggleOutline, headings } = useReader();
+  return (
+    <>
+      {headings.length ? (
+        <WorkspaceTooltip
+          label={outline ? "Hide outline" : "Show outline"}
+          shortcut="O"
+          align="end"
+        >
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="rdr-outline-toggle rdr-tool"
+            aria-pressed={outline}
+            aria-keyshortcuts="O"
+            onClick={toggleOutline}
+          >
+            <OutlineGlyph open={outline} />
+            Outline
+          </Button>
+        </WorkspaceTooltip>
+      ) : null}
+      <ShareButton />
+      <ReadingOptions />
+    </>
+  );
+}
+
 /* -------------------------------------------------------------------------- */
 /* Layout pieces                                                              */
 /* -------------------------------------------------------------------------- */

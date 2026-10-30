@@ -1,5 +1,6 @@
 import type { MetadataRoute } from "next";
 import { CONTENT_TYPES, getContentIndex } from "@/lib/notion-cms";
+import { LEGAL_LAST_UPDATED_ISO, LEGAL_ROUTES } from "@/lib/legal";
 import { getSiteUrl } from "@/lib/site";
 import { TAXONOMY_INDEX_MIN_ITEMS, getTaxonomyIndex } from "@/lib/taxonomy";
 export const revalidate = 3600;
@@ -20,6 +21,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     })),
     { url: `${base}/categories`, changeFrequency: "weekly", priority: 0.5 },
     { url: `${base}/tags`, changeFrequency: "weekly", priority: 0.5 },
+    ...LEGAL_ROUTES.map((route) => ({
+      url: `${base}${route}`,
+      lastModified: new Date(LEGAL_LAST_UPDATED_ISO),
+      changeFrequency: "yearly" as const,
+      priority: route === "/legal" ? 0.4 : 0.3,
+    })),
   ];
   return [
     ...staticPaths,

@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { Turnstile, type TurnstileInstance } from "@marsidev/react-turnstile";
 import {
@@ -265,7 +266,11 @@ export function CommentComposer({
             <p className="dsn-fields-note">
               Comments are public. Your name and email travel with the comment
               so a reply can reach you; the email is never shown to other
-              readers.
+              readers.{" "}
+              <Link href="/privacy-policy#comments">
+                How comment details are handled
+              </Link>
+              .
             </p>
             {adminProfile ? (
               <button

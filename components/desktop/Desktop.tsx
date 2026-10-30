@@ -18,6 +18,7 @@ import {
 } from "@/components/admin/AdminAuthProvider";
 import { WorkstationLockCurtain } from "@/components/admin/WorkstationLockCurtain";
 import { CommandPalette } from "@/components/command/CommandPalette";
+import { CookieNotice } from "@/components/legal/CookieNotice";
 import { ContextMenu, ContextMenuTrigger } from "@/components/ui/context-menu";
 import { WindowsLayer } from "@/components/window/WindowsLayer";
 import { useWindowManager, type WindowState } from "@/hooks/useWindowManager";
@@ -31,6 +32,7 @@ import {
   usesRouteContent,
   type AppId,
 } from "@/lib/registry";
+import { requestSettingsSection } from "@/lib/settings-navigation";
 import { getWallpaper } from "@/lib/wallpapers";
 import { CONTENT_TYPES } from "@/lib/content-types";
 import { LoadingView } from "@/components/system/states/LoadingView";
@@ -489,6 +491,12 @@ export function Desktop({ children }: { children?: ReactNode }) {
       </div>
       {/* Outside `.desktop-root` so portalled windows and the workstation lock
           curtain share the root stacking context cleanly beneath the 40px bar. */}
+      <CookieNotice
+        onOpenSettings={() => {
+          requestSettingsSection("privacy-storage");
+          openApp("settings");
+        }}
+      />
       <CommandPalette
         open={paletteOpen}
         onOpenChange={setPaletteOpen}

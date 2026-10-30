@@ -11,6 +11,7 @@ export type AppId =
   | "tags"
   | "bookmarks"
   | "contact"
+  | "legal"
   | "og-studio"
   | "invoices"
   | "insights";
@@ -22,6 +23,8 @@ export type AppMeta = {
   description: string;
   icon: string;
   route: `/${AppId}`;
+  /** Additional canonical paths that open this same routed window. */
+  aliases?: readonly string[];
   adminOnly?: boolean;
 };
 export const APP_REGISTRY: Record<AppId, AppMeta> = {
@@ -113,6 +116,16 @@ export const APP_REGISTRY: Record<AppId, AppMeta> = {
     icon: "/icons/fluent-color/account.svg",
     route: "/contact",
   },
+  legal: {
+    id: "legal",
+    title: "Legal",
+    kind: "Privacy & terms",
+    description:
+      "Privacy Policy, Terms and Conditions, Disclaimer, and cookies",
+    icon: "/icons/fluent-color/document.svg",
+    route: "/legal",
+    aliases: ["/privacy-policy", "/terms-and-conditions", "/disclaimer"],
+  },
   settings: {
     id: "settings",
     title: "Settings",
@@ -180,6 +193,7 @@ const ROUTED_APPS: AppId[] = [
   "tags",
   "bookmarks",
   "contact",
+  "legal",
 ];
 export function usesRouteContent(appId: AppId | null): appId is AppId {
   return appId !== null && ROUTED_APPS.includes(appId);
@@ -194,10 +208,12 @@ export function getAppIdFromPathname(
   const normalized = pathname.replace(/\/+$/, "") || "/";
   return (
     (Object.keys(APP_REGISTRY) as AppId[]).find((id) => {
-      const route = APP_REGISTRY[id].route;
-      return (
-        normalized === route ||
-        (usesRouteContent(id) && normalized.startsWith(`${route}/`))
+      const meta = APP_REGISTRY[id];
+      const routes = [meta.route, ...(meta.aliases ?? [])];
+      return routes.some(
+        (route) =>
+          normalized === route ||
+          (usesRouteContent(id) && normalized.startsWith(`${route}/`)),
       );
     }) ?? null
   );

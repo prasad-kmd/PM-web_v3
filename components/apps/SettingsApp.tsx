@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { useEffect, useId, useMemo, useState } from "react";
 import {
   Alert02Icon,
@@ -38,18 +39,23 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
+import { CookieNoticeButton } from "@/components/legal/CookieNotice";
 import { useAppearance } from "@/lib/appearance";
 import { BUILD_INFO, STACK_INFO } from "@/lib/build-info";
+import { COOKIE_COMMENTER, getClientCookie } from "@/lib/cookies";
 import {
-  COOKIE_COMMENTER,
-  COOKIE_SLIDESHOW_ENABLED,
-  COOKIE_SLIDESHOW_INTERVAL,
-  COOKIE_THEME,
-  COOKIE_WALLPAPER,
-  COOKIE_WALLPAPER_INTENSITY,
-  getClientCookie,
-} from "@/lib/cookies";
+  LEGAL_DOCUMENTS,
+  LEGAL_EFFECTIVE_DATE,
+  LEGAL_VERSION,
+  VISITOR_COOKIE_REGISTER,
+} from "@/lib/legal";
 import type { Theme } from "@/lib/registry";
+import {
+  SETTINGS_SECTION_EVENT,
+  clearPendingSettingsSection,
+  consumePendingSettingsSection,
+  type SettingsSectionRequest,
+} from "@/lib/settings-navigation";
 import {
   SLIDESHOW_INTERVAL_OPTIONS,
   WALLPAPER_INTENSITY_OPTIONS,
@@ -151,14 +157,8 @@ const KEYBOARD_GROUPS = [
   },
 ] as const;
 
-const COOKIE_TABLE = [
-  { name: COOKIE_THEME, purpose: "Light or dark appearance" },
-  { name: COOKIE_WALLPAPER, purpose: "Selected desktop wallpaper" },
-  { name: COOKIE_WALLPAPER_INTENSITY, purpose: "Wallpaper visibility" },
-  { name: COOKIE_SLIDESHOW_ENABLED, purpose: "Automatic wallpaper slideshow" },
-  { name: COOKIE_SLIDESHOW_INTERVAL, purpose: "Slideshow timing" },
-  { name: COOKIE_COMMENTER, purpose: "Comment display name and handles" },
-] as const;
+/** Rendered from the same register published in the Privacy Policy. */
+const COOKIE_TABLE = VISITOR_COOKIE_REGISTER;
 
 function StatePill({ on, labels }: { on: boolean; labels: [string, string] }) {
   return (
@@ -241,8 +241,10 @@ function AboutTab() {
           About this workspace
         </h2>
         <p className="settings-description">
-          A personal portfolio presented as a persistent desktop workspace.
-          Nothing here is tracked; preferences live in this browser only.
+          A personal portfolio presented as a persistent desktop workspace. No
+          advertising cookies or third-party analytics scripts are used;
+          preferences live in this browser, while entry pages record aggregate
+          read counts.
         </p>
 
         <div className="settings-card settings-about-hero">
@@ -456,7 +458,9 @@ function AboutTab() {
                 />{" "}
                 Storage
               </span>
-              <span className="settings-list-value">Cookies only</span>
+              <span className="settings-list-value">
+                Cookies + browser storage
+              </span>
             </div>
           </div>
         </div>
@@ -494,21 +498,39 @@ function AboutTab() {
           </div>
         </div>
 
-        <div className="settings-group">
+        <div className="settings-group" id="settings-privacy-storage">
           <p className="settings-group-title">Privacy &amp; storage</p>
+          <p className="settings-about-note" style={{ marginBottom: 10 }}>
+            Visitor cookies are listed below. Entry pages also record aggregate
+            reads by entry, day, country and referring host; the Privacy Policy
+            explains that first-party count and every local/session key.
+          </p>
           <div className="settings-card">
             {COOKIE_TABLE.map((row) => (
               <div className="settings-list-row" key={row.name}>
                 <span className="settings-list-key mono">{row.name}</span>
-                <span className="settings-list-value">{row.purpose}</span>
+                <span className="settings-list-value">{`${row.purpose} · ${row.duration}`}</span>
               </div>
             ))}
           </div>
           <p className="settings-about-note">
-            Comments, when enabled, are stored alongside the entry they belong
-            to — there is no separate account and no profile to maintain.
+            Comments are public and stored with the entry in Notion; the email
+            address is stripped from the public comment feed. There is no
+            visitor account or profile. See the{" "}
+            <Link href="/privacy-policy#cookies-and-browser-storage">
+              full cookie and storage register
+            </Link>
+            .
           </p>
-          <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
+          <div
+            style={{
+              display: "flex",
+              flexWrap: "wrap",
+              gap: 8,
+              marginTop: 10,
+            }}
+          >
+            <CookieNoticeButton />
             <button
               type="button"
               className="settings-danger-btn"
@@ -518,6 +540,37 @@ function AboutTab() {
               Reset preferences on this device
             </button>
           </div>
+        </div>
+
+        <div className="settings-group">
+          <p className="settings-group-title">Legal</p>
+          <div className="settings-card">
+            {LEGAL_DOCUMENTS.map((document) => (
+              <div className="settings-list-row" key={document.id}>
+                <span className="settings-list-key">{document.title}</span>
+                <Link
+                  className="settings-list-value"
+                  href={document.route}
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 4,
+                  }}
+                >
+                  Open
+                  <HugeiconsIcon
+                    icon={ArrowRight01Icon}
+                    strokeWidth={2}
+                    size={12}
+                    aria-hidden
+                  />
+                </Link>
+              </div>
+            ))}
+          </div>
+          <p className="settings-about-note">
+            Legal version {LEGAL_VERSION} · Effective {LEGAL_EFFECTIVE_DATE}.
+          </p>
         </div>
 
         <div className="settings-group">
@@ -557,8 +610,9 @@ function AboutTab() {
             </div>
           </div>
           <p className="settings-about-note">
-            Content and code are published under CC BY-NC-ND 4.0 unless noted in
-            the third-party notices.
+            Operator-authored content and code are published under CC BY-NC-ND
+            4.0 unless a specific item or source file states otherwise.
+            Third-party and upstream components keep their own licences.
           </p>
         </div>
       </section>
@@ -580,7 +634,35 @@ export function SettingsApp() {
     slideshowInterval,
     setSlideshowInterval,
   } = useAppearance();
+  const [activeTab, setActiveTab] = useState<"appearance" | "about">(
+    "appearance",
+  );
   const slideshowSwitchId = useId();
+
+  useEffect(() => {
+    const applySectionRequest = (section: SettingsSectionRequest | null) => {
+      if (section !== "privacy-storage") return;
+      clearPendingSettingsSection(section);
+      setActiveTab("about");
+      window.setTimeout(() => {
+        document.getElementById("settings-privacy-storage")?.scrollIntoView({
+          behavior: window.matchMedia("(prefers-reduced-motion: reduce)")
+            .matches
+            ? "auto"
+            : "smooth",
+          block: "start",
+        });
+      }, 160);
+    };
+
+    applySectionRequest(consumePendingSettingsSection());
+    const onRequest = (event: Event) =>
+      applySectionRequest(
+        (event as CustomEvent<SettingsSectionRequest>).detail,
+      );
+    window.addEventListener(SETTINGS_SECTION_EVENT, onRequest);
+    return () => window.removeEventListener(SETTINGS_SECTION_EVENT, onRequest);
+  }, []);
 
   const activeIntensityMeta =
     WALLPAPER_INTENSITY_OPTIONS.find(
@@ -589,7 +671,8 @@ export function SettingsApp() {
 
   return (
     <Tabs
-      defaultValue="appearance"
+      value={activeTab}
+      onValueChange={(value) => setActiveTab(value as "appearance" | "about")}
       orientation="vertical"
       className="settings-layout"
     >

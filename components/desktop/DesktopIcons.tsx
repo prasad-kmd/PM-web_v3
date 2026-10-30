@@ -3,6 +3,7 @@
 import {
   FileTextIcon,
   Settings02Icon,
+  Shield01Icon,
   Folder01Icon,
   Notebook01Icon,
   News01Icon,
@@ -40,6 +41,7 @@ function ShortcutGlyph({ appId }: { appId: AppId }) {
           tags: Tag01Icon,
           bookmarks: Bookmark01Icon,
           contact: Mail01Icon,
+          legal: Shield01Icon,
           "og-studio": Image02Icon,
           invoices: Invoice02Icon,
           insights: ChartLineData02Icon,
