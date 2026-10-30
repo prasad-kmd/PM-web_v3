@@ -61,10 +61,11 @@ export type ContentDetailResult = ContentIndexResult & {
 };
 
 const CACHE_SECONDS = 60 * 60;
+const IMAGE_CACHE_SECONDS = 15 * 60;
 const DEFAULT_API_VERSION = "2026-03-11";
 const MAX_BLOCK_DEPTH = 5;
 
-type CacheMode = "cache" | "no-store";
+type CacheMode = "cache" | "image-cache" | "no-store";
 type NotionClient = InstanceType<typeof Client>;
 
 const DATABASE_ENV: Record<ContentType, string[]> = {
@@ -345,7 +346,14 @@ export function createNotionClient(
         cache: cacheMode === "no-store" ? "no-store" : "force-cache",
         ...(cacheMode === "cache"
           ? { next: { revalidate: CACHE_SECONDS, tags: ["notion-cms"] } }
-          : {}),
+          : cacheMode === "image-cache"
+            ? {
+                next: {
+                  revalidate: IMAGE_CACHE_SECONDS,
+                  tags: ["notion-cms"],
+                },
+              }
+            : {}),
       });
       if (response.status !== 429 || attempt >= 2) return response;
       const seconds = Number(response.headers.get("Retry-After") || "1");
@@ -593,7 +601,7 @@ export async function getFreshNotionImageUrl(
   id: string,
   source: "default" | "thumbnail" | "icon" = "default",
 ): Promise<string | null> {
-  const notion = createNotionClient("no-store");
+  const notion = createNotionClient("image-cache");
   const resource = (resourceType === "block"
     ? await notion.blocks.retrieve({ block_id: id })
     : await notion.pages.retrieve({ page_id: id })) as unknown as UnknownRecord;

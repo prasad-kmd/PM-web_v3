@@ -48,6 +48,15 @@ const CV_HREF = "/cv/resume-v2.pdf";
 
 const pad = (value: number) => String(value).padStart(2, "0");
 
+let cachedProjectsState: ProjectState | null = null;
+let cachedCvReadyState: boolean | null = null;
+
+if (typeof window !== "undefined") {
+  window.addEventListener("pm:content-cache-purged", () => {
+    cachedProjectsState = null;
+  });
+}
+
 /**
  * Résumé (R1 · Beacon).
  *
@@ -60,30 +69,48 @@ const pad = (value: number) => String(value).padStart(2, "0");
  *   the live total count in `/projects`.
  */
 export function ResumeApp({ onNavigateHome }: { onNavigateHome?: () => void }) {
-  const [projects, setProjects] = useState<ProjectState>({
-    status: "loading",
-    items: [],
-    total: 0,
-    configured: true,
-  });
+  const [projects, setProjects] = useState<ProjectState>(
+    () =>
+      cachedProjectsState ?? {
+        status: "loading",
+        items: [],
+        total: 0,
+        configured: true,
+      },
+  );
   // The CV may not be in the repo yet. The probe decides whether a click opens
   // the file or explains, in a toast, that it has not been uploaded — the
   // button stays a button either way.
-  const [cvReady, setCvReady] = useState<boolean | null>(null);
+  const [cvReady, setCvReady] = useState<boolean | null>(cachedCvReadyState);
 
   useEffect(() => {
+    if (cachedCvReadyState !== null) {
+      setCvReady(cachedCvReadyState);
+      return;
+    }
     const controller = new AbortController();
     fetch(CV_HREF, { method: "HEAD", signal: controller.signal })
-      .then((response) => setCvReady(response.ok))
-      .catch(() => setCvReady(false));
+      .then((response) => {
+        cachedCvReadyState = response.ok;
+        setCvReady(response.ok);
+      })
+      .catch(() => {
+        if (!controller.signal.aborted) {
+          cachedCvReadyState = false;
+          setCvReady(false);
+        }
+      });
     return () => controller.abort();
   }, []);
 
   useEffect(() => {
+    if (cachedProjectsState) {
+      setProjects(cachedProjectsState);
+      return;
+    }
     const controller = new AbortController();
     fetch(`/api/latest?types=projects&limit=${RESUME_PROJECTS_LIMIT}`, {
       signal: controller.signal,
-      cache: "no-store",
     })
       .then((response) => (response.ok ? response.json() : Promise.reject()))
       .then(
@@ -100,12 +127,16 @@ export function ResumeApp({ onNavigateHome }: { onNavigateHome?: () => void }) {
               ? data.total
               : items.length;
           const configured = data.configured !== false;
-          setProjects({
+          const nextState: ProjectState = {
             status: data.error === "unavailable" ? "error" : "ready",
             items,
             total,
             configured,
-          });
+          };
+          if (nextState.status === "ready") {
+            cachedProjectsState = nextState;
+          }
+          setProjects(nextState);
         },
       )
       .catch(() => {

@@ -2,8 +2,10 @@ import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
 import {
   adminClearCookieHeaders,
+  adminClearHintCookieHeader,
   adminClearTrustCookieHeaders,
   adminSetCookieHeader,
+  adminSetHintCookieHeader,
   adminSetTrustCookieHeader,
   consumeTotpChallenge,
   createAdminSessionToken,
@@ -25,6 +27,7 @@ import { getAdminCommentProfile } from "@/lib/admin/comment-profile";
 import { notifyAdminLoginAttempt } from "@/lib/admin/telegram-notify";
 import { clientIp, sameOrigin } from "@/lib/comments/request-context";
 import { createLimiter } from "@/lib/contact/security";
+import { COOKIE_ADMIN_HINT } from "@/lib/cookies";
 
 export const runtime = "nodejs";
 
@@ -76,13 +79,20 @@ export async function GET(request: NextRequest) {
   const session = await getAdminSession(request);
   if (!session) {
     // Public visitors receive zero metadata about whether 2FA/TOTP is configured.
-    return NextResponse.json(
+    const response = NextResponse.json(
       { authenticated: false },
       { headers: NO_STORE_HEADERS },
     );
+    if (request.cookies.get(COOKIE_ADMIN_HINT)?.value) {
+      response.headers.append(
+        "Set-Cookie",
+        adminClearHintCookieHeader(request),
+      );
+    }
+    return response;
   }
   const totpEnabled = isAdminTotpRequired();
-  return NextResponse.json(
+  const response = NextResponse.json(
     {
       authenticated: true,
       username: session.username,
@@ -95,6 +105,17 @@ export async function GET(request: NextRequest) {
     },
     { headers: NO_STORE_HEADERS },
   );
+  if (request.cookies.get(COOKIE_ADMIN_HINT)?.value !== "1") {
+    const remainingSec = Math.max(
+      60,
+      Math.floor((session.expiresAt - Date.now()) / 1000),
+    );
+    response.headers.append(
+      "Set-Cookie",
+      adminSetHintCookieHeader(remainingSec, request),
+    );
+  }
+  return response;
 }
 
 export async function POST(request: NextRequest) {
@@ -362,6 +383,10 @@ export async function POST(request: NextRequest) {
       "Set-Cookie",
       adminSetCookieHeader(token, maxAgeSeconds, request),
     );
+    response.headers.append(
+      "Set-Cookie",
+      adminSetHintCookieHeader(maxAgeSeconds, request),
+    );
     if (trustCookie) {
       response.headers.append(
         "Set-Cookie",
@@ -507,6 +532,10 @@ export async function POST(request: NextRequest) {
   response.headers.append(
     "Set-Cookie",
     adminSetCookieHeader(token, maxAgeSeconds, request),
+  );
+  response.headers.append(
+    "Set-Cookie",
+    adminSetHintCookieHeader(maxAgeSeconds, request),
   );
   return response;
 }
