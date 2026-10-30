@@ -100,22 +100,19 @@ function DesktopSearchParamsSync({
 }
 
 /**
- * Handles owner studio hotkeys (`⌘⇧L`, `⌘⇧G`, `⌘⇧I`, `⌘⇧A`) and ensures any
- * open admin studio windows are closed if the session becomes unauthenticated.
- * Under Decision 2B, unauthenticated direct visits to `/og-studio`, `/invoices`,
- * or `/insights` render a stealth 404 and never auto-open the lock curtain.
+ * Ensures any open admin studio windows are closed if the session becomes
+ * unauthenticated. Under Decision 2B, unauthenticated direct visits to
+ * `/og-studio`, `/invoices`, or `/insights` render a stealth 404 and never
+ * auto-open the lock curtain.
  */
 function AdminWorkspaceBridge({
   windows,
-  onOpenApp,
   onCloseAdminWindows,
 }: {
   windows: WindowState[];
-  onOpenApp: (appId: AppId) => void;
   onCloseAdminWindows: () => void;
 }) {
-  const { authenticated, ready, lockOpen, openLockCurtain, closeLockCurtain } =
-    useAdminAuth();
+  const { authenticated, ready } = useAdminAuth();
 
   useEffect(() => {
     if (!ready || authenticated) return;
@@ -126,31 +123,6 @@ function AdminWorkspaceBridge({
       onCloseAdminWindows();
     }
   }, [authenticated, onCloseAdminWindows, ready, windows]);
-
-  useEffect(() => {
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (!(event.metaKey || event.ctrlKey) || !event.shiftKey) return;
-      const key = event.key.toLowerCase();
-      if (key === "l") {
-        event.preventDefault();
-        if (!authenticated) {
-          if (lockOpen) closeLockCurtain();
-          else openLockCurtain();
-        }
-      } else if (authenticated && key === "g") {
-        event.preventDefault();
-        onOpenApp("og-studio");
-      } else if (authenticated && key === "i") {
-        event.preventDefault();
-        onOpenApp("invoices");
-      } else if (authenticated && key === "a") {
-        event.preventDefault();
-        onOpenApp("insights");
-      }
-    };
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, [authenticated, closeLockCurtain, lockOpen, onOpenApp, openLockCurtain]);
 
   return null;
 }
@@ -267,22 +239,6 @@ function DesktopWorkspace({
     registerSignOutHandler(closeAdminWindows);
   }, [closeAdminWindows, registerSignOutHandler]);
 
-  useEffect(() => {
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (!(event.metaKey || event.ctrlKey) || !event.altKey) return;
-      const key = event.key.toLowerCase();
-      if (!event.shiftKey && key === "k") {
-        event.preventDefault();
-        setPaletteOpen((current) => !current);
-      } else if (!event.shiftKey && key === ",") {
-        event.preventDefault();
-        openApp("settings");
-      }
-    };
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, [openApp]);
-
   const captureContextTarget = useCallback((event: React.MouseEvent) => {
     const target = event.target as HTMLElement;
     const link = target.closest("a[href]") as HTMLAnchorElement | null;
@@ -368,7 +324,7 @@ function DesktopWorkspace({
   }, [pathname, routeApp, search]);
 
   // Track if an admin path was viewed while signed out; if the owner unlocks via
-  // `⌘⇧L` on that 404 screen, refresh the server payload and open the studio.
+  // the Profile menu on that 404 screen, refresh the server payload and open the studio.
   useEffect(() => {
     const rawCandidate = getAppIdFromPathname(pathname);
     if (!rawCandidate || !isAdminOnlyApp(rawCandidate)) {
@@ -462,7 +418,6 @@ function DesktopWorkspace({
       </Suspense>
       <AdminWorkspaceBridge
         windows={manager.windows}
-        onOpenApp={openApp}
         onCloseAdminWindows={closeAdminWindows}
       />
       <div

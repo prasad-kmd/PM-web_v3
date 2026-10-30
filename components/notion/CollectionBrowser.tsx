@@ -198,26 +198,6 @@ function CollectionBrowserView({
     searchRef.current?.focus();
   }, [q, writeUrl]);
 
-  // "/" focuses search while this listing is the live window content.
-  useEffect(() => {
-    const onKey = (event: KeyboardEvent) => {
-      if (event.key !== "/" || event.metaKey || event.ctrlKey || event.altKey)
-        return;
-      const target = event.target as HTMLElement | null;
-      if (
-        target?.closest(
-          "input, textarea, select, [contenteditable=true], [role=menu], [role=listbox]",
-        )
-      )
-        return;
-      if (!rootRef.current?.isConnected) return;
-      event.preventDefault();
-      searchRef.current?.focus();
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, []);
-
   const listing = useMemo(
     () =>
       selectListing(items, {
@@ -478,10 +458,6 @@ function CollectionBrowserView({
                   ↵
                 </kbd>
               </button>
-            ) : !draft && !q ? (
-              <kbd className="lib-kbd lib-kbd-slash" aria-hidden>
-                /
-              </kbd>
             ) : null}
           </form>
           <span className="lib-grow" />

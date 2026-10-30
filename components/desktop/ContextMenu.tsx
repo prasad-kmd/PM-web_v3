@@ -20,7 +20,6 @@ import {
   ContextMenuItem,
   ContextMenuLabel,
   ContextMenuSeparator,
-  ContextMenuShortcut,
   ContextMenuTrigger,
 } from "@/components/ui/context-menu";
 import { useAppearance } from "@/lib/appearance";
@@ -130,17 +129,14 @@ export function DesktopContextMenuContent({
         <ContextMenuItem onClick={() => window.history.back()}>
           <MenuIcon icon={ArrowLeft02Icon} />
           Back
-          <ContextMenuShortcut>Alt+←</ContextMenuShortcut>
         </ContextMenuItem>
         <ContextMenuItem onClick={() => window.history.forward()}>
           <MenuIcon icon={ArrowRight01Icon} />
           Forward
-          <ContextMenuShortcut>Alt+→</ContextMenuShortcut>
         </ContextMenuItem>
         <ContextMenuItem onClick={() => window.location.reload()}>
           <MenuIcon icon={Refresh01Icon} />
           Reload workspace
-          <ContextMenuShortcut>⌘R</ContextMenuShortcut>
         </ContextMenuItem>
       </ContextMenuGroup>
 
@@ -153,7 +149,6 @@ export function DesktopContextMenuContent({
           <ContextMenuItem onClick={onOpenCommandPalette}>
             <MenuIcon icon={Search01Icon} />
             Find in workspace…
-            <ContextMenuShortcut>⌘K</ContextMenuShortcut>
           </ContextMenuItem>
         ) : null}
         <ContextMenuItem onClick={nextWallpaper}>
@@ -274,7 +269,6 @@ export function ShortcutContextMenu({
           <ContextMenuItem onClick={() => onOpen(appId)}>
             <MenuIcon icon={ArrowRight01Icon} />
             Open
-            <ContextMenuShortcut>↵</ContextMenuShortcut>
           </ContextMenuItem>
           <ContextMenuItem
             onClick={() =>

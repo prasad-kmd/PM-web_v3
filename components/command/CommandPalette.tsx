@@ -58,7 +58,6 @@ type PaletteItem = {
   icon: typeof Search01Icon;
   title: string;
   meta: string;
-  shortcut?: string;
   keywords: string[];
   subtitle?: string;
   slug?: string;
@@ -273,8 +272,6 @@ export function CommandPalette({
         icon: APP_ICON[appId],
         title: app.title,
         meta: app.kind,
-        shortcut:
-          appId === "resume" ? "⌘O" : appId === "settings" ? "⌘," : undefined,
         keywords: [app.kind, app.description, appId, "window", "open", "app"],
         subtitle: app.description,
         onSelect: () => closeAndRun(() => onOpenApp(appId)),
@@ -366,7 +363,6 @@ export function CommandPalette({
           icon: ChartLineData02Icon,
           title: "Content Insights",
           meta: "Readership",
-          shortcut: "⌘⇧A",
           keywords: [
             "reads",
             "insights",
@@ -383,7 +379,6 @@ export function CommandPalette({
           icon: Image02Icon,
           title: "OG Image Studio",
           meta: "Brand graphics",
-          shortcut: "⌘⇧G",
           keywords: ["og", "social", "card", "image", "studio"],
           onSelect: () => closeAndRun(() => onOpenApp("og-studio")),
         },
@@ -393,7 +388,6 @@ export function CommandPalette({
           icon: Invoice02Icon,
           title: "Invoice Studio",
           meta: "Workspace ledger",
-          shortcut: "⌘⇧I",
           keywords: [
             "invoice",
             "billing",
@@ -490,7 +484,6 @@ export function CommandPalette({
         icon: Login01Icon,
         title: "Owner sign in…",
         meta: "Workspace",
-        shortcut: "⌘⇧L",
         keywords: ["login", "sign in", "owner", "admin", "unlock"],
         onSelect: () => closeAndRun(openLockCurtain),
       });
@@ -742,13 +735,7 @@ export function CommandPalette({
                               <span className="cmd-row-title">
                                 {item.title}
                               </span>
-                              {item.shortcut ? (
-                                <kbd className="cmd-kbd">{item.shortcut}</kbd>
-                              ) : (
-                                <span className="cmd-row-meta">
-                                  {item.meta}
-                                </span>
-                              )}
+                              <span className="cmd-row-meta">{item.meta}</span>
                             </button>
                           );
                         })}

@@ -196,7 +196,7 @@ export function ResumeApp({ onNavigateHome }: { onNavigateHome?: () => void }) {
                     size={13}
                     aria-hidden
                   />
-                  {resumeProfile.location} · {resumeProfile.timezone}
+                  {resumeProfile.location}
                   <span className="resume-sep" aria-hidden="true" />
                   <span className="resume-availability">
                     <span aria-hidden="true" />

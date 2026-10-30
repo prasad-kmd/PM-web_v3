@@ -5,6 +5,8 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import { toast } from "sonner";
 import { usePwaInstall } from "@/hooks/usePwaInstall";
 
+export const PWA_INSTALL_SHORTCUT_ID = "pwa-install";
+
 /**
  * A first-class desktop shortcut for installing the workspace.
  *
@@ -13,7 +15,13 @@ import { usePwaInstall } from "@/hooks/usePwaInstall";
  * could lose that activation while the menu closed, so it has been replaced
  * by this directly clickable desktop affordance.
  */
-export function DesktopInstallShortcut() {
+export function DesktopInstallShortcut({
+  selected = false,
+  onSelect,
+}: {
+  selected?: boolean;
+  onSelect?: () => void;
+} = {}) {
   const { status, installed, installing, canInstall, isIos, promptInstall } =
     usePwaInstall();
 
@@ -48,9 +56,14 @@ export function DesktopInstallShortcut() {
   return (
     <button
       type="button"
-      className="desktop-shortcut desktop-install-shortcut"
+      data-shortcut-id={PWA_INSTALL_SHORTCUT_ID}
       data-pwa-install-shortcut=""
-      onPointerDown={(event) => event.stopPropagation()}
+      className={`desktop-shortcut desktop-install-shortcut${selected ? " is-selected" : ""}`}
+      onPointerDown={(event) => {
+        event.stopPropagation();
+        onSelect?.();
+      }}
+      onFocus={() => onSelect?.()}
       onClick={handleInstall}
       disabled={installing}
       aria-label={installing ? "Installing workspace" : "Install workspace app"}

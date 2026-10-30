@@ -683,9 +683,7 @@ export function ContentInsightsApp() {
 
                     <div className="insights-kpi-card">
                       <div className="insights-kpi-top">
-                        <span className="insights-kpi-label">
-                          Today · UTC+05:30
-                        </span>
+                        <span className="insights-kpi-label">Today</span>
                         <HugeiconsIcon
                           icon={Calendar03Icon}
                           size={14}
@@ -1327,7 +1325,7 @@ export function ContentInsightsApp() {
                 </div>
 
                 <p className="insights-privacy-note">
-                  Counts are aggregated into daily UTC+05:30 buckets without
+                  Counts are aggregated into daily local-date buckets without
                   storing visitor IP addresses, browser fingerprints, or
                   third-party tracking cookies.
                 </p>

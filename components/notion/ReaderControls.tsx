@@ -1,6 +1,5 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import {
   createContext,
   useCallback,
@@ -88,19 +87,6 @@ function useReader() {
 const useIsoLayoutEffect =
   typeof window !== "undefined" ? useLayoutEffect : useEffect;
 
-function isTypingTarget(target: EventTarget | null) {
-  return (
-    target instanceof HTMLElement &&
-    Boolean(
-      target.closest(
-        // `.window` is itself role="dialog" (the DesktopOS window shell), so
-        // only real dialogs/popovers inside or above it count.
-        "input, textarea, select, [contenteditable=true], [role=menu], [role=listbox], [role=dialog]:not(.window), [role=alertdialog]",
-      ),
-    )
-  );
-}
-
 /**
  * Owns reader state and finds the window scroller. DesktopOS renders route
  * content inside `.window-body`, not the document, so the Rare UI components
@@ -110,15 +96,12 @@ function isTypingTarget(target: EventTarget | null) {
 export function ReaderProvider({
   children,
   headings,
-  prevHref,
-  nextHref,
 }: {
   children: ReactNode;
   headings: ReaderHeading[];
   prevHref?: string | null;
   nextHref?: string | null;
 }) {
-  const router = useRouter();
   const anchorRef = useRef<HTMLSpanElement>(null);
   const scrollerRef = useRef<HTMLElement | null>(null);
   const [ready, setReady] = useState(false);
@@ -178,24 +161,6 @@ export function ReaderProvider({
       return !current;
     });
   }, []);
-
-  // J / K: next / previous entry · O: toggle the outline rail.
-  useEffect(() => {
-    const onKey = (event: KeyboardEvent) => {
-      if (event.metaKey || event.ctrlKey || event.altKey || event.repeat)
-        return;
-      if (isTypingTarget(event.target)) return;
-      if (!anchorRef.current?.isConnected) return;
-      const key = event.key.toLowerCase();
-      if (key === "j" && nextHref) router.push(nextHref);
-      else if (key === "k" && prevHref) router.push(prevHref);
-      else if (key === "o") toggleOutline();
-      else return;
-      event.preventDefault();
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [nextHref, prevHref, router, toggleOutline]);
 
   const sections = useMemo(() => {
     const top = headings.filter((heading) => heading.depth === 0);
@@ -410,7 +375,6 @@ export function ReaderToolbarActions({
       {headings.length ? (
         <WorkspaceTooltip
           label={outline ? "Hide outline" : "Show outline"}
-          shortcut="O"
           align="end"
         >
           <Button
@@ -419,7 +383,6 @@ export function ReaderToolbarActions({
             size="sm"
             className="rdr-outline-toggle rdr-tool"
             aria-pressed={outline}
-            aria-keyshortcuts="O"
             onClick={toggleOutline}
           >
             <OutlineGlyph open={outline} />
@@ -443,7 +406,6 @@ export function ReaderDocumentActions() {
       {headings.length ? (
         <WorkspaceTooltip
           label={outline ? "Hide outline" : "Show outline"}
-          shortcut="O"
           align="end"
         >
           <Button
@@ -452,7 +414,6 @@ export function ReaderDocumentActions() {
             size="sm"
             className="rdr-outline-toggle rdr-tool"
             aria-pressed={outline}
-            aria-keyshortcuts="O"
             onClick={toggleOutline}
           >
             <OutlineGlyph open={outline} />
@@ -613,15 +574,13 @@ export function ReaderSections() {
   );
 }
 
-/** Command-style status footer: current section + key hints. */
+/** Reader status footer: current active section. */
 export function ReaderFooter({
   collectionLabel,
-  hasNext,
-  hasPrev,
 }: {
   collectionLabel: string;
-  hasNext: boolean;
-  hasPrev: boolean;
+  hasNext?: boolean;
+  hasPrev?: boolean;
 }) {
   const { sections, scrollerRef, ready } = useReader();
   const [active, setActive] = useState(0);
@@ -665,16 +624,6 @@ export function ReaderFooter({
           : collectionLabel}
       </span>
       <span className="rdr-foot-grow" />
-      {hasNext || hasPrev ? (
-        <span className="rdr-foot-hint">
-          <kbd>J</kbd>/<kbd>K</kbd> Next / previous entry
-        </span>
-      ) : null}
-      {sections.length ? (
-        <span className="rdr-foot-hint">
-          <kbd>O</kbd> Outline
-        </span>
-      ) : null}
     </footer>
   );
 }

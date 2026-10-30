@@ -28,7 +28,6 @@ import {
   MenubarLabel,
   MenubarMenu,
   MenubarSeparator,
-  MenubarShortcut,
   MenubarTrigger,
 } from "@/components/ui/menubar";
 import { WorkspaceTooltip } from "@/components/ui/tooltip";
@@ -135,7 +134,6 @@ export function MenuBar({
                         size={15}
                       />
                       <span>Content Insights</span>
-                      <MenubarShortcut>⌘⇧A</MenubarShortcut>
                     </MenubarItem>
                     <MenubarItem onClick={() => onOpenApp("og-studio")}>
                       <HugeiconsIcon
@@ -144,7 +142,6 @@ export function MenuBar({
                         size={15}
                       />
                       <span>OG Image Studio</span>
-                      <MenubarShortcut>⌘⇧G</MenubarShortcut>
                     </MenubarItem>
                     <MenubarItem onClick={() => onOpenApp("invoices")}>
                       <HugeiconsIcon
@@ -153,7 +150,6 @@ export function MenuBar({
                         size={15}
                       />
                       <span>Invoice Studio</span>
-                      <MenubarShortcut>⌘⇧I</MenubarShortcut>
                     </MenubarItem>
                   </MenubarGroup>
 
@@ -181,7 +177,6 @@ export function MenuBar({
                         size={15}
                       />
                       <span>Settings…</span>
-                      <MenubarShortcut>⌘,</MenubarShortcut>
                     </MenubarItem>
                     {deviceTrusted && (
                       <MenubarItem onClick={() => void forgetTrustedDevice()}>
@@ -219,7 +214,6 @@ export function MenuBar({
                         size={15}
                       />
                       <span>About Prasad</span>
-                      <MenubarShortcut>⌘O</MenubarShortcut>
                     </MenubarItem>
                     <MenubarItem onClick={() => onOpenApp("contact")}>
                       <HugeiconsIcon
@@ -248,7 +242,6 @@ export function MenuBar({
                       size={15}
                     />
                     <span>Sign in…</span>
-                    <MenubarShortcut>⌘⇧L</MenubarShortcut>
                   </MenubarItem>
                 </>
               )}
@@ -260,13 +253,13 @@ export function MenuBar({
             <MenubarContent>
               <MenubarGroup>
                 <MenubarItem onClick={onOpenCommandPalette}>
-                  Find in workspace… <MenubarShortcut>⌘K</MenubarShortcut>
+                  Find in workspace…
                 </MenubarItem>
                 <MenubarItem onClick={() => onOpenApp("resume")}>
-                  Open Resume <MenubarShortcut>⌘O</MenubarShortcut>
+                  Open Resume
                 </MenubarItem>
                 <MenubarItem onClick={() => onOpenApp("settings")}>
-                  Open Settings <MenubarShortcut>⌘,</MenubarShortcut>
+                  Open Settings
                 </MenubarItem>
               </MenubarGroup>
               <MenubarSeparator />
@@ -374,13 +367,12 @@ export function MenuBar({
       </div>
 
       <div className="menu-bar-status">
-        <WorkspaceTooltip label="Find in workspace" shortcut="⌘K">
+        <WorkspaceTooltip label="Find in workspace">
           <button
             type="button"
             className="menu-bar-icon-btn"
             onClick={onOpenCommandPalette}
             aria-label="Find in workspace"
-            aria-keyshortcuts="Meta+K Control+K"
           >
             <HugeiconsIcon icon={Search01Icon} strokeWidth={2} size={15} />
           </button>

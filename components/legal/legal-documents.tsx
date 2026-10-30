@@ -49,7 +49,7 @@ const PRIVACY_SECTIONS: readonly LegalSection[] = [
         <p>
           This website is a personal engineering portfolio and writing workspace
           operated by <strong>Prasad Madhuranga</strong> (“I”, “me” or “the
-          operator”), based in <strong>Kandy, Sri Lanka</strong>. I am
+          operator”), based in <strong>Sri Lanka</strong>. I am
           responsible for deciding how personal data described in this policy is
           used on this site.
         </p>
@@ -661,7 +661,7 @@ const TERMS_SECTIONS: readonly LegalSection[] = [
       <>
         <p>
           This website is operated by <strong>Prasad Madhuranga</strong> (“I”,
-          “me” or “the operator”), based in Kandy, Sri Lanka. It presents a
+          “me” or “the operator”), based in Sri Lanka. It presents a
           personal engineering portfolio, projects, articles, tutorials, writing
           and an interactive desktop-style workspace.
         </p>

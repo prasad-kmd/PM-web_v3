@@ -30,7 +30,8 @@ export type WindowState = {
 type StoredWindowLayout = Pick<WindowState, "rect" | "restRect" | "maximized">;
 type StoredWindowLayouts = Partial<Record<AppId, StoredWindowLayout>>;
 
-const STORAGE_KEY = "pm-window-layout-v1";
+export const WINDOW_LAYOUT_STORAGE_KEY = "pm-window-layout-v2";
+const LEGACY_STORAGE_KEY = "pm-window-layout-v1";
 
 const DEFAULT_WINDOW_SIZE = { w: 900, h: 640 };
 
@@ -58,8 +59,14 @@ function readStoredLayouts(): StoredWindowLayouts {
   if (typeof window === "undefined") return {};
 
   try {
+    window.localStorage.removeItem(LEGACY_STORAGE_KEY);
+  } catch {
+    // Ignore storage cleanup failures.
+  }
+
+  try {
     const value: unknown = JSON.parse(
-      window.localStorage.getItem(STORAGE_KEY) ?? "{}",
+      window.localStorage.getItem(WINDOW_LAYOUT_STORAGE_KEY) ?? "{}",
     );
     if (!value || typeof value !== "object") return {};
 
@@ -127,13 +134,38 @@ export function useWindowManager(area: Area, isMobile: boolean) {
       };
       layoutsRef.current = next;
       try {
-        window.localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+        window.localStorage.setItem(
+          WINDOW_LAYOUT_STORAGE_KEY,
+          JSON.stringify(next),
+        );
       } catch {
         // Private mode or storage limits should never block window interaction.
       }
     },
     [ensureLayoutsLoaded],
   );
+
+  const resetLayouts = useCallback(() => {
+    layoutsRef.current = {};
+    layoutsLoadedRef.current = true;
+    try {
+      window.localStorage.removeItem(WINDOW_LAYOUT_STORAGE_KEY);
+      window.localStorage.removeItem(LEGACY_STORAGE_KEY);
+    } catch {
+      // Storage access is optional.
+    }
+    setWindows((current) =>
+      current.map((windowState) => {
+        if (windowState.exiting) return windowState;
+        return {
+          ...windowState,
+          maximized: true,
+          restoreMaximized: true,
+          rect: { x: 0, y: 0, w: area.w, h: area.h },
+        };
+      }),
+    );
+  }, [area.h, area.w]);
 
   const buildWindowState = useCallback(
     (
@@ -156,7 +188,12 @@ export function useWindowManager(area: Area, isMobile: boolean) {
                 w: Math.min(1090, Math.max(740, targetArea.w - 56)),
                 h: Math.min(720, Math.max(520, targetArea.h - 40)),
               }
-            : null;
+            : appId === "insights"
+              ? {
+                  w: Math.min(1120, Math.max(750, targetArea.w - 48)),
+                  h: Math.min(740, Math.max(540, targetArea.h - 36)),
+                }
+              : null;
       const freshRect = studioSize
         ? clampRect(
             {
@@ -171,7 +208,7 @@ export function useWindowManager(area: Area, isMobile: boolean) {
       const restRect = stored
         ? clampRect(stored.restRect, targetArea)
         : freshRect;
-      const restoreMaximized = stored?.maximized ?? false;
+      const restoreMaximized = stored?.maximized ?? true;
       const maximized = mobile || restoreMaximized;
       const rect = maximized
         ? { x: 0, y: 0, w: targetArea.w, h: targetArea.h }
@@ -332,12 +369,14 @@ export function useWindowManager(area: Area, isMobile: boolean) {
             ? {
                 ...windowState,
                 maximized: false,
+                restoreMaximized: false,
                 rect: clampRect(windowState.restRect, area),
                 z: zRef.current,
               }
             : {
                 ...windowState,
                 maximized: true,
+                restoreMaximized: true,
                 restRect: windowState.rect,
                 rect: { x: 0, y: 0, w: area.w, h: area.h },
                 z: zRef.current,
@@ -365,6 +404,7 @@ export function useWindowManager(area: Area, isMobile: boolean) {
           const next = {
             ...windowState,
             maximized: false,
+            restoreMaximized: false,
             restRect: windowState.maximized
               ? windowState.restRect
               : windowState.rect,
@@ -391,6 +431,7 @@ export function useWindowManager(area: Area, isMobile: boolean) {
             rect: { ...rect },
             restRect: { ...rect },
             maximized: false,
+            restoreMaximized: false,
           };
           persistLayout(next);
           return next;
@@ -487,6 +528,7 @@ export function useWindowManager(area: Area, isMobile: boolean) {
     resize: updateRect,
     finishExit,
     closeAll,
+    resetLayouts,
     syncToRoute,
     topId,
     topAppId,
