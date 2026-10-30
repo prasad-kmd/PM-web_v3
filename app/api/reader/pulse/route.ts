@@ -2,16 +2,41 @@ import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
 import { sameOrigin } from "@/lib/comments/request-context";
 import { CONTENT_TYPES } from "@/lib/content-types";
-import { isValidSlug, recordEntryRead } from "@/lib/engagement/reads";
+import {
+  getEntryReadCount,
+  isContentType,
+  isValidSlug,
+  recordEntryRead,
+} from "@/lib/engagement/reads";
 
 export const runtime = "nodejs";
-export const dynamic = "force-dynamic";
+
+const READ_CACHE_CONTROL =
+  "public, s-maxage=3600, stale-while-revalidate=86400";
 
 const payloadSchema = z.object({
   type: z.enum(CONTENT_TYPES),
   slug: z.string().trim().min(1).max(160),
   ref: z.string().trim().max(512).optional(),
 });
+
+export async function GET(request: NextRequest) {
+  const rawType = request.nextUrl.searchParams.get("type")?.trim() ?? "";
+  const rawSlug = request.nextUrl.searchParams.get("slug")?.trim() ?? "";
+
+  if (!isContentType(rawType) || !isValidSlug(rawSlug)) {
+    return NextResponse.json(
+      { error: "Invalid entry parameters." },
+      { status: 400, headers: { "Cache-Control": "no-store" } },
+    );
+  }
+
+  const count = await getEntryReadCount(rawType, rawSlug);
+  return NextResponse.json(
+    { configured: count !== null, count },
+    { headers: { "Cache-Control": READ_CACHE_CONTROL } },
+  );
+}
 
 export async function POST(request: NextRequest) {
   if (!sameOrigin(request)) {

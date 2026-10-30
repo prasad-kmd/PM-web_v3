@@ -4,48 +4,108 @@ import { useEffect, useState } from "react";
 import { ViewIcon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import type { ContentType } from "@/lib/content-types";
-import type { PulseResponse } from "@/lib/engagement/types";
+import type { ReadCountResponse } from "@/lib/engagement/types";
 
 const numberFormatter = new Intl.NumberFormat("en-US");
 const ACTIVE_READ_DELAY_MS = 1500;
+
+const readCountMemoryCache = new Map<string, number | null>();
+const readCountInflight = new Map<string, Promise<number | null>>();
+
+function entryCacheKey(type: ContentType, slug: string): string {
+  return `${type}:${slug.toLowerCase()}`;
+}
 
 function seenStorageKey(type: ContentType, slug: string): string {
   return `pm_rdr_seen:${type}:${slug.toLowerCase()}`;
 }
 
+function fetchCachedReadCount(
+  type: ContentType,
+  slug: string,
+): Promise<number | null> {
+  const key = entryCacheKey(type, slug);
+  if (readCountMemoryCache.has(key)) {
+    return Promise.resolve(readCountMemoryCache.get(key) ?? null);
+  }
+  const existing = readCountInflight.get(key);
+  if (existing) return existing;
+
+  const url = `/api/reader/pulse?type=${encodeURIComponent(type)}&slug=${encodeURIComponent(slug)}`;
+  const req = fetch(url)
+    .then(async (res): Promise<number | null> => {
+      if (!res.ok) return null;
+      const data = (await res.json()) as ReadCountResponse;
+      if (
+        !data.configured ||
+        typeof data.count !== "number" ||
+        !Number.isFinite(data.count)
+      ) {
+        readCountMemoryCache.set(key, null);
+        return null;
+      }
+      const normalized = Math.max(0, Math.floor(data.count));
+      readCountMemoryCache.set(key, normalized);
+      return normalized;
+    })
+    .catch(() => null)
+    .finally(() => {
+      readCountInflight.delete(key);
+    });
+
+  readCountInflight.set(key, req);
+  return req;
+}
+
 /**
  * Displays the tabular read count strictly inside `.rdr-meta` on content
- * reader pages and registers a single active read per browser session.
+ * reader pages via a 1h CDN-cached `GET /api/reader/pulse` request and
+ * registers a single write-only active read per browser session (`POST`).
  *
- * Uses `sessionStorage` so DesktopOS window focus switches (`FrozenRouteSurface`
- * ↔ `LiveRouteSurface`) never double-fire the pulse request.
+ * Uses `sessionStorage` (`pm_rdr_seen:<type>:<slug>`) so DesktopOS window
+ * focus switches (`FrozenRouteSurface` ↔ `LiveRouteSurface`) never double-fire
+ * the pulse request, and keeps `ContentDetailPage` 100% 1h ISR (`●`).
  */
 export function ReaderReadCount({
   type,
   slug,
-  initialCount,
 }: {
   type: ContentType;
   slug: string;
-  initialCount: number | null;
 }) {
-  const [count, setCount] = useState<number | null>(initialCount);
+  const key = entryCacheKey(type, slug);
+  const [count, setCount] = useState<number | null>(() =>
+    readCountMemoryCache.has(key)
+      ? (readCountMemoryCache.get(key) ?? null)
+      : null,
+  );
 
   useEffect(() => {
-    setCount(initialCount);
-  }, [initialCount, slug, type]);
+    let cancelled = false;
+    const cached = readCountMemoryCache.has(key)
+      ? (readCountMemoryCache.get(key) ?? null)
+      : undefined;
+
+    if (cached !== undefined) {
+      setCount(cached);
+    } else {
+      setCount(null);
+      void fetchCachedReadCount(type, slug).then((resolved) => {
+        if (!cancelled) {
+          setCount(resolved);
+        }
+      });
+    }
+
+    return () => {
+      cancelled = true;
+    };
+  }, [key, slug, type]);
 
   useEffect(() => {
-    if (initialCount === null) return;
-
     const storageKey = seenStorageKey(type, slug);
     try {
-      const cached = window.sessionStorage.getItem(storageKey);
-      if (cached !== null) {
-        const parsed = Number.parseInt(cached, 10);
-        if (Number.isFinite(parsed)) {
-          setCount((prev) => (prev === null ? parsed : Math.max(prev, parsed)));
-        }
+      if (window.sessionStorage.getItem(storageKey) !== null) {
         return;
       }
     } catch {
@@ -57,15 +117,17 @@ export function ReaderReadCount({
     let timerId: number | null = null;
 
     const sendPulse = async () => {
-      if (cancelled) return;
+      const resolvedCount = await fetchCachedReadCount(type, slug);
+      if (cancelled || resolvedCount === null) return;
+
       try {
-        window.sessionStorage.setItem(storageKey, String(initialCount ?? 0));
+        window.sessionStorage.setItem(storageKey, "1");
       } catch {
         // Ignore storage write errors.
       }
 
       try {
-        const res = await fetch("/api/reader/pulse", {
+        await fetch("/api/reader/pulse", {
           method: "POST",
           headers: { "content-type": "application/json" },
           body: JSON.stringify({
@@ -75,24 +137,8 @@ export function ReaderReadCount({
           }),
           keepalive: true,
         });
-        if (!res.ok || cancelled) return;
-        const data = (await res.json()) as PulseResponse;
-        if (cancelled) return;
-        if (!data.configured) {
-          setCount(null);
-          return;
-        }
-        if (typeof data.count === "number" && Number.isFinite(data.count)) {
-          const next = Math.max(initialCount ?? 0, data.count);
-          setCount(next);
-          try {
-            window.sessionStorage.setItem(storageKey, String(next));
-          } catch {
-            // Ignore storage write errors.
-          }
-        }
       } catch {
-        // Fail silently; initial server count remains visible.
+        // Fail silently; cached read count remains visible.
       }
     };
 
@@ -120,7 +166,7 @@ export function ReaderReadCount({
       if (timerId !== null) window.clearTimeout(timerId);
       document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
-  }, [initialCount, slug, type]);
+  }, [slug, type]);
 
   if (count === null) return null;
 
