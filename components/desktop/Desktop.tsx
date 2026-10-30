@@ -41,7 +41,7 @@ import { PwaInstallToasts } from "@/components/system/PwaInstallToasts";
 import { ServiceWorkerRegistrar } from "@/components/system/ServiceWorkerRegistrar";
 import { LoadingView } from "@/components/system/states/LoadingView";
 import type { Area } from "@/lib/windows";
-import { DesktopContextMenuContent } from "./ContextMenu";
+import { DesktopContextMenu, DesktopContextMenuContent } from "./ContextMenu";
 import { DesktopIcons } from "./DesktopIcons";
 import { MenuBar } from "./MenuBar";
 import { ProfileWidget } from "./ProfileWidget";
@@ -425,11 +425,17 @@ export function Desktop({ children }: { children?: ReactNode }) {
         </div>
         <div className="desktop-background-scrim" aria-hidden />
 
-        <MenuBar
-          onOpenApp={openApp}
-          onCloseAll={manager.closeAll}
+        <DesktopContextMenu
+          onOpenSettings={() => openApp("settings")}
+          onOpenResume={() => openApp("resume")}
           onOpenCommandPalette={() => setPaletteOpen(true)}
-        />
+        >
+          <MenuBar
+            onOpenApp={openApp}
+            onCloseAll={manager.closeAll}
+            onOpenCommandPalette={() => setPaletteOpen(true)}
+          />
+        </DesktopContextMenu>
 
         <ContextMenu>
           <ContextMenuTrigger
@@ -511,7 +517,9 @@ export function Desktop({ children }: { children?: ReactNode }) {
         onOpenApp={openApp}
         onCloseAll={manager.closeAll}
       />
-      <WorkstationLockCurtain />
+      <DesktopContextMenu locked>
+        <WorkstationLockCurtain />
+      </DesktopContextMenu>
       <Toaster position="bottom-right" closeButton />
     </AdminAuthProvider>
   );

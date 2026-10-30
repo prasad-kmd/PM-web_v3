@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, type MouseEvent as ReactMouseEvent } from "react";
 import {
   ArrowLeft02Icon,
   ArrowRight01Icon,
@@ -72,12 +73,15 @@ export function DesktopContextMenuContent({
   onOpenCommandPalette,
   targetLink,
   targetImage,
+  locked = false,
 }: {
-  onOpenSettings: () => void;
-  onOpenResume: () => void;
+  onOpenSettings?: () => void;
+  onOpenResume?: () => void;
   onOpenCommandPalette?: () => void;
   targetLink: string | null;
   targetImage: string | null;
+  /** Locked surfaces keep navigation/share actions but cannot open apps. */
+  locked?: boolean;
 }) {
   const { nextWallpaper } = useAppearance();
 
@@ -142,8 +146,10 @@ export function DesktopContextMenuContent({
 
       <ContextMenuSeparator />
       <ContextMenuGroup>
-        <ContextMenuLabel>Workspace</ContextMenuLabel>
-        {onOpenCommandPalette ? (
+        <ContextMenuLabel>
+          {locked ? "Locked workspace" : "Workspace"}
+        </ContextMenuLabel>
+        {!locked && onOpenCommandPalette ? (
           <ContextMenuItem onClick={onOpenCommandPalette}>
             <MenuIcon icon={Search01Icon} />
             Find in workspace…
@@ -164,16 +170,79 @@ export function DesktopContextMenuContent({
           <MenuIcon icon={ArrowRight01Icon} />
           Share page
         </ContextMenuItem>
-        <ContextMenuItem onClick={onOpenResume}>
-          <MenuIcon icon={InformationCircleIcon} />
-          Open Resume
-        </ContextMenuItem>
-        <ContextMenuItem onClick={onOpenSettings}>
-          <MenuIcon icon={Settings02Icon} />
-          Open Settings
-        </ContextMenuItem>
+        {!locked && onOpenResume ? (
+          <ContextMenuItem onClick={onOpenResume}>
+            <MenuIcon icon={InformationCircleIcon} />
+            Open Resume
+          </ContextMenuItem>
+        ) : null}
+        {!locked && onOpenSettings ? (
+          <ContextMenuItem onClick={onOpenSettings}>
+            <MenuIcon icon={Settings02Icon} />
+            Open Settings
+          </ContextMenuItem>
+        ) : null}
       </ContextMenuGroup>
     </ContextMenuContent>
+  );
+}
+
+/**
+ * Reusable Desktop context-menu surface for shell areas that live outside
+ * the work area—notably the fixed menubar and the workstation lock curtain.
+ * The trigger uses `display: contents`, so wrapping those fixed/full-screen
+ * surfaces does not change their layout.
+ */
+export function DesktopContextMenu({
+  children,
+  className = "desktop-context-trigger",
+  locked = false,
+  onOpenSettings,
+  onOpenResume,
+  onOpenCommandPalette,
+}: {
+  children: React.ReactNode;
+  className?: string;
+  locked?: boolean;
+  onOpenSettings?: () => void;
+  onOpenResume?: () => void;
+  onOpenCommandPalette?: () => void;
+}) {
+  const [contextTarget, setContextTarget] = useState<{
+    link: string | null;
+    image: string | null;
+  }>({ link: null, image: null });
+
+  const captureContextTarget = (event: ReactMouseEvent) => {
+    const target = event.target as HTMLElement;
+    const link = target.closest("a[href]") as HTMLAnchorElement | null;
+    const image = target.closest("img") as HTMLImageElement | null;
+    setContextTarget({
+      link: link?.href ?? null,
+      image: image?.src ?? null,
+    });
+  };
+
+  return (
+    <ContextMenu>
+      <ContextMenuTrigger
+        className={className}
+        onContextMenu={(event) => {
+          event.preventDefault();
+          captureContextTarget(event);
+        }}
+      >
+        {children}
+      </ContextMenuTrigger>
+      <DesktopContextMenuContent
+        locked={locked}
+        onOpenSettings={onOpenSettings}
+        onOpenResume={onOpenResume}
+        onOpenCommandPalette={onOpenCommandPalette}
+        targetLink={contextTarget.link}
+        targetImage={contextTarget.image}
+      />
+    </ContextMenu>
   );
 }
 

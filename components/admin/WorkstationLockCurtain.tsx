@@ -360,7 +360,13 @@ export function WorkstationLockCurtain() {
           exit={{ opacity: 0 }}
           transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
           onPointerDown={(event) => {
-            if (event.target === event.currentTarget && !submitting) {
+            // A secondary-button press belongs to the context menu; it must
+            // not dismiss the curtain before `contextmenu` can open it.
+            if (
+              event.button === 0 &&
+              event.target === event.currentTarget &&
+              !submitting
+            ) {
               closeLockCurtain();
             }
           }}
