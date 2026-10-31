@@ -15,8 +15,9 @@ export async function POST(request: NextRequest) {
   const auth = await requireAdminSession(request);
   if (!auth.ok) return auth.response;
 
+  // Shared tag covers CMS-backed details and generated taxonomy pages that are
+  // not practical to enumerate; `max` intentionally keeps SWR semantics.
   revalidateTag("notion-cms", "max");
-  revalidateTag("reads", "max");
   for (const path of [
     "/projects",
     "/blog",
@@ -28,6 +29,7 @@ export async function POST(request: NextRequest) {
     "/tags",
     "/api/latest",
     "/api/search-index",
+    "/api/reader/pulse",
     "/llms.txt",
     "/feed.xml",
     "/rss.xml",
