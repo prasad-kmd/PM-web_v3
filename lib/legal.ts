@@ -1,4 +1,5 @@
 import {
+  COOKIE_ADMIN_HINT,
   COOKIE_COMMENTER,
   COOKIE_COOKIE_NOTICE,
   COOKIE_SLIDESHOW_ENABLED,
@@ -257,6 +258,14 @@ export const STORAGE_REGISTER: readonly StorageRegisterEntry[] = [
     type: "HttpOnly cookies",
     purpose: "Operator authentication and optional trusted-browser recognition",
     duration: "Session default 12 hours; trust default 30 days",
+    scope: "owner",
+  },
+  {
+    name: COOKIE_ADMIN_HINT,
+    type: "Cookie",
+    purpose:
+      "Non-sensitive boolean hint ('1') set only after operator sign-in so public visitors skip session checks",
+    duration: "Matches operator session (default 12 hours)",
     scope: "owner",
   },
 ] as const;

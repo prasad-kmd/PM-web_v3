@@ -10,6 +10,7 @@ import { cookies } from "next/headers";
 import { NextResponse, type NextRequest } from "next/server";
 import {
   COOKIE_ADMIN_DEV,
+  COOKIE_ADMIN_HINT,
   COOKIE_ADMIN_PROD,
   COOKIE_ADMIN_TRUST_DEV,
   COOKIE_ADMIN_TRUST_PROD,
@@ -820,10 +821,26 @@ export function adminSetCookieHeader(
   return `${name}=${token}; Path=/; Max-Age=${maxAgeSeconds}; HttpOnly; SameSite=Strict${secureAttr}`;
 }
 
+export function adminSetHintCookieHeader(
+  maxAgeSeconds: number,
+  request?: NextRequest,
+): string {
+  const secure = isSecureRequest(request);
+  const secureAttr = secure ? "; Secure" : "";
+  return `${COOKIE_ADMIN_HINT}=1; Path=/; Max-Age=${maxAgeSeconds}; SameSite=Lax${secureAttr}`;
+}
+
+export function adminClearHintCookieHeader(request?: NextRequest): string {
+  const secure = isSecureRequest(request);
+  const secureAttr = secure ? "; Secure" : "";
+  return `${COOKIE_ADMIN_HINT}=; Path=/; Max-Age=0; SameSite=Lax${secureAttr}`;
+}
+
 export function adminClearCookieHeaders(request?: NextRequest): string[] {
   const secure = isSecureRequest(request);
   const headers = [
     `${COOKIE_ADMIN_DEV}=; Path=/; Max-Age=0; HttpOnly; SameSite=Strict`,
+    adminClearHintCookieHeader(request),
   ];
   if (secure) {
     headers.push(

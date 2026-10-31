@@ -60,14 +60,52 @@ How the hardened two-step unlock behaves:
 
 ### Accessing the Suite in the UI
 
-- **Visitors (signed out):** Clicking the top-left portrait in the 40px menu bar opens a clean profile menu (`About Prasad`, `Get in touch…`, `Copy workspace link`, and `Sign in…` / `⌘⇧L`).
-- **Workstation Lock Curtain:** Selecting `Sign in…` or pressing `⌘⇧L` (`Ctrl+Shift+L` on Windows/Linux) lowers a frosted acrylic veil below the menu bar with **Username** and **Password** fields.
+- **Visitors (signed out):** Clicking the top-left portrait in the 40px menu bar opens a clean profile menu (`About Prasad`, `Get in touch…`, `Copy workspace link`, and `Sign in…`).
+- **Workstation Lock Curtain:** Selecting `Sign in…` lowers a frosted acrylic veil below the menu bar with **Username** and **Password** fields.
 - **Signed-in Owner:** The profile portrait displays a subtle emerald status dot and unlocks:
-  - **OG Image Studio** (`⌘⇧G`)
-  - **Invoice Studio** (`⌘⇧I`)
+  - **OG Image Studio**
+  - **Invoice Studio**
+  - **Content Insights**
   - **Refresh content** (invalidates cached CMS tags immediately via `/api/admin/cache/purge`)
   - **Automatic Owner Comment Mode:** Opening any entry's discussion panel while signed in automatically applies your owner profile (`ADMIN_DISPLAY_NAME` / `ADMIN_COMMENT_EMAIL` / social handles, defaulting to `Prasad Madhuranga` and `CONTACT_EMAIL`), skips the guest identity inputs and Turnstile prompt, and publishes comments in `PMc2` format (`role=owner`) with the distinguished **Owner** badge (with a one-click **Guest mode** toggle if needed).
   - **Sign out** (clears session cookies and closes open studio windows)
+
+> The owner hotkeys (`⌘⇧L`, `⌘⇧G`, `⌘⇧I`, `⌘⇧A`) and the `⌘,` settings shortcut were removed in favour of the menubar, so every studio is reached through **MenuBar Profile**. `⌘K` still opens the workspace command palette.
+
+### The Stealth-404 Contract (owner-only routes)
+
+`/insights`, `/invoices` and `/og-studio` are **server-guarded**, not client-guarded. A visitor who is not signed in never receives the studio — they receive a genuine **HTTP 404** rendered with the site's own not-found surface.
+
+| Request | Signed out | Signed in |
+|---|---|---|
+| `GET /insights` | **404** — the site's own not-found surface. No studio markup, no login prompt | **200** — the Content Insights window opens in the DesktopOS shell |
+| `GET /invoices` | **404** (same) | **200** — the Invoice Studio window |
+| `GET /og-studio` | **404** (same) | **200** — the OG Image Studio window |
+
+The rules this contract enforces:
+
+1. **A real 404 status.** `notFound()` is raised inside the page component, so the response status is `404` — not `200` with an empty body.
+2. **No studio markup.** The guard runs before the studio component, so the studio's HTML is never in the response.
+3. **Never a login prompt.** The DesktopOS lock curtain is **not** auto-opened by an admin route. It is reachable only from **MenuBar Profile → Sign in…** or from the command palette.
+4. **No metadata leak.** While signed out the routes return the neutral title `Page not found` with `robots: { index: false, follow: false }` — the same directives as the real route, so nothing distinguishes "does not exist" from "not yours".
+5. **A closed door stays closed.** If the session ends while a studio window is open, the window closes and the URL returns to `/`.
+6. **Sign-in from the 404 screen works.** If the owner signs in from the Profile menu while sitting on `/insights`, the shell refreshes the server payload and the studio opens automatically.
+
+These three routes are the only pages that are deliberately `force-dynamic`: they read the session cookie on every request, and they are owner-only, so their traffic is effectively zero.
+
+### The admin-hint cookie
+
+`pm_admin_hint` is a **non-sensitive boolean** cookie (`"1"`). It is set **only** after a successful owner sign-in and it expires with the session.
+
+It never gates authorisation — the real `HttpOnly` session cookie does that. Its only job is to let the client skip a pointless `GET /api/admin/session` round-trip: without it, every visitor's page load would trigger one server function invocation purely to learn that they are not signed in.
+
+| Cookie | HttpOnly | Purpose |
+|---|---|---|
+| `__Host-pm_admin` / `pm_admin` | yes | The session itself — authorisation. |
+| `__Host-pm_admin_trust` / `pm_admin_trust` | yes | Trusted-workstation recognition. |
+| `pm_admin_hint` | **no** | A hint that a session *might* exist. No secret, no data. |
+
+The hint is cleared by the server (`GET /api/admin/session` → `401`) and by the client on sign-out. It is listed in the Settings → Privacy register as an owner-scoped cookie.
 
 ---
 

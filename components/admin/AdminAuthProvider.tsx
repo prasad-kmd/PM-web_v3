@@ -11,6 +11,11 @@ import {
 } from "react";
 import { toast } from "sonner";
 import type { AdminCommentProfile } from "@/lib/admin/comment-profile";
+import {
+  COOKIE_ADMIN_HINT,
+  getClientCookie,
+  setClientCookie,
+} from "@/lib/cookies";
 
 type SessionResponse = {
   authenticated: boolean;
@@ -121,6 +126,10 @@ export function AdminAuthProvider({
   }, []);
 
   useEffect(() => {
+    if (getClientCookie(COOKIE_ADMIN_HINT) !== "1") {
+      setReady(true);
+      return;
+    }
     void checkSession();
   }, [checkSession]);
 
@@ -295,6 +304,7 @@ export function AdminAuthProvider({
       } catch {
         // Clear local state regardless.
       }
+      setClientCookie(COOKIE_ADMIN_HINT, "", 0);
       setAuthenticated(false);
       setUsername(null);
       setExpiresAt(null);
@@ -317,6 +327,7 @@ export function AdminAuthProvider({
       });
       if (!res.ok) {
         if (res.status === 401) {
+          setClientCookie(COOKIE_ADMIN_HINT, "", 0);
           setAuthenticated(false);
           setCommentProfile(null);
           onSignedOut?.();
@@ -325,6 +336,9 @@ export function AdminAuthProvider({
         }
         toast.error("Could not refresh workspace content.");
         return;
+      }
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new Event("pm:content-cache-purged"));
       }
       toast.success("Workspace content refreshed.");
     } catch {
