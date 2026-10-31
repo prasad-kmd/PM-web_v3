@@ -14,7 +14,7 @@
  * Keep SW_VERSION in sync with PWA_CACHE_VERSION in lib/pwa.ts. Bump it only
  * when old pm-* caches must be purged as a group.
  */
-const SW_VERSION = 1;
+const SW_VERSION = 2;
 const CORE_CACHE = `pm-core-v${SW_VERSION}`;
 const STATIC_CACHE = `pm-static-v${SW_VERSION}`;
 const PAGES_CACHE = `pm-pages-v${SW_VERSION}`;

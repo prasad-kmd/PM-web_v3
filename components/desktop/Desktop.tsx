@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  Suspense,
   useCallback,
   useEffect,
   useLayoutEffect,
@@ -66,6 +67,29 @@ function useMobileWindowMode() {
   }, []);
 
   return isMobile;
+}
+
+/**
+ * Keeps the URL query-string subscription behind Suspense so the desktop shell
+ * can be prerendered without changing its existing route/window behavior.
+ *
+ * `useSearchParams()` outside a Suspense boundary forces a client-side-render
+ * bailout for the whole shell during prerendering, which prevents the root
+ * layout from being statically generated.
+ */
+function DesktopSearchParamsSync({
+  onChange,
+}: {
+  onChange: (value: string) => void;
+}) {
+  const searchParams = useSearchParams();
+  const serialized = searchParams.toString();
+
+  useEffect(() => {
+    onChange(serialized);
+  }, [onChange, serialized]);
+
+  return null;
 }
 
 /**
@@ -162,7 +186,7 @@ export function Desktop({ children }: { children?: ReactNode }) {
   const workRef = useRef<HTMLDivElement>(null);
   const pathname = usePathname();
   const router = useRouter();
-  const search = useSearchParams().toString();
+  const [search, setSearch] = useState("");
   const routeApp = getAppIdFromPathname(pathname);
   const [snapshots, setSnapshots] = useState<
     Partial<Record<AppId, HTMLElement>>
@@ -398,6 +422,9 @@ export function Desktop({ children }: { children?: ReactNode }) {
 
   return (
     <AdminAuthProvider onSignedOut={closeAdminWindows}>
+      <Suspense fallback={null}>
+        <DesktopSearchParamsSync onChange={setSearch} />
+      </Suspense>
       <AdminWorkspaceBridge
         windows={manager.windows}
         onOpenApp={openApp}
