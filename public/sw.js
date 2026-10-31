@@ -11,10 +11,17 @@
  * - API, RSC/prefetch, owner-studio and other private/dynamic surfaces are
  *   never intercepted for cache storage.
  *
+ * The site now serves its public pages as static output with a one-hour ISR
+ * window, so a network-first navigation usually resolves at the CDN without
+ * touching an origin function. The worker's own document cache is therefore an
+ * OFFLINE copy, not a freshness layer: a copy that has outlived the ISR
+ * window is served with RFC 9111's `Warning: 110` so it can never be mistaken
+ * for a current one.
+ *
  * Keep SW_VERSION in sync with PWA_CACHE_VERSION in lib/pwa.ts. Bump it only
  * when old pm-* caches must be purged as a group.
  */
-const SW_VERSION = 2;
+const SW_VERSION = 3;
 const CORE_CACHE = `pm-core-v${SW_VERSION}`;
 const STATIC_CACHE = `pm-static-v${SW_VERSION}`;
 const PAGES_CACHE = `pm-pages-v${SW_VERSION}`;
@@ -28,6 +35,12 @@ const CURRENT_CACHES = new Set([
 
 const OFFLINE_URL = "/~offline";
 const NAVIGATION_TIMEOUT_MS = 6000;
+/**
+ * The site's ISR window. A document copy older than this is no longer
+ * "current" and is served with a `Warning: 110` header when it is used
+ * offline (RFC 9111 §5.5).
+ */
+const DOCUMENT_FRESHNESS_MS = 60 * 60 * 1000;
 const CACHE_LIMITS = {
   [STATIC_CACHE]: 160,
   [PAGES_CACHE]: 40,
@@ -54,6 +67,9 @@ const NEVER_CACHE_PATHS = [
   "/og-studio",
   "/settings",
 ];
+// "/api" covers "/api/notion-image" as well: its 307 redirect is cached by
+// the browser and the CDN with its own s-maxage, and the worker must not
+// hold a second copy of a signed Notion URL that expires in 60 minutes.
 
 const STATIC_FILE_PATTERN = /\.(?:css|js|mjs|woff2?|ttf|otf)$/i;
 const IMAGE_FILE_PATTERN = /\.(?:avif|gif|ico|jpe?g|png|svg|webp)$/i;
@@ -187,6 +203,30 @@ async function getOfflineResponse() {
   );
 }
 
+/** Age of a stored document, in milliseconds, from its `Date` header. */
+function documentAgeMs(response) {
+  const stamp = Date.parse(response.headers.get("date") || "");
+  if (!Number.isFinite(stamp)) return null;
+  return Math.max(0, Date.now() - stamp);
+}
+
+/**
+ * Marks a document copy that has outlived the ISR window as stale, so an
+ * offline reader (or an operator reading the headers) can tell that this is
+ * a cached copy rather than the current page.
+ */
+function withStaleWarning(response, ageMs) {
+  if (ageMs === null || ageMs <= DOCUMENT_FRESHNESS_MS) return response;
+  const headers = new Headers(response.headers);
+  headers.set("Warning", '110 - "Response is stale"');
+  headers.set("X-PM-Cache-Age", String(Math.round(ageMs / 1000)));
+  return new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers,
+  });
+}
+
 async function networkFirstNavigation(event, request, url) {
   try {
     const response = await fetchWithTimeout(request, NAVIGATION_TIMEOUT_MS);
@@ -205,7 +245,8 @@ async function networkFirstNavigation(event, request, url) {
     const cached =
       (await pages.match(normalizedPageKey(url))) ||
       (await pages.match(request, { ignoreSearch: true }));
-    return cached || getOfflineResponse();
+    if (!cached) return getOfflineResponse();
+    return withStaleWarning(cached, documentAgeMs(cached));
   }
 }
 

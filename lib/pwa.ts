@@ -2,7 +2,7 @@
  * Shared constants and browser helpers for the dependency-free Phase 4 PWA.
  * Keep `PWA_CACHE_VERSION` in sync with `SW_VERSION` in `public/sw.js`.
  */
-export const PWA_CACHE_VERSION = 2;
+export const PWA_CACHE_VERSION = 3;
 export const PWA_CACHE_PREFIX = "pm-";
 export const PWA_CORE_CACHE = `pm-core-v${PWA_CACHE_VERSION}`;
 export const PWA_STATIC_CACHE = `pm-static-v${PWA_CACHE_VERSION}`;

@@ -7,8 +7,11 @@ import {
   type NotionBlock,
 } from "@/lib/notion-cms";
 
-export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
+
+/** Notion S3 signed URLs stay valid for 60 minutes; cache redirects for 15m (+5m SWR). */
+const NOTION_IMAGE_CACHE_CONTROL =
+  "public, max-age=300, s-maxage=900, stale-while-revalidate=300";
 const validId = (id: string | null): id is string =>
   !!id &&
   /^(?:[0-9a-f]{32}|[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$/i.test(
@@ -81,7 +84,7 @@ export async function GET(request: Request) {
       status: 307,
       headers: {
         Location: url,
-        "Cache-Control": "private, no-store",
+        "Cache-Control": NOTION_IMAGE_CACHE_CONTROL,
         "X-Content-Type-Options": "nosniff",
       },
     });

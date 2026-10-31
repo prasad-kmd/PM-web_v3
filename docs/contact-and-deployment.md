@@ -49,6 +49,47 @@ Production builds require `NEXT_PUBLIC_SITE_URL` to be the public HTTPS origin. 
 
 Before promoting a deployment, smoke-test `/`, one entry from each collection, `/categories`, one term page, `/legal` and each legal document, `/contact`, `/sitemap.xml`, `/robots.txt`, `/llms.txt`, `/feed.xml`, `/manifest.webmanifest` and `/sw.js`. Verify Back/Forward, multiple-window focus, same-collection navigation, resized windows, mobile layout, JavaScript-disabled reading, a real contact submission (including Turnstile and Telegram delivery), representative OG images in both styles, and the PWA/offline checklist in [PWA and boot](./pwa-and-boot.md).
 
+### The static rendering model
+
+Public routes are **statically generated** and revalidated on a one-hour window
+(`revalidate = 3600`), with an on-demand purge from
+`/api/admin/cache/purge`. The build output is the source of truth for what is
+static:
+
+| Symbol | Meaning |
+| ------ | ------- |
+| `○` | Statically generated at build time and served from the CDN |
+| `●` | Statically generated with a revalidation window (ISR) |
+| `ƒ` | Rendered per request by a function |
+
+**Expected:** every public page route is `○` or `●`. The only `ƒ` routes are
+`/insights`, `/invoices` and `/og-studio` (they read the owner session cookie
+on every request and are owner-only, so their traffic is effectively zero) and
+the small set of API routes that must stay live — `/api/admin/session`,
+`/api/comments`, `/api/contact`, `/api/system` and `/api/reader/pulse`.
+
+**Origin behaviour:** a static or ISR route costs a CDN read. A repeat request
+returns the `x-vercel-cache: HIT` header and consumes no Active CPU and no
+origin transfer. `MISS` means it was rendered on demand.
+
+**Owner studios are stealth 404s.** Signed out, `/insights`, `/invoices` and
+`/og-studio` return a genuine **404** with the site's own not-found surface —
+never a login prompt and never any studio markup. See
+[Owner Workstation Suite Setup](./admin-suite-setup.md).
+
+**Notion images** are resolved through `/api/notion-image`, which returns a
+**307 redirect** to a signed Notion URL. The redirect is edge-cached for 15
+minutes (`s-maxage=900`) with a 5-minute stale-while-revalidate window, and the
+Notion API response behind it is cached for the same period. Notion signed
+URLs are valid for about an hour, so the cached redirect always expires well
+before the URL it points at does.
+
+**Environment:** production builds require `NEXT_PUBLIC_SITE_URL` to be the
+public HTTPS origin — the origin is baked into every prerendered page, the
+canonical tags, the sitemap and the OG image URLs, so the build fails fast
+rather than publishing a wrong canonical. Preview deployments fall back to the
+origin Vercel assigns them, so a preview builds without the variable.
+
 ## Animation and icons
 
 Project components import animation primitives from `motion/react` and use the existing `@hugeicons` packages for icons. `framer-motion` remains a transitive dependency of `motion`, but is not a direct dependency or imported directly. `lucide-react` is not required. After the migration, TypeScript and an offline frozen-lockfile install passed; the selected Hugeicons exports, Motion exports and accessible spinner were checked in isolation. Browser testing was not repeated.

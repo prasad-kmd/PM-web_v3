@@ -65,10 +65,10 @@ The worker is `public/sw.js`. Keep `SW_VERSION` there in sync with `PWA_CACHE_VE
 
 | Cache          | Contents                                                                            | Strategy/limit                                                                           |
 | -------------- | ----------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
-| `pm-core-v1`   | `/~offline`, manifest, Outfit font, favicon and core app icons                      | Essential-only precache; manifest is network-first                                       |
-| `pm-static-v1` | Same-origin scripts, styles, workers, fonts and public `.json`/`.txt`/`.xml` assets | Cache-first; non-hashed files revalidate behind the cached response; maximum 160 entries |
-| `pm-pages-v1`  | Public HTML documents the visitor has opened                                        | Network-first with a 6-second timeout, then cache, then `/~offline`; maximum 40 entries  |
-| `pm-images-v1` | Public same-origin images shown on visited pages                                    | Stale-while-revalidate; maximum 80 entries                                               |
+| `pm-core-v3`   | `/~offline`, manifest, Outfit font, favicon and core app icons                      | Essential-only precache; manifest is network-first                                       |
+| `pm-static-v3` | Same-origin scripts, styles, workers, fonts and public `.json`/`.txt`/`.xml` assets | Cache-first; non-hashed files revalidate behind the cached response; maximum 160 entries |
+| `pm-pages-v3`  | Public HTML documents the visitor has opened                                        | Network-first with a 6-second timeout, then cache, then `/~offline`; maximum 40 entries  |
+| `pm-images-v3` | Public same-origin images shown on visited pages                                    | Stale-while-revalidate; maximum 80 entries                                               |
 
 The root document is not precached, so the current Desktop, appearance cookies and boot decision are not frozen into an install-time shell. The installed start URL `/?source=pwa` is normalised to `/` when stored as a visited page.
 
@@ -83,6 +83,16 @@ The worker only handles same-origin `GET` requests. It does not handle or store:
 Excluded document routes are network-only with the offline page as their failure response; they are not written to Cache Storage. An unvisited public document has no cached copy and therefore also receives `/~offline`.
 
 Offline support is consequently document-based, not a promise that every in-app transition works without a network. A cached page can reopen when its document and required static assets are present, but live search, comments, readership pulses, forms and other API-backed actions still need the network. Soft-navigation RSC payloads are deliberately not cached.
+
+### The worker under ISR
+
+Public pages are served as **static output with a one-hour revalidation window** (1 h `revalidate`, plus an on-demand purge from `/api/admin/cache/purge`). That changes what the worker's document cache means:
+
+- **The network is still tried first**, and it now usually resolves at the CDN rather than at an origin function. A navigation is a CDN read, not a render.
+- **`pm-pages-v3` is an offline copy, not a freshness layer.** It is only consulted when the network fails.
+- **A copy that has outlived the ISR window is marked as stale.** When an offline document is served, the worker measures its age from the stored `Date` header and, when it exceeds one hour, adds `Warning: 110 - "Response is stale"` (RFC 9111) and `X-PM-Cache-Age: <seconds>`. A stale copy can therefore never be mistaken for the current page.
+- **404s are never stored.** `isCacheableResponse()` requires `response.ok`, so the site's not-found surface — including the stealth 404 for `/insights`, `/invoices` and `/og-studio` — is never written to Cache Storage.
+- **`/api/notion-image` is not intercepted.** Its 307 redirect to the signed Notion URL is cached by the browser and the CDN with its own `s-maxage`; the worker deliberately keeps no second copy of a URL that expires in 60 minutes.
 
 ## Install flow
 
