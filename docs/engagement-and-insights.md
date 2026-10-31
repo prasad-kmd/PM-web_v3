@@ -2,7 +2,7 @@
 
 This guide covers the server-side setup for:
 
-1. **Ad-blocker-resilient public content read counters** (shown exclusively on content reader pages) and the protected **Content Insights** studio (`/insights`, `⌘⇧A`).
+1. **Ad-blocker-resilient public content read counters** (shown exclusively on content reader pages, loaded client-side from a first-party cached endpoint) and the protected **Content Insights** studio (`/insights`, `⌘⇧A`).
 2. **Categorized Telegram notifications** using Forum Supergroup **Topics** (`message_thread_id`) for Contact submissions, Reader comments, and Admin authentication events.
 3. **Inline comment moderation** (`Hide` / `Restore`) and the **`⌘K` Workspace Command Palette**.
 
@@ -12,10 +12,12 @@ This guide covers the server-side setup for:
 
 ### Architectural Guarantees
 
-- **100% Immune to Script & Content Blockers (uBlock Origin, EasyPrivacy, Brave Shields):**
+- **First-party readership flow, resilient to script & content blockers (uBlock Origin, EasyPrivacy, Brave Shields):**
   - Zero third-party scripts, pixels, or Firebase browser SDKs are shipped to visitors.
-  - Initial read counts are fetched server-side inside `ContentDetailPage.tsx` and rendered directly in HTML (visible even when JavaScript is disabled).
-  - Active reads post to a neutral first-party endpoint (`POST /api/reader/pulse`) with zero filter-list trigger keywords.
+  - Active reads post to a neutral first-party endpoint (`POST /api/reader/pulse`) with zero filter-list trigger keywords. Recording a read never depends on a third-party host, so blocking rules cannot suppress it.
+  - Read counts load after hydration from a same-origin, CDN-cached endpoint (`GET /api/reader/pulse`); the count is **not** part of the server-rendered HTML and therefore requires JavaScript to appear.
+  - The count response is cached at the shared edge for one hour with a five-minute stale-while-revalidate window. A cache miss reads the aggregate from Firebase, so a displayed total may lag recent reads by roughly an hour.
+  - A provider outage returns `503` with `Cache-Control: no-store`, so an error is never cached and never displayed as a frozen `0`.
 - **Reader-Page Scope Only:**
   - Read counts are tracked and displayed **exclusively** on content reader pages (`/{type}/{slug}` across `projects`, `blog`, `articles`, `tutorials`, `glossary`, and `news`).
   - Non-content routes (`/`, `/resume`, `/settings`, `/contact`, `/bookmarks`) and owner studios (`/insights`, `/og-studio`, `/invoices`) never display a read counter.

@@ -351,6 +351,8 @@ export type RtdbReadOptions = {
   revalidate?: number | false;
   tags?: string[];
   timeoutMs?: number;
+  /** Propagate provider/cache errors when the caller must avoid caching a false zero. */
+  throwOnError?: boolean;
 };
 
 export async function rtdbGet<T>(
@@ -394,7 +396,8 @@ export async function rtdbGet<T>(
       }
       throw cacheErr;
     }
-  } catch {
+  } catch (error) {
+    if (options?.throwOnError) throw error;
     return null;
   }
 }
