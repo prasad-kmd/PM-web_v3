@@ -12,10 +12,11 @@ This guide covers the server-side setup for:
 
 ### Architectural Guarantees
 
-- **100% Immune to Script & Content Blockers (uBlock Origin, EasyPrivacy, Brave Shields):**
+- **First-party readership flow:**
   - Zero third-party scripts, pixels, or Firebase browser SDKs are shipped to visitors.
-  - Initial read counts are fetched server-side inside `ContentDetailPage.tsx` and rendered directly in HTML (visible even when JavaScript is disabled).
-  - Active reads post to a neutral first-party endpoint (`POST /api/reader/pulse`) with zero filter-list trigger keywords.
+  - Read counts load after hydration from a same-origin, CDN-cached endpoint (`GET /api/reader/pulse`); the count is not included in the server-rendered HTML and requires JavaScript.
+  - Active reads post separately to a neutral first-party endpoint (`POST /api/reader/pulse`) with zero filter-list trigger keywords.
+  - The count response is cached at the shared edge for one hour, with a five-minute stale-while-revalidate window. A cache miss reads the aggregate from Firebase; displayed totals may lag recent reads by roughly an hour.
 - **Reader-Page Scope Only:**
   - Read counts are tracked and displayed **exclusively** on content reader pages (`/{type}/{slug}` across `projects`, `blog`, `articles`, `tutorials`, `glossary`, and `news`).
   - Non-content routes (`/`, `/resume`, `/settings`, `/contact`, `/bookmarks`) and owner studios (`/insights`, `/og-studio`, `/invoices`) never display a read counter.

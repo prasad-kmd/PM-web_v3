@@ -65,7 +65,7 @@ How the hardened two-step unlock behaves:
 - **Signed-in Owner:** The profile portrait displays a subtle emerald status dot and unlocks:
   - **OG Image Studio** (`⌘⇧G`)
   - **Invoice Studio** (`⌘⇧I`)
-  - **Refresh content** (invalidates cached CMS tags immediately via `/api/admin/cache/purge`)
+  - **Refresh content** (revalidates public content indexes, taxonomy, search/latest APIs, feeds, sitemap and related cached data via `/api/admin/cache/purge`; cache refresh can be stale-while-revalidate on the next request)
   - **Automatic Owner Comment Mode:** Opening any entry's discussion panel while signed in automatically applies your owner profile (`ADMIN_DISPLAY_NAME` / `ADMIN_COMMENT_EMAIL` / social handles, defaulting to `Prasad Madhuranga` and `CONTACT_EMAIL`), skips the guest identity inputs and Turnstile prompt, and publishes comments in `PMc2` format (`role=owner`) with the distinguished **Owner** badge (with a one-click **Guest mode** toggle if needed).
   - **Sign out** (clears session cookies and closes open studio windows)
 
