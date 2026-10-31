@@ -149,7 +149,7 @@ export const STORAGE_REGISTER: readonly StorageRegisterEntry[] = [
     scope: "visitor",
   },
   {
-    name: "pm-window-layout-v1",
+    name: "pm-window-layout-v2",
     type: "Local storage",
     purpose: "Desktop window position, size and maximised state",
     duration: "Until cleared",

@@ -747,15 +747,6 @@ input:focus-visible {
   -webkit-line-clamp: 2;
 }
 
-.marquee {
-  position: absolute;
-  z-index: 5;
-  border: 1px solid var(--ring);
-  border-radius: 4px;
-  background: color-mix(in oklab, var(--foreground) 8%, transparent);
-  pointer-events: none;
-}
-
 /* Window chrome */
 .window-geometry {
   position: fixed;
@@ -2619,21 +2610,19 @@ input:focus-visible {
   }
 }
 
-/* Server-rendered route surface: visible to readers and crawlers before the
-   existing non-modal window manager takes over after hydration. */
+/* Server-rendered route surface: matches the default maximized window geometry
+   before the non-modal window manager hydrates on the client. */
 .route-server-window {
   position: fixed;
   z-index: 10;
-  top: calc(
-    var(--menubar-h) + max(12px, (100dvh - var(--menubar-h) - 640px) / 2)
-  );
-  left: 50%;
-  width: min(900px, calc(100vw - 24px));
-  height: min(640px, calc(100dvh - var(--menubar-h) - 24px));
-  transform: translateX(-50%);
+  top: var(--menubar-h);
+  left: 0;
+  width: 100%;
+  height: calc(100dvh - var(--menubar-h));
 }
 .route-server-surface {
   height: 100%;
+  border-radius: 0;
 }
 .route-unknown {
   position: fixed;
@@ -2646,16 +2635,6 @@ input:focus-visible {
 }
 .route-unknown > * {
   pointer-events: auto;
-}
-@media (max-width: 768px) {
-  .route-server-window {
-    top: var(--menubar-h);
-    width: 100%;
-    height: calc(100dvh - var(--menubar-h));
-  }
-  .route-server-surface {
-    border-radius: 0;
-  }
 }
 
 /* Desktop (fine pointer, wide): shortcuts flow in columns along the right edge. */
@@ -4757,6 +4736,27 @@ body:has(.workstation-lock-curtain) .window-geometry {
 .cmd-clear-btn:focus-visible {
   outline: 2px solid var(--ring);
   outline-offset: -1px;
+}
+
+.cmd-submit-btn {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  padding: 0;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  cursor: pointer;
+}
+
+.cmd-submit-btn:hover .cmd-kbd {
+  background: var(--accent);
+  color: var(--foreground);
+}
+
+.cmd-submit-btn:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 1px;
 }
 
 .cmd-kbd {
