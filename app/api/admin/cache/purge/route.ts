@@ -24,10 +24,14 @@ export async function POST(request: NextRequest) {
     "/tutorials",
     "/glossary",
     "/news",
+    "/categories",
+    "/tags",
     "/api/latest",
     "/api/search-index",
     "/llms.txt",
     "/feed.xml",
+    "/rss.xml",
+    "/sitemap.xml",
   ]) {
     revalidatePath(path);
   }
