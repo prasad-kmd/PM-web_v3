@@ -77,7 +77,7 @@ The worker only handles same-origin `GET` requests. It does not handle or store:
 - `/api/*`, including form, comment, readership and owner calls
 - RSC, prefetch or Next data requests
 - range requests or `/_next/image`
-- `/bookmarks`, `/settings`, `/dev`, `/insights`, `/invoices` or `/og-studio` documents/cacheable subresources
+- `/bookmarks`, `/settings`, `/insights`, `/invoices` or `/og-studio` documents/cacheable subresources
 - non-GET requests, failed/opaque responses, or responses outside the route-specific cacheability checks
 
 Excluded document routes are network-only with the offline page as their failure response; they are not written to Cache Storage. An unvisited public document has no cached copy and therefore also receives `/~offline`.

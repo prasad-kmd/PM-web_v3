@@ -10,6 +10,7 @@ import {
   useMemo,
   useRef,
   useState,
+  type FormEvent,
   type MouseEvent,
 } from "react";
 import { Toggle } from "@base-ui/react/toggle";
@@ -21,6 +22,7 @@ import {
   ArrowUp01Icon,
   Bookmark01Icon,
   Calendar03Icon,
+  Cancel01Icon,
   Folder01Icon,
   GridViewIcon,
   ListViewIcon,
@@ -165,13 +167,36 @@ function CollectionBrowserView({
     setDraft(q);
   }, [q]);
 
-  // Debounced search → `?q=` (replace, so typing doesn't flood history).
-  useEffect(() => {
-    const next = draft.trim().slice(0, 300);
-    if (next === q) return;
-    const timer = setTimeout(() => writeUrl(next, 1, "replace"), 250);
-    return () => clearTimeout(timer);
-  }, [draft, q, writeUrl]);
+  const trimmedDraft = draft.trim().slice(0, 300);
+  const searchDirty = trimmedDraft !== q;
+
+  const commitSearch = useCallback(
+    (rawValue: string) => {
+      const next = rawValue.trim().slice(0, 300);
+      setDraft(next);
+      if (next === q) return;
+      writeUrl(next, 1, "push");
+      scrollWindowToTop(rootRef.current);
+    },
+    [q, writeUrl],
+  );
+
+  const handleSearchSubmit = useCallback(
+    (event: FormEvent<HTMLFormElement>) => {
+      event.preventDefault();
+      commitSearch(draft);
+    },
+    [commitSearch, draft],
+  );
+
+  const clearSearch = useCallback(() => {
+    setDraft("");
+    if (q) {
+      writeUrl("", 1, "push");
+      scrollWindowToTop(rootRef.current);
+    }
+    searchRef.current?.focus();
+  }, [q, writeUrl]);
 
   // "/" focuses search while this listing is the live window content.
   useEffect(() => {
@@ -186,7 +211,6 @@ function CollectionBrowserView({
       )
         return;
       if (!rootRef.current?.isConnected) return;
-      event.preventDefault();
       searchRef.current?.focus();
     };
     window.addEventListener("keydown", onKey);
@@ -390,35 +414,71 @@ function CollectionBrowserView({
       </aside>
 
       <div className="lib-main">
-        <div className="lib-tools" role="search">
-          <label className="lib-search" htmlFor={searchId}>
+        <div className="lib-tools">
+          <form
+            className="lib-search"
+            role="search"
+            onSubmit={handleSearchSubmit}
+            onClick={(event) => {
+              if (event.target === event.currentTarget) {
+                searchRef.current?.focus();
+              }
+            }}
+          >
             <HugeiconsIcon
               icon={Search01Icon}
               size={15}
               strokeWidth={1.8}
               aria-hidden
             />
-            <span className="sr-only">Search {meta.label.toLowerCase()}</span>
+            <label className="sr-only" htmlFor={searchId}>
+              Search {meta.label.toLowerCase()}
+            </label>
             <input
               ref={searchRef}
               id={searchId}
               type="search"
+              enterKeyHint="search"
               value={draft}
               maxLength={300}
-              placeholder={`Search ${meta.label.toLowerCase()}`}
+              placeholder={`Search ${meta.label.toLowerCase()}…`}
               autoComplete="off"
               onChange={(event) => setDraft(event.target.value)}
               onKeyDown={(event) => {
-                if (event.key === "Escape" && draft) {
+                if (event.key === "Escape" && (draft || q)) {
                   event.preventDefault();
-                  setDraft("");
+                  clearSearch();
                 }
               }}
             />
-            <kbd className="lib-kbd" aria-hidden>
-              /
-            </kbd>
-          </label>
+            {draft || q ? (
+              <button
+                type="button"
+                className="lib-search-clear"
+                onClick={clearSearch}
+                aria-label="Clear search"
+              >
+                <HugeiconsIcon
+                  icon={Cancel01Icon}
+                  size={12}
+                  strokeWidth={2}
+                  aria-hidden
+                />
+              </button>
+            ) : null}
+            {searchDirty && trimmedDraft ? (
+              <button
+                type="submit"
+                className="lib-search-submit"
+                title="Press Enter to search"
+                aria-label="Run search"
+              >
+                <kbd className="lib-kbd" aria-hidden>
+                  ↵
+                </kbd>
+              </button>
+            ) : null}
+          </form>
           <span className="lib-grow" />
           <Select
             items={sortItems}

@@ -114,11 +114,7 @@ export const InvoiceSettingsSchema = z.object({
   email: z.string().trim().max(160).default("contact@pmengineer.lk"),
   phone: z.string().trim().max(80).default(""),
   website: z.string().trim().max(160).default("https://pmengineer.lk"),
-  address: z
-    .string()
-    .trim()
-    .max(400)
-    .default("Kandy, Central Province, Sri Lanka"),
+  address: z.string().trim().max(400).default("Sri Lanka"),
   logoUrl: z.string().trim().max(500_000).default("/favicon-pm.svg"),
   invoicePrefix: z.string().trim().min(1).max(20).default("INV-"),
   invoicePadding: z.number().int().min(2).max(8).default(4),

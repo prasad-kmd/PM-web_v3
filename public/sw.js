@@ -61,7 +61,6 @@ const PRECACHE_URLS = [
 const NEVER_CACHE_PATHS = [
   "/api",
   "/bookmarks",
-  "/dev",
   "/insights",
   "/invoices",
   "/og-studio",

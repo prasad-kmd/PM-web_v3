@@ -26,11 +26,13 @@ export function ProfileWidget() {
           <img
             className="profile-card-photo"
             src="/images/profile-placeholder.jpg"
-            alt="Placeholder profile portrait"
+            alt="Prasad Madhuranga"
           />
           <div className="profile-card-identity">
             <CardTitle>Prasad Madhuranga</CardTitle>
-            <CardDescription>Mechanical + Mechatronics Engineer</CardDescription>
+            <CardDescription>
+              Mechanical + Mechatronics Engineer
+            </CardDescription>
           </div>
         </CardHeader>
 
@@ -38,14 +40,22 @@ export function ProfileWidget() {
           <dl className="profile-card-details">
             <div>
               <dt>
-                <HugeiconsIcon icon={Location01Icon} strokeWidth={2} aria-hidden="true" />
+                <HugeiconsIcon
+                  icon={Location01Icon}
+                  strokeWidth={2}
+                  aria-hidden="true"
+                />
                 Location
               </dt>
-              <dd>Kandy, Sri Lanka · UTC +05:30</dd>
+              <dd>Sri Lanka</dd>
             </div>
             <div>
               <dt>
-                <HugeiconsIcon icon={Briefcase01Icon} strokeWidth={2} aria-hidden="true" />
+                <HugeiconsIcon
+                  icon={Briefcase01Icon}
+                  strokeWidth={2}
+                  aria-hidden="true"
+                />
                 Focus
               </dt>
               <dd>Robotics · automation · machine vision</dd>

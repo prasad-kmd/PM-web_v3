@@ -76,11 +76,11 @@ How the hardened two-step unlock behaves:
 
 `/insights`, `/invoices` and `/og-studio` are **server-guarded**, not client-guarded. A visitor who is not signed in never receives the studio — they receive a genuine **HTTP 404** rendered with the site's own not-found surface.
 
-| Request | Signed out | Signed in |
-|---|---|---|
-| `GET /insights` | **404** — the site's own not-found surface. No studio markup, no login prompt | **200** — the Content Insights window opens in the DesktopOS shell |
-| `GET /invoices` | **404** (same) | **200** — the Invoice Studio window |
-| `GET /og-studio` | **404** (same) | **200** — the OG Image Studio window |
+| Request          | Signed out                                                                    | Signed in                                                          |
+| ---------------- | ----------------------------------------------------------------------------- | ------------------------------------------------------------------ |
+| `GET /insights`  | **404** — the site's own not-found surface. No studio markup, no login prompt | **200** — the Content Insights window opens in the DesktopOS shell |
+| `GET /invoices`  | **404** (same)                                                                | **200** — the Invoice Studio window                                |
+| `GET /og-studio` | **404** (same)                                                                | **200** — the OG Image Studio window                               |
 
 The rules this contract enforces:
 
@@ -99,11 +99,11 @@ These three routes are the only pages that are deliberately `force-dynamic`: the
 
 It never gates authorisation — the real `HttpOnly` session cookie does that. Its only job is to let the client skip a pointless `GET /api/admin/session` round-trip: without it, every visitor's page load would trigger one server function invocation purely to learn that they are not signed in.
 
-| Cookie | HttpOnly | Purpose |
-|---|---|---|
-| `__Host-pm_admin` / `pm_admin` | yes | The session itself — authorisation. |
-| `__Host-pm_admin_trust` / `pm_admin_trust` | yes | Trusted-workstation recognition. |
-| `pm_admin_hint` | **no** | A hint that a session *might* exist. No secret, no data. |
+| Cookie                                     | HttpOnly | Purpose                                                  |
+| ------------------------------------------ | -------- | -------------------------------------------------------- |
+| `__Host-pm_admin` / `pm_admin`             | yes      | The session itself — authorisation.                      |
+| `__Host-pm_admin_trust` / `pm_admin_trust` | yes      | Trusted-workstation recognition.                         |
+| `pm_admin_hint`                            | **no**   | A hint that a session _might_ exist. No secret, no data. |
 
 The hint is cleared by the server (`GET /api/admin/session` → `401`) and by the client on sign-out. It is listed in the Settings → Privacy register as an owner-scoped cookie.
 

@@ -138,14 +138,14 @@ const KEYBOARD_GROUPS = [
         keys: ["⌘", "K"],
         label: "Open workspace command search",
       },
+      {
+        keys: ["↑", "↓", "←", "→"],
+        label: "Move between desktop shortcuts once selected",
+      },
       { keys: ["Enter"], label: "Open the selected shortcut" },
       {
-        keys: ["⌘", "click"],
-        label: "Add or remove a shortcut from the selection",
-      },
-      {
         keys: ["Esc"],
-        label: "Clear the shortcut selection, close an overlay",
+        label: "Clear the shortcut selection or close an overlay",
       },
       { keys: ["Right-click"], label: "Open the desktop or shortcut menu" },
     ],
@@ -155,10 +155,22 @@ const KEYBOARD_GROUPS = [
     rows: [
       {
         keys: ["Double-click"],
-        label: "Maximize or restore from the titlebar",
+        label: "Restore or maximize from the titlebar",
       },
-      { keys: ["Drag → edge"], label: "Snap to the left, right or a corner" },
+      {
+        keys: ["Drag → edge"],
+        label: "Snap a restored window to the left, right or a corner",
+      },
       { keys: ["Esc"], label: "Close the focused menu, popover or flyout" },
+    ],
+  },
+  {
+    title: "Search",
+    rows: [
+      {
+        keys: ["Enter"],
+        label: "Submit search in collections or workspace search",
+      },
     ],
   },
   {
@@ -429,9 +441,7 @@ function AboutTab() {
             <div className="settings-about-line">
               Mechanical + Mechatronics Engineer
             </div>
-            <div className="settings-about-line">
-              Kandy, Sri Lanka · UTC +05:30
-            </div>
+            <div className="settings-about-line">Sri Lanka</div>
             <span className="settings-about-status">
               <span aria-hidden="true" />
               Open to collaboration
@@ -724,7 +734,7 @@ function AboutTab() {
         </div>
 
         <div className="settings-group">
-          <p className="settings-group-title">Keyboard</p>
+          <p className="settings-group-title">Controls</p>
           <div className="settings-card">
             {KEYBOARD_GROUPS.map((group) => (
               <div key={group.title}>

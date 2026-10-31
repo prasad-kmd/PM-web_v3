@@ -1,6 +1,6 @@
 /* ==========================================================================
-   System states: loading (01 + 04), not-found (02), error (04) and the
-   /dev/states preview. global-error (Safe mode) is fully inline-styled.
+   System states: loading (01 + 04), not-found (02) and error (04).
+   global-error (Safe mode) is fully inline-styled.
    ========================================================================== */
 
 /* ---------- Loading -------------------------------------------------------- */
@@ -505,51 +505,6 @@
   .state-skel-doc {
     padding: 24px 16px 96px;
   }
-}
-
-/* ---------- /dev/states preview ------------------------------------------- */
-.dev-states {
-  width: min(1100px, 100%);
-  height: min(780px, 100%);
-}
-.dev-states-titlebar {
-  cursor: default;
-}
-.dev-states-tools {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 12px;
-  border-bottom: 1px solid var(--border);
-  background: var(--background);
-}
-.dev-states-path {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  color: var(--muted-foreground);
-  font-size: 12px;
-}
-.dev-states-path input {
-  width: 260px;
-  height: 30px;
-  padding: 0 8px;
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  background: var(--card);
-  color: var(--foreground);
-  font: 12px var(--font-mono, ui-monospace, monospace);
-}
-.dev-states-file {
-  color: var(--muted-foreground);
-  font: 11.5px var(--font-mono, ui-monospace, monospace);
-}
-.dev-states-tools .rdr-seg button {
-  flex: none;
-}
-.dev-states-frame {
-  position: relative;
 }
 
 @media (prefers-reduced-motion: reduce) {

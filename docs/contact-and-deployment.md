@@ -56,11 +56,11 @@ Public routes are **statically generated** and revalidated on a one-hour window
 `/api/admin/cache/purge`. The build output is the source of truth for what is
 static:
 
-| Symbol | Meaning |
-| ------ | ------- |
-| `○` | Statically generated at build time and served from the CDN |
-| `●` | Statically generated with a revalidation window (ISR) |
-| `ƒ` | Rendered per request by a function |
+| Symbol | Meaning                                                    |
+| ------ | ---------------------------------------------------------- |
+| `○`    | Statically generated at build time and served from the CDN |
+| `●`    | Statically generated with a revalidation window (ISR)      |
+| `ƒ`    | Rendered per request by a function                         |
 
 **Expected:** every public page route is `○` or `●`. The only `ƒ` routes are
 `/insights`, `/invoices` and `/og-studio` (they read the owner session cookie
@@ -96,4 +96,4 @@ Project components import animation primitives from `motion/react` and use the e
 
 ## Development routes
 
-`/dev/states` previews the loading, not-found, error and global-error screens with sample data. It is available in development and returns 404 in production unless `ENABLE_DEV_ROUTES=1` is set; it is always `noindex`.
+There are none. The former `/dev/states` preview — which rendered the loading, not-found and error screens with sample data — has been removed along with its stylesheet, so `ENABLE_DEV_ROUTES` is no longer read anywhere and has been dropped from `.env.example`. The loading, not-found and error screens themselves are unchanged and are exercised through the real routes: a missing path renders the not-found state, and a failed request renders the error state.
