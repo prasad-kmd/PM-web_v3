@@ -1,5 +1,24 @@
 # V3 content enhancements — application and audit notes
 
+> **Status — historical document.** This records one past change set, prepared
+> against a specific commit (see _Scope and baseline_). It is kept for
+> reference and is **not** a description of the site as it stands today.
+>
+> For the current behaviour, read:
+>
+> - [`docs/notion-cms-setup.md`](./notion-cms-setup.md) — the Notion setup, the
+>   static/ISR rendering model, and the intentionally empty collections
+> - [`docs/contact-and-deployment.md`](./contact-and-deployment.md) — the
+>   deployment model, the canonical-origin rules and the production checks
+> - [`docs/keyboard-shortcuts.md`](./keyboard-shortcuts.md) — every keyboard
+>   binding and every advertised shortcut
+> - [`docs/pwa-and-boot.md`](./pwa-and-boot.md) — the service worker and boot
+>   sequence
+>
+> In particular, the `NEXT_PUBLIC_SITE_URL` instruction below describes the
+> **production** requirement only. The site now also resolves a canonical
+> origin for Vercel previews without that variable.
+
 ## Scope and baseline
 
 Prepared against `prasad-kmd/pm-web_v3` commit

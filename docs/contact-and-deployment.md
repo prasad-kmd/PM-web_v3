@@ -62,11 +62,26 @@ static:
 | `●`    | Statically generated with a revalidation window (ISR)      |
 | `ƒ`    | Rendered per request by a function                         |
 
-**Expected:** every public page route is `○` or `●`. The only `ƒ` routes are
-`/insights`, `/invoices` and `/og-studio` (they read the owner session cookie
-on every request and are owner-only, so their traffic is effectively zero) and
-the small set of API routes that must stay live — `/api/admin/session`,
-`/api/comments`, `/api/contact`, `/api/system` and `/api/reader/pulse`.
+**Expected:** every public page route is `○` or `●`. The only `ƒ` **page**
+routes are `/insights`, `/invoices` and `/og-studio` (they read the owner
+session cookie on every request and are owner-only, so their traffic is
+effectively zero).
+
+API routes are always functions, so the question for them is not the route
+symbol but whether the **response** is CDN-cacheable:
+
+| Route                                                                                                                                                                                         | Response caching                                                                      |
+| --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| `/api/search-index`, `/api/feed.xml`, `/api/llms.txt`, `/api/rss.xml`                                                                                                                         | ISR (`●`, `revalidate = 3600`) — rendered into static output                          |
+| `/api/og`                                                                                                                                                                                     | `public, max-age=3600, s-maxage=86400, stale-while-revalidate=604800`                 |
+| `/api/latest`                                                                                                                                                                                 | `public, max-age=300, s-maxage=3600, stale-while-revalidate=86400`                    |
+| `/api/notion-image`                                                                                                                                                                           | `public, max-age=300, s-maxage=900, stale-while-revalidate=300` (307)                 |
+| `/api/reader/pulse` (GET)                                                                                                                                                                     | `public, max-age=0, s-maxage=3600, stale-while-revalidate=300`; errors are `no-store` |
+| `/api/admin/session`, `/api/admin/insights`, `/api/admin/comments/moderate`, `/api/comments`, `/api/comments/identity`, `/api/contact`, `/api/contact/email`, `/api/system`, `/api/og-custom` | `no-store` — these are per-request, owner- or submission-scoped                       |
+
+The `no-store` routes are the ones that must never be shared: a session check,
+a moderation action, a form submission and a generated OG card. Everything a
+**visitor** reads on the public site is behind a cache.
 
 **Origin behaviour:** a static or ISR route costs a CDN read. A repeat request
 returns the `x-vercel-cache: HIT` header and consumes no Active CPU and no
@@ -89,6 +104,65 @@ public HTTPS origin — the origin is baked into every prerendered page, the
 canonical tags, the sitemap and the OG image URLs, so the build fails fast
 rather than publishing a wrong canonical. Preview deployments fall back to the
 origin Vercel assigns them, so a preview builds without the variable.
+
+## Acceptance evidence
+
+The Vercel Hobby plan's limits are account-wide, and an account may host more
+than one project, so account-level usage numbers cannot be attributed to this
+site. The evidence that matters is therefore **project-scoped and per-route**.
+
+Run these against your own deployment. `measure-vercel.sh` does all of them at
+once; the commands are also listed individually so each result can be read on
+its own.
+
+### 1. A repeat request is served by the CDN
+
+```bash
+curl -sSI https://<your-host>/articles | grep -i "x-vercel-cache\|cache-control"
+```
+
+`x-vercel-cache: HIT` proves the response came from the CDN: **no function
+was invoked, no Active CPU was consumed and no origin transfer was billed.**
+`MISS` on the first request and `HIT` on the second is the expected pair.
+
+### 2. The build route table
+
+The build log is the structural proof. Every public route should be `○` or `●`;
+only the three owner studios and the per-request API routes should be `ƒ`. If
+a page route shows `ƒ`, something in its tree is still reading request state —
+the usual culprit is a `cookies()` call in a shared ancestor.
+
+### 3. Cold versus warm TTFB
+
+```bash
+for i in 1 2 3; do
+  curl -s -o /dev/null -w "%{time_starttransfer}\n" "https://<your-host>/articles?cb=$RANDOM"
+done
+```
+
+The first request renders on demand; the following ones are served from the
+edge. A large gap between the first and the rest confirms the ISR window is
+working.
+
+### 4. The volatile endpoints are edge-cached
+
+```bash
+curl -sSI "https://<your-host>/api/reader/pulse?slug=<a-real-slug>" | grep -i cache-control
+curl -sSI "https://<your-host>/api/notion-image?page=<a-published-page-id>" | grep -i cache-control
+```
+
+Expect `s-maxage=3600` on the read counter and `s-maxage=900` on the image
+redirect.
+
+### 5. The owner routes cost nothing
+
+```bash
+curl -s -o /dev/null -w "%{http_code}\n" https://<your-host>/insights
+```
+
+`404`, not `200` and not a login page. The request is still a function
+invocation, but it is one an attacker would have to make deliberately — the
+routes are not advertised anywhere to a signed-out visitor.
 
 ## Animation and icons
 
