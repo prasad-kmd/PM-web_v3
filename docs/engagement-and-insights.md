@@ -2,7 +2,7 @@
 
 This guide covers the server-side setup for:
 
-1. **Ad-blocker-resilient public content read counters** (shown exclusively on content reader pages, loaded client-side from a first-party cached endpoint) and the protected **Content Insights** studio (`/insights`, `⌘⇧A`).
+1. **Ad-blocker-resilient public content read counters** (shown exclusively on content reader pages, loaded client-side from a first-party cached endpoint) and the protected **Content Insights** studio (`/insights`, reached from the MenuBar).
 2. **Categorized Telegram notifications** using Forum Supergroup **Topics** (`message_thread_id`) for Contact submissions, Reader comments, and Admin authentication events.
 3. **Inline comment moderation** (`Hide` / `Restore`) and the **`⌘K` Workspace Command Palette**.
 
@@ -58,12 +58,15 @@ FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG...\n----
 
 ### Step 3 — Opening Content Insights (`/insights`)
 
-1. Sign in as owner (`⌘⇧L` or Profile menu → **Sign in…**).
+1. Sign in as owner (Profile menu → **Sign in…**).
 2. Launch **Content Insights** via:
    - Profile menu → **Studio → Content Insights**
-   - Keyboard shortcut **`⌘⇧A`** (`Ctrl+Shift+A`)
+   - MenuBar → **View → Content Insights**
    - Command palette (`⌘K`) → type `insights` → **Content Insights**
    - Direct URL `/insights`
+
+> The owner-studio hotkeys (`⌘⇧L`, `⌘⇧G`, `⌘⇧I`, `⌘⇧A`) and the `⌘,` settings shortcut were removed. Every studio is reached through the **MenuBar** or the **command palette**. `⌘K` still opens the palette.
+
 3. Switch across **Overview** (interactive Recharts **Area / Bars** readership chart, KPI cards, collection shares, and top entries preview), **Entries** (searchable, sortable full content leaderboard), and **Audience** (referrer hostnames and country-level distribution), filter by **7d / 30d / 90d / All**, or click **CSV** to download the filtered report.
 
 ---

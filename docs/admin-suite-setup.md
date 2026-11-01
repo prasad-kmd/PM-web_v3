@@ -2,7 +2,7 @@
 
 This document covers configuration for the private owner suite integrated into `pm-web_v3`:
 
-1. **Owner Sign-In & Workstation Lock Curtain** (`MenuBar` profile dropdown + `⌘⇧L`)
+1. **Owner Sign-In & Workstation Lock Curtain** (`MenuBar` profile dropdown)
 2. **OG Image Studio** (`05 · Bloom spotlight` + admin-only `/api/og-custom`)
 3. **Invoice Studio** (`01 · Split ledger studio` + Notion `2026-03-11` ledger + client-side `@react-pdf/renderer` PDF export)
 
@@ -190,4 +190,4 @@ Share an empty Notion page with your invoice integration and set `NOTION_INVOICE
 
 ## 6. Content Insights Studio (`/insights`) & Telegram Topic Routing
 
-For setting up the **Content Insights** studio (`⌘⇧A`), ad-blocker-resilient Firebase Realtime Database read counters, inline comment moderation, and per-topic Telegram group routing (`TELEGRAM_TOPIC_*`), see [`docs/engagement-and-insights.md`](./engagement-and-insights.md).
+For setting up the **Content Insights** studio (`/insights`), ad-blocker-resilient Firebase Realtime Database read counters, inline comment moderation, and per-topic Telegram group routing (`TELEGRAM_TOPIC_*`), see [`docs/engagement-and-insights.md`](./engagement-and-insights.md).
