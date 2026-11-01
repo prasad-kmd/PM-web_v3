@@ -18,12 +18,15 @@ import {
   Tag01Icon,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { APP_REGISTRY, DESKTOP_APPS, type AppId } from "@/lib/registry";
 import { ShortcutContextMenu } from "./ContextMenu";
-import { DesktopInstallShortcut } from "./DesktopInstallShortcut";
+import {
+  DesktopInstallShortcut,
+  PWA_INSTALL_SHORTCUT_ID,
+} from "./DesktopInstallShortcut";
 
-type Marquee = { x1: number; y1: number; x2: number; y2: number };
+type Direction = "ArrowUp" | "ArrowDown" | "ArrowLeft" | "ArrowRight";
 
 function ShortcutGlyph({ appId }: { appId: AppId }) {
   return (
@@ -55,106 +58,204 @@ function ShortcutGlyph({ appId }: { appId: AppId }) {
   );
 }
 
+function findSpatialNeighbor(
+  buttons: HTMLButtonElement[],
+  current: HTMLButtonElement,
+  direction: Direction,
+): HTMLButtonElement | null {
+  const originRect = current.getBoundingClientRect();
+  const ax = originRect.left + originRect.width / 2;
+  const ay = originRect.top + originRect.height / 2;
+
+  let best: HTMLButtonElement | null = null;
+  let bestScore = Number.POSITIVE_INFINITY;
+
+  for (const candidate of buttons) {
+    if (candidate === current) continue;
+    const rect = candidate.getBoundingClientRect();
+    const bx = rect.left + rect.width / 2;
+    const by = rect.top + rect.height / 2;
+    const dx = bx - ax;
+    const dy = by - ay;
+
+    let primary = 0;
+    let cross = 0;
+
+    if (direction === "ArrowDown") {
+      if (dy <= 8) continue;
+      primary = dy;
+      cross = Math.abs(dx);
+    } else if (direction === "ArrowUp") {
+      if (dy >= -8) continue;
+      primary = -dy;
+      cross = Math.abs(dx);
+    } else if (direction === "ArrowRight") {
+      if (dx <= 8) continue;
+      primary = dx;
+      cross = Math.abs(dy);
+    } else {
+      if (dx >= -8) continue;
+      primary = -dx;
+      cross = Math.abs(dy);
+    }
+
+    const score = primary + cross * 2.5;
+    if (score < bestScore) {
+      bestScore = score;
+      best = candidate;
+    }
+  }
+
+  return best;
+}
+
 export function DesktopIcons({ onOpen }: { onOpen: (appId: AppId) => void }) {
-  const [selected, setSelected] = useState<Set<AppId>>(new Set());
-  const [marquee, setMarquee] = useState<Marquee | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
   const layerRef = useRef<HTMLDivElement>(null);
-  const dragRef = useRef<Marquee | null>(null);
 
-  const beginMarquee = useCallback(
-    (event: React.PointerEvent<HTMLDivElement>) => {
-      if (event.button !== 0) return;
-      if ((event.target as HTMLElement).closest(".desktop-shortcut")) return;
-
-      const rect = layerRef.current!.getBoundingClientRect();
-      const x = event.clientX - rect.left;
-      const y = event.clientY - rect.top;
-      dragRef.current = { x1: x, y1: y, x2: x, y2: y };
-      setMarquee(dragRef.current);
-      if (!event.ctrlKey && !event.metaKey) setSelected(new Set());
-
-      const onMove = (moveEvent: PointerEvent) => {
-        if (!dragRef.current) return;
-        dragRef.current = {
-          ...dragRef.current,
-          x2: moveEvent.clientX - rect.left,
-          y2: moveEvent.clientY - rect.top,
-        };
-        setMarquee({ ...dragRef.current });
-      };
-      const onUp = () => {
-        window.removeEventListener("pointermove", onMove);
-        window.removeEventListener("pointerup", onUp);
-        dragRef.current = null;
-        setMarquee(null);
-      };
-
-      window.addEventListener("pointermove", onMove);
-      window.addEventListener("pointerup", onUp);
-    },
-    [],
-  );
-
+  // Clicking empty desktop canvas clears any active single-icon selection.
   useEffect(() => {
-    const onKey = (event: KeyboardEvent) => {
-      const target = event.target;
-      if (!(target instanceof HTMLElement)) return;
-      // Native shortcut buttons already handle Enter. Never intercept keyboard
-      // input inside windows, links, form controls, menus or editable text.
-      if (target.closest(".desktop-shortcut")) {
-        if (event.key === "Escape") setSelected(new Set());
+    if (!selectedId) return;
+    const onPointerDown = (event: PointerEvent) => {
+      if (event.button !== 0) return;
+      const target = event.target as HTMLElement | null;
+      if (
+        target?.closest(
+          ".desktop-shortcut, [role=menu], [data-slot=context-menu-content]",
+        )
+      ) {
         return;
       }
-      const onDesktop =
-        layerRef.current?.contains(target) ||
-        (target === document.body &&
-          !document.querySelector(".window-geometry"));
-      if (!onDesktop) return;
-      const only = selected.size === 1 ? [...selected][0] : null;
-      if (event.key === "Enter" && only) onOpen(only);
-      if (event.key === "Escape") setSelected(new Set());
+      setSelectedId(null);
+    };
+    document.addEventListener("pointerdown", onPointerDown);
+    return () => document.removeEventListener("pointerdown", onPointerDown);
+  }, [selectedId]);
+
+  // Once a desktop icon is selected, arrow keys navigate single selection
+  // spatially across the rendered shortcut grid; Enter opens; Escape clears.
+  useEffect(() => {
+    if (!selectedId) return;
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.metaKey || event.ctrlKey || event.altKey) return;
+
+      const target = event.target as HTMLElement | null;
+      if (
+        target?.closest(
+          "input, textarea, select, [contenteditable=true], [role=menu], [role=listbox], [role=dialog], [role=alertdialog], .workstation-lock-curtain",
+        )
+      ) {
+        return;
+      }
+
+      if (
+        document.querySelector(".window-geometry, .workstation-lock-curtain")
+      ) {
+        return;
+      }
+
+      const container = layerRef.current;
+      if (!container) return;
+
+      if (event.key === "Escape") {
+        event.preventDefault();
+        setSelectedId(null);
+        if (
+          document.activeElement instanceof HTMLElement &&
+          container.contains(document.activeElement)
+        ) {
+          document.activeElement.blur();
+        }
+        return;
+      }
+
+      const buttons = Array.from(
+        container.querySelectorAll<HTMLButtonElement>(
+          ".desktop-shortcut[data-shortcut-id]:not(:disabled)",
+        ),
+      );
+      if (!buttons.length) return;
+
+      const currentButton = buttons.find(
+        (btn) => btn.dataset.shortcutId === selectedId,
+      );
+      if (!currentButton) return;
+
+      if (event.key === "Enter") {
+        // Native button focus already fires `onClick` on Enter; only trigger
+        // manually when selection is active while focus sits on document/body.
+        if (document.activeElement !== currentButton) {
+          event.preventDefault();
+          currentButton.click();
+        }
+        return;
+      }
+
+      let nextButton: HTMLButtonElement | null = null;
+      if (
+        event.key === "ArrowUp" ||
+        event.key === "ArrowDown" ||
+        event.key === "ArrowLeft" ||
+        event.key === "ArrowRight"
+      ) {
+        nextButton = findSpatialNeighbor(buttons, currentButton, event.key);
+      } else if (event.key === "Home") {
+        nextButton = buttons[0] ?? null;
+      } else if (event.key === "End") {
+        nextButton = buttons[buttons.length - 1] ?? null;
+      } else {
+        return;
+      }
+
+      event.preventDefault();
+      if (nextButton && nextButton.dataset.shortcutId) {
+        setSelectedId(nextButton.dataset.shortcutId);
+        nextButton.focus({ preventScroll: false });
+      }
     };
 
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [selected, onOpen]);
-
-  const box = marquee
-    ? {
-        left: Math.min(marquee.x1, marquee.x2),
-        top: Math.min(marquee.y1, marquee.y2),
-        width: Math.abs(marquee.x2 - marquee.x1),
-        height: Math.abs(marquee.y2 - marquee.y1),
-      }
-    : null;
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [selectedId]);
 
   return (
-    <div className="desktop-grid" ref={layerRef} onPointerDown={beginMarquee}>
-      <DesktopInstallShortcut />
-      {DESKTOP_APPS.map((appId) => {
+    <div
+      className="desktop-grid"
+      ref={layerRef}
+      onPointerDown={(event) => {
+        if (
+          event.button === 0 &&
+          !(event.target as HTMLElement).closest(".desktop-shortcut")
+        ) {
+          setSelectedId(null);
+        }
+      }}
+    >
+      <DesktopInstallShortcut
+        selected={selectedId === PWA_INSTALL_SHORTCUT_ID}
+        onSelect={() => setSelectedId(PWA_INSTALL_SHORTCUT_ID)}
+      />
+      {DESKTOP_APPS.map((appId, index) => {
         const meta = APP_REGISTRY[appId];
         const label = meta.title;
-        const isSelected = selected.has(appId);
+        const isSelected = selectedId === appId;
+        const tabStop = isSelected || (selectedId === null && index === 0);
 
         return (
           <ShortcutContextMenu key={appId} appId={appId} onOpen={onOpen}>
             <button
               type="button"
               data-app={appId}
+              data-shortcut-id={appId}
+              tabIndex={tabStop ? 0 : -1}
               className={`desktop-shortcut${isSelected ? " is-selected" : ""}`}
               onPointerDown={(event) => {
                 event.stopPropagation();
-                if (event.ctrlKey || event.metaKey) {
-                  setSelected((current) => {
-                    const next = new Set(current);
-                    if (next.has(appId)) next.delete(appId);
-                    else next.add(appId);
-                    return next;
-                  });
-                } else {
-                  setSelected(new Set([appId]));
-                }
+                setSelectedId(appId);
               }}
+              onContextMenu={() => setSelectedId(appId)}
+              onFocus={() => setSelectedId(appId)}
               onClick={() => onOpen(appId)}
               aria-label={label}
             >
@@ -167,10 +268,6 @@ export function DesktopIcons({ onOpen }: { onOpen: (appId: AppId) => void }) {
           </ShortcutContextMenu>
         );
       })}
-
-      {box && box.width > 2 && box.height > 2 && (
-        <div className="marquee" style={box} aria-hidden />
-      )}
     </div>
   );
 }

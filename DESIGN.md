@@ -138,15 +138,15 @@ Use the published Menubar composition: one animated popup is handed between trig
 
 ### Desktop shortcuts and context menus
 
-Shortcuts remain real buttons with select, multi-select, Enter open, marquee selection, and right-click behavior. They use single-stroke Hugeicons-style icons in neutral icon tiles with clean text treatment.
+Shortcuts remain real buttons with a single selection, spatial arrow-key movement between them, Enter to open, Escape to clear, and right-click behavior. Selection is a roving tabindex: exactly one shortcut is in the tab order, so Tab leaves the desktop in one press. They use single-stroke Hugeicons-style icons in neutral icon tiles with clean text treatment.
 
 Empty-canvas and shortcut context menus use the actual Animate UI Base UI Context Menu primitive: `Root → Trigger → Portal → Positioner → Popup`. Collision handling, keyboard behavior, focus management, reduced-motion support, and popup motion belong to the primitive.
 
 ### Profile widget
 
-The upper-left identity card uses the installed Coss Card primitive—not a substitute surface—with direct `CardHeader`, `CardPanel`, and `CardFooter` sections. It shows the profile image, name, dual discipline, Kandy location, a concise focus line, and an understated availability status. The card inherits the shared 10px radius, semantic card/border tokens, Outfit type, and the same restrained shadow used by windows.
+The upper-left identity card uses the installed Coss Card primitive—not a substitute surface—with direct `CardHeader`, `CardPanel`, and `CardFooter` sections. It shows the profile image, name, dual discipline, the operator's location, a concise focus line, and an understated availability status. The card inherits the shared 10px radius, semantic card/border tokens, Outfit type, and the same restrained shadow used by windows.
 
-The temporary portrait lives at `public/images/profile-placeholder.jpg`; replacing that file is the only change needed to use a supplied image. The widget stops canvas-selection pointer events but remains below all application windows.
+The portrait lives at `public/images/profile-placeholder.jpg`; replacing that file is the only change needed to use a supplied image, and the widget's alternative text carries the operator's name rather than describing the image as a placeholder. The widget stops canvas-selection pointer events but remains below all application windows.
 
 ### Windows
 

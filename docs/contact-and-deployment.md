@@ -49,10 +49,125 @@ Production builds require `NEXT_PUBLIC_SITE_URL` to be the public HTTPS origin. 
 
 Before promoting a deployment, smoke-test `/`, one entry from each collection, `/categories`, one term page, `/legal` and each legal document, `/contact`, `/sitemap.xml`, `/robots.txt`, `/llms.txt`, `/feed.xml`, `/manifest.webmanifest` and `/sw.js`. Verify Back/Forward, multiple-window focus, same-collection navigation, resized windows, mobile layout, JavaScript-disabled reading, a real contact submission (including Turnstile and Telegram delivery), representative OG images in both styles, and the PWA/offline checklist in [PWA and boot](./pwa-and-boot.md).
 
+### The static rendering model
+
+Public routes are **statically generated** and revalidated on a one-hour window
+(`revalidate = 3600`), with an on-demand purge from
+`/api/admin/cache/purge`. The build output is the source of truth for what is
+static:
+
+| Symbol | Meaning                                                    |
+| ------ | ---------------------------------------------------------- |
+| `○`    | Statically generated at build time and served from the CDN |
+| `●`    | Statically generated with a revalidation window (ISR)      |
+| `ƒ`    | Rendered per request by a function                         |
+
+**Expected:** every public page route is `○` or `●`. The only `ƒ` **page**
+routes are `/insights`, `/invoices` and `/og-studio` (they read the owner
+session cookie on every request and are owner-only, so their traffic is
+effectively zero).
+
+API routes are always functions, so the question for them is not the route
+symbol but whether the **response** is CDN-cacheable:
+
+| Route                                                                                                                                                                                         | Response caching                                                                      |
+| --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| `/api/search-index`, `/api/feed.xml`, `/api/llms.txt`, `/api/rss.xml`                                                                                                                         | ISR (`●`, `revalidate = 3600`) — rendered into static output                          |
+| `/api/og`                                                                                                                                                                                     | `public, max-age=3600, s-maxage=86400, stale-while-revalidate=604800`                 |
+| `/api/latest`                                                                                                                                                                                 | `public, max-age=300, s-maxage=3600, stale-while-revalidate=86400`                    |
+| `/api/notion-image`                                                                                                                                                                           | `public, max-age=300, s-maxage=900, stale-while-revalidate=300` (307)                 |
+| `/api/reader/pulse` (GET)                                                                                                                                                                     | `public, max-age=0, s-maxage=3600, stale-while-revalidate=300`; errors are `no-store` |
+| `/api/admin/session`, `/api/admin/insights`, `/api/admin/comments/moderate`, `/api/comments`, `/api/comments/identity`, `/api/contact`, `/api/contact/email`, `/api/system`, `/api/og-custom` | `no-store` — these are per-request, owner- or submission-scoped                       |
+
+The `no-store` routes are the ones that must never be shared: a session check,
+a moderation action, a form submission and a generated OG card. Everything a
+**visitor** reads on the public site is behind a cache.
+
+**Origin behaviour:** a static or ISR route costs a CDN read. A repeat request
+returns the `x-vercel-cache: HIT` header and consumes no Active CPU and no
+origin transfer. `MISS` means it was rendered on demand.
+
+**Owner studios are stealth 404s.** Signed out, `/insights`, `/invoices` and
+`/og-studio` return a genuine **404** with the site's own not-found surface —
+never a login prompt and never any studio markup. See
+[Owner Workstation Suite Setup](./admin-suite-setup.md).
+
+**Notion images** are resolved through `/api/notion-image`, which returns a
+**307 redirect** to a signed Notion URL. The redirect is edge-cached for 15
+minutes (`s-maxage=900`) with a 5-minute stale-while-revalidate window, and the
+Notion API response behind it is cached for the same period. Notion signed
+URLs are valid for about an hour, so the cached redirect always expires well
+before the URL it points at does.
+
+**Environment:** production builds require `NEXT_PUBLIC_SITE_URL` to be the
+public HTTPS origin — the origin is baked into every prerendered page, the
+canonical tags, the sitemap and the OG image URLs, so the build fails fast
+rather than publishing a wrong canonical. Preview deployments fall back to the
+origin Vercel assigns them, so a preview builds without the variable.
+
+## Acceptance evidence
+
+The Vercel Hobby plan's limits are account-wide, and an account may host more
+than one project, so account-level usage numbers cannot be attributed to this
+site. The evidence that matters is therefore **project-scoped and per-route**.
+
+Run these against your own deployment. `measure-vercel.sh` does all of them at
+once; the commands are also listed individually so each result can be read on
+its own.
+
+### 1. A repeat request is served by the CDN
+
+```bash
+curl -sSI https://<your-host>/articles | grep -i "x-vercel-cache\|cache-control"
+```
+
+`x-vercel-cache: HIT` proves the response came from the CDN: **no function
+was invoked, no Active CPU was consumed and no origin transfer was billed.**
+`MISS` on the first request and `HIT` on the second is the expected pair.
+
+### 2. The build route table
+
+The build log is the structural proof. Every public route should be `○` or `●`;
+only the three owner studios and the per-request API routes should be `ƒ`. If
+a page route shows `ƒ`, something in its tree is still reading request state —
+the usual culprit is a `cookies()` call in a shared ancestor.
+
+### 3. Cold versus warm TTFB
+
+```bash
+for i in 1 2 3; do
+  curl -s -o /dev/null -w "%{time_starttransfer}\n" "https://<your-host>/articles?cb=$RANDOM"
+done
+```
+
+The first request renders on demand; the following ones are served from the
+edge. A large gap between the first and the rest confirms the ISR window is
+working.
+
+### 4. The volatile endpoints are edge-cached
+
+```bash
+curl -sSI "https://<your-host>/api/reader/pulse?slug=<a-real-slug>" | grep -i cache-control
+curl -sSI "https://<your-host>/api/notion-image?page=<a-published-page-id>" | grep -i cache-control
+```
+
+Expect `s-maxage=3600` on the read counter and `s-maxage=900` on the image
+redirect.
+
+### 5. The owner routes cost nothing
+
+```bash
+curl -s -o /dev/null -w "%{http_code}\n" https://<your-host>/insights
+```
+
+`404`, not `200` and not a login page. The request is still a function
+invocation, but it is one an attacker would have to make deliberately — the
+routes are not advertised anywhere to a signed-out visitor.
+
 ## Animation and icons
 
 Project components import animation primitives from `motion/react` and use the existing `@hugeicons` packages for icons. `framer-motion` remains a transitive dependency of `motion`, but is not a direct dependency or imported directly. `lucide-react` is not required. After the migration, TypeScript and an offline frozen-lockfile install passed; the selected Hugeicons exports, Motion exports and accessible spinner were checked in isolation. Browser testing was not repeated.
 
 ## Development routes
 
-`/dev/states` previews the loading, not-found, error and global-error screens with sample data. It is available in development and returns 404 in production unless `ENABLE_DEV_ROUTES=1` is set; it is always `noindex`.
+There are none. The former `/dev/states` preview — which rendered the loading, not-found and error screens with sample data — has been removed along with its stylesheet, so `ENABLE_DEV_ROUTES` is no longer read anywhere and has been dropped from `.env.example`. The loading, not-found and error screens themselves are unchanged and are exercised through the real routes: a missing path renders the not-found state, and a failed request renders the error state.

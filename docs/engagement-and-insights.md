@@ -2,7 +2,7 @@
 
 This guide covers the server-side setup for:
 
-1. **Ad-blocker-resilient public content read counters** (shown exclusively on content reader pages) and the protected **Content Insights** studio (`/insights`, `⌘⇧A`).
+1. **Ad-blocker-resilient public content read counters** (shown exclusively on content reader pages, loaded client-side from a first-party cached endpoint) and the protected **Content Insights** studio (`/insights`, reached from the MenuBar).
 2. **Categorized Telegram notifications** using Forum Supergroup **Topics** (`message_thread_id`) for Contact submissions, Reader comments, and Admin authentication events.
 3. **Inline comment moderation** (`Hide` / `Restore`) and the **`⌘K` Workspace Command Palette**.
 
@@ -12,10 +12,12 @@ This guide covers the server-side setup for:
 
 ### Architectural Guarantees
 
-- **100% Immune to Script & Content Blockers (uBlock Origin, EasyPrivacy, Brave Shields):**
+- **First-party readership flow, resilient to script & content blockers (uBlock Origin, EasyPrivacy, Brave Shields):**
   - Zero third-party scripts, pixels, or Firebase browser SDKs are shipped to visitors.
-  - Initial read counts are fetched server-side inside `ContentDetailPage.tsx` and rendered directly in HTML (visible even when JavaScript is disabled).
-  - Active reads post to a neutral first-party endpoint (`POST /api/reader/pulse`) with zero filter-list trigger keywords.
+  - Active reads post to a neutral first-party endpoint (`POST /api/reader/pulse`) with zero filter-list trigger keywords. Recording a read never depends on a third-party host, so blocking rules cannot suppress it.
+  - Read counts load after hydration from a same-origin, CDN-cached endpoint (`GET /api/reader/pulse`); the count is **not** part of the server-rendered HTML and therefore requires JavaScript to appear.
+  - The count response is cached at the shared edge for one hour with a five-minute stale-while-revalidate window. A cache miss reads the aggregate from Firebase, so a displayed total may lag recent reads by roughly an hour.
+  - A provider outage returns `503` with `Cache-Control: no-store`, so an error is never cached and never displayed as a frozen `0`.
 - **Reader-Page Scope Only:**
   - Read counts are tracked and displayed **exclusively** on content reader pages (`/{type}/{slug}` across `projects`, `blog`, `articles`, `tutorials`, `glossary`, and `news`).
   - Non-content routes (`/`, `/resume`, `/settings`, `/contact`, `/bookmarks`) and owner studios (`/insights`, `/og-studio`, `/invoices`) never display a read counter.
@@ -56,12 +58,15 @@ FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG...\n----
 
 ### Step 3 — Opening Content Insights (`/insights`)
 
-1. Sign in as owner (`⌘⇧L` or Profile menu → **Sign in…**).
+1. Sign in as owner (Profile menu → **Sign in…**).
 2. Launch **Content Insights** via:
    - Profile menu → **Studio → Content Insights**
-   - Keyboard shortcut **`⌘⇧A`** (`Ctrl+Shift+A`)
+   - MenuBar → **View → Content Insights**
    - Command palette (`⌘K`) → type `insights` → **Content Insights**
    - Direct URL `/insights`
+
+> The owner-studio hotkeys (`⌘⇧L`, `⌘⇧G`, `⌘⇧I`, `⌘⇧A`) and the `⌘,` settings shortcut were removed. Every studio is reached through the **MenuBar** or the **command palette**. `⌘K` still opens the palette.
+
 3. Switch across **Overview** (interactive Recharts **Area / Bars** readership chart, KPI cards, collection shares, and top entries preview), **Entries** (searchable, sortable full content leaderboard), and **Audience** (referrer hostnames and country-level distribution), filter by **7d / 30d / 90d / All**, or click **CSV** to download the filtered report.
 
 ---

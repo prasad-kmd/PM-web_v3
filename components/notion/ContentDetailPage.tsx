@@ -19,7 +19,6 @@ import {
   type ContentType,
 } from "@/lib/notion-cms";
 import { getSiteUrl } from "@/lib/site";
-import { getEntryReadCount } from "@/lib/engagement/reads";
 import { isFeedType } from "@/lib/content-listing";
 import { collectLinks } from "@/lib/inline-links";
 import { entryOgImagePath } from "@/lib/og/url";
@@ -169,10 +168,7 @@ export async function ContentDetailPage({
   const feed = isFeedType(type);
   const storyLinks = feed ? collectLinks(result.blocks) : [];
 
-  const [index, initialReads] = await Promise.all([
-    getContentIndex(type),
-    getEntryReadCount(type, item.slug),
-  ]);
+  const index = await getContentIndex(type);
   const siteBaseUrl = getSiteUrl();
   const ordered = [...index.items].sort(byReadingOrder(type));
   const position = ordered.findIndex((other) => other.id === item.id);
@@ -272,11 +268,7 @@ export async function ContentDetailPage({
                       <HugeiconsIcon icon={Clock01Icon} size={14} aria-hidden />
                       {readTime} min read
                     </span>
-                    <ReaderReadCount
-                      type={type}
-                      slug={item.slug}
-                      initialCount={initialReads}
-                    />
+                    <ReaderReadCount type={type} slug={item.slug} />
                   </div>
                 </header>
                 {item.image ? (

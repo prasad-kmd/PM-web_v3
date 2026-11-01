@@ -274,7 +274,7 @@ export function buildAdminLoginTelegramMessage(
     rows.push(["Note", suppressedNote]);
   }
 
-  rows.push(["Time (LK)", `${formatColomboTime(now)} (UTC+05:30)`]);
+  rows.push(["Time (LK)", formatColomboTime(now)]);
   rows.push(["Time (UTC)", now.toISOString(), true]);
   rows.push(["IP", ip, true]);
   if (location) {

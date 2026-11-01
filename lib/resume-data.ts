@@ -6,7 +6,6 @@ export const resumeProfile = {
     "BSc (Hons) Mechatronics — reading at The Open University of Sri Lanka",
   tagline: "Machines, firmware and the seam between them.",
   location: "Kandy, Sri Lanka",
-  timezone: "UTC +05:30",
   availability: "Open to collaboration",
   summary:
     "A motivated engineer with a foundation in mechanical engineering and a practical interest in automation and robotics. This is a working record of my education, experience, interests, and selected work.",
@@ -16,7 +15,6 @@ export const personalDetails = [
   { label: "Name", value: resumeProfile.name },
   { label: "Role", value: resumeProfile.role },
   { label: "Base", value: resumeProfile.location },
-  { label: "Timezone", value: resumeProfile.timezone },
   { label: "Availability", value: resumeProfile.availability },
 ];
 

@@ -3,10 +3,14 @@ import type { ContentType } from "@/lib/content-types";
 export type InsightsRange = "7d" | "30d" | "90d" | "all";
 export type InsightsCollectionFilter = "all" | ContentType;
 
+export type ReadCountResponse = {
+  configured: boolean;
+  count: number | null;
+};
+
 export type PulseResponse = {
   configured: boolean;
   counted: boolean;
-  count: number | null;
 };
 
 export type InsightsDailyPoint = {

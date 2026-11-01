@@ -13,6 +13,8 @@ export const COOKIE_ADMIN_PROD = "__Host-pm_admin";
 /** Optional 30-day trusted-browser cookies skipping TOTP step-up on known workstations. */
 export const COOKIE_ADMIN_TRUST_DEV = "pm_admin_trust";
 export const COOKIE_ADMIN_TRUST_PROD = "__Host-pm_admin_trust";
+/** Non-sensitive boolean hint ("1") set only after owner sign-in so public visitors skip session checks. */
+export const COOKIE_ADMIN_HINT = "pm_admin_hint";
 
 const ONE_YEAR_SECONDS = 60 * 60 * 24 * 365;
 

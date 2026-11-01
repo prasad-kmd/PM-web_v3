@@ -1,6 +1,5 @@
 import "server-only";
 import { createHmac } from "node:crypto";
-import { revalidateTag } from "next/cache";
 import type { NextRequest } from "next/server";
 import { getAdminSession } from "@/lib/admin/auth";
 import { clientIp } from "@/lib/comments/request-context";
@@ -203,14 +202,13 @@ function resolveSourceLabel(
   return "direct";
 }
 
-function readTagForEntry(type: ContentType, slug: string): string {
-  return `reads:${type}:${slug.toLowerCase()}`;
-}
-
 /**
- * Reads the server-cached read count for a single content entry.
- * Returns `null` when Firebase readership storage is not configured so the
- * reader UI can cleanly omit the counter element.
+ * Reads a single content count without a nested Next data-cache entry. The
+ * public GET route applies the one-hour shared-cache policy; keeping this
+ * provider read uncached avoids stacking a second one-hour stale window below
+ * the CDN response cache. Returns `null` when Firebase is not configured and
+ * throws on provider failure so the API route can return a non-cacheable error
+ * instead of caching a false zero.
  */
 export async function getEntryReadCount(
   type: ContentType,
@@ -220,25 +218,7 @@ export async function getEntryReadCount(
   const slugKey = encodeRtdbKey(slug.toLowerCase());
   const count = await rtdbGet<number>(
     `content_reads/totals/${type}/${slugKey}/count`,
-    {
-      revalidate: 60,
-      tags: ["reads", readTagForEntry(type, slug)],
-    },
-  );
-  if (typeof count === "number" && Number.isFinite(count)) {
-    return Math.max(0, Math.floor(count));
-  }
-  return 0;
-}
-
-async function getEntryReadCountFresh(
-  type: ContentType,
-  slug: string,
-): Promise<number> {
-  const slugKey = encodeRtdbKey(slug.toLowerCase());
-  const count = await rtdbGet<number>(
-    `content_reads/totals/${type}/${slugKey}/count`,
-    { revalidate: false },
+    { throwOnError: true },
   );
   if (typeof count === "number" && Number.isFinite(count)) {
     return Math.max(0, Math.floor(count));
@@ -271,33 +251,30 @@ export async function recordEntryRead(input: {
   type: ContentType;
   slug: string;
   referrer?: string | null;
-}): Promise<{ configured: boolean; counted: boolean; count: number | null }> {
+}): Promise<{ configured: boolean; counted: boolean }> {
   if (!isFirebaseConfigured()) {
-    return { configured: false, counted: false, count: null };
+    return { configured: false, counted: false };
   }
 
   const canonicalSlug = await resolveCanonicalEntrySlug(input.type, input.slug);
   if (!canonicalSlug) {
-    return { configured: true, counted: false, count: null };
+    return { configured: true, counted: false };
   }
 
-  // Skip bots, prefetches, and signed-in workspace owner visits.
+  // Skip bots, prefetches, and signed-in workspace owner visits without RTDB reads.
   if (isPrefetchOrProbe(input.request)) {
-    const count = await getEntryReadCountFresh(input.type, canonicalSlug);
-    return { configured: true, counted: false, count };
+    return { configured: true, counted: false };
   }
 
   const adminSession = await getAdminSession(input.request);
   if (adminSession !== null) {
-    const count = await getEntryReadCountFresh(input.type, canonicalSlug);
-    return { configured: true, counted: false, count };
+    return { configured: true, counted: false };
   }
 
   const ip = clientIp(input.request) || "unknown";
   const ua = input.request.headers.get("user-agent") || "";
   if (isDuplicateRead(ip, ua, input.type, canonicalSlug)) {
-    const count = await getEntryReadCountFresh(input.type, canonicalSlug);
-    return { configured: true, counted: false, count };
+    return { configured: true, counted: false };
   }
 
   const nowMs = Date.now();
@@ -322,12 +299,9 @@ export async function recordEntryRead(input: {
     [`daily/${dayKey}/bySource/${sourceKey}`]: inc,
   });
 
-  revalidateTag(readTagForEntry(input.type, canonicalSlug), "max");
-  const updatedCount = await getEntryReadCountFresh(input.type, canonicalSlug);
   return {
     configured: true,
     counted: true,
-    count: updatedCount,
   };
 }
 

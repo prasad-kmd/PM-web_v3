@@ -135,7 +135,6 @@ export function MenuBar({
                         size={15}
                       />
                       <span>Content Insights</span>
-                      <MenubarShortcut>⌘⇧A</MenubarShortcut>
                     </MenubarItem>
                     <MenubarItem onClick={() => onOpenApp("og-studio")}>
                       <HugeiconsIcon
@@ -144,7 +143,6 @@ export function MenuBar({
                         size={15}
                       />
                       <span>OG Image Studio</span>
-                      <MenubarShortcut>⌘⇧G</MenubarShortcut>
                     </MenubarItem>
                     <MenubarItem onClick={() => onOpenApp("invoices")}>
                       <HugeiconsIcon
@@ -153,7 +151,6 @@ export function MenuBar({
                         size={15}
                       />
                       <span>Invoice Studio</span>
-                      <MenubarShortcut>⌘⇧I</MenubarShortcut>
                     </MenubarItem>
                   </MenubarGroup>
 
@@ -181,7 +178,6 @@ export function MenuBar({
                         size={15}
                       />
                       <span>Settings…</span>
-                      <MenubarShortcut>⌘,</MenubarShortcut>
                     </MenubarItem>
                     {deviceTrusted && (
                       <MenubarItem onClick={() => void forgetTrustedDevice()}>
@@ -219,7 +215,6 @@ export function MenuBar({
                         size={15}
                       />
                       <span>About Prasad</span>
-                      <MenubarShortcut>⌘O</MenubarShortcut>
                     </MenubarItem>
                     <MenubarItem onClick={() => onOpenApp("contact")}>
                       <HugeiconsIcon
@@ -248,7 +243,6 @@ export function MenuBar({
                       size={15}
                     />
                     <span>Sign in…</span>
-                    <MenubarShortcut>⌘⇧L</MenubarShortcut>
                   </MenubarItem>
                 </>
               )}
@@ -263,10 +257,10 @@ export function MenuBar({
                   Find in workspace… <MenubarShortcut>⌘K</MenubarShortcut>
                 </MenubarItem>
                 <MenubarItem onClick={() => onOpenApp("resume")}>
-                  Open Resume <MenubarShortcut>⌘O</MenubarShortcut>
+                  Open Resume
                 </MenubarItem>
                 <MenubarItem onClick={() => onOpenApp("settings")}>
-                  Open Settings <MenubarShortcut>⌘,</MenubarShortcut>
+                  Open Settings
                 </MenubarItem>
               </MenubarGroup>
               <MenubarSeparator />

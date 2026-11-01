@@ -14,7 +14,7 @@ type InstallHintRecord = {
   dismissedAt?: number;
 };
 
-const ADMIN_PATHS = ["/dev", "/insights", "/invoices", "/og-studio"];
+const ADMIN_PATHS = ["/insights", "/invoices", "/og-studio"];
 const NEW_VISIT_AFTER_MS = 30 * 60 * 1000;
 const FIRST_VISIT_DELAY_MS = 60 * 1000;
 const RETURN_VISIT_DELAY_MS = 5 * 1000;

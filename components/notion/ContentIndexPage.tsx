@@ -6,29 +6,18 @@ import {
   getContentIndex,
   type ContentType,
 } from "@/lib/notion-cms";
-import {
-  parseUrlState,
-  toListingItem,
-  type ListingSearchParams,
-} from "@/lib/content-listing";
+import { toListingItem } from "@/lib/content-listing";
 import {
   CollectionBrowser,
   CollectionBrowserFallback,
 } from "./CollectionBrowser";
 
-export async function ContentIndexPage({
-  type,
-  searchParams,
-}: {
-  type: ContentType;
-  searchParams: ListingSearchParams;
-}) {
+export async function ContentIndexPage({ type }: { type: ContentType }) {
   const meta = CONTENT_META[type];
   const result = await getContentIndex(type);
-  const { q, page } = parseUrlState(searchParams);
   const unavailable = !result.configured || result.error;
   const items = unavailable ? [] : result.items.map(toListingItem);
-  const browserProps = { type, items, initialQ: q, initialPage: page };
+  const browserProps = { type, items, initialQ: "", initialPage: 1 };
   return (
     <main className="cms-app lib-app">
       <WindowBreadcrumb items={[{ label: meta.label }]} />

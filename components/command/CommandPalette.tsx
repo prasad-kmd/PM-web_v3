@@ -36,6 +36,7 @@ import {
   useMemo,
   useRef,
   useState,
+  type FormEvent,
   type KeyboardEvent as ReactKeyboardEvent,
 } from "react";
 import { toast } from "sonner";
@@ -57,7 +58,6 @@ type PaletteItem = {
   icon: typeof Search01Icon;
   title: string;
   meta: string;
-  shortcut?: string;
   keywords: string[];
   subtitle?: string;
   slug?: string;
@@ -136,7 +136,8 @@ export function CommandPalette({
   const { authenticated, openLockCurtain, signOut, refreshContentCache } =
     useAdminAuth();
 
-  const [query, setQuery] = useState("");
+  const [draftQuery, setDraftQuery] = useState("");
+  const [submittedQuery, setSubmittedQuery] = useState("");
   const [entries, setEntries] = useState<SearchEntry[]>(cachedEntries ?? []);
   const [loadingIndex, setLoadingIndex] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
@@ -146,24 +147,43 @@ export function CommandPalette({
 
   useEffect(() => {
     if (!open) return;
-    setQuery("");
+    setDraftQuery("");
+    setSubmittedQuery("");
     setActiveIndex(0);
-
-    if (cachedEntries) {
-      setEntries(cachedEntries);
-    } else {
-      setLoadingIndex(true);
-      void loadSearchEntries().then((loaded) => {
-        setEntries(loaded);
-        setLoadingIndex(false);
-      });
-    }
+    setEntries(cachedEntries ?? []);
 
     const focusTimer = window.setTimeout(() => {
       inputRef.current?.focus();
     }, 16);
     return () => window.clearTimeout(focusTimer);
   }, [open]);
+
+  const submitSearch = useCallback((rawValue: string) => {
+    const next = rawValue.trim();
+    setDraftQuery(next);
+    setSubmittedQuery(next);
+    setActiveIndex(0);
+
+    if (!next) return;
+
+    if (cachedEntries) {
+      setEntries(cachedEntries);
+      return;
+    }
+
+    setLoadingIndex(true);
+    void loadSearchEntries().then((loaded) => {
+      setEntries(loaded);
+      setLoadingIndex(false);
+    });
+  }, []);
+
+  const clearSearch = useCallback(() => {
+    setDraftQuery("");
+    setSubmittedQuery("");
+    setActiveIndex(0);
+    inputRef.current?.focus();
+  }, []);
 
   const closeAndRun = useCallback(
     (fn: () => void) => {
@@ -252,8 +272,6 @@ export function CommandPalette({
         icon: APP_ICON[appId],
         title: app.title,
         meta: app.kind,
-        shortcut:
-          appId === "resume" ? "⌘O" : appId === "settings" ? "⌘," : undefined,
         keywords: [app.kind, app.description, appId, "window", "open", "app"],
         subtitle: app.description,
         onSelect: () => closeAndRun(() => onOpenApp(appId)),
@@ -345,7 +363,6 @@ export function CommandPalette({
           icon: ChartLineData02Icon,
           title: "Content Insights",
           meta: "Readership",
-          shortcut: "⌘⇧A",
           keywords: [
             "reads",
             "insights",
@@ -362,7 +379,6 @@ export function CommandPalette({
           icon: Image02Icon,
           title: "OG Image Studio",
           meta: "Brand graphics",
-          shortcut: "⌘⇧G",
           keywords: ["og", "social", "card", "image", "studio"],
           onSelect: () => closeAndRun(() => onOpenApp("og-studio")),
         },
@@ -372,7 +388,6 @@ export function CommandPalette({
           icon: Invoice02Icon,
           title: "Invoice Studio",
           meta: "Workspace ledger",
-          shortcut: "⌘⇧I",
           keywords: [
             "invoice",
             "billing",
@@ -469,7 +484,6 @@ export function CommandPalette({
         icon: Login01Icon,
         title: "Owner sign in…",
         meta: "Workspace",
-        shortcut: "⌘⇧L",
         keywords: ["login", "sign in", "owner", "admin", "unlock"],
         onSelect: () => closeAndRun(openLockCurtain),
       });
@@ -493,11 +507,12 @@ export function CommandPalette({
     toggleTheme,
   ]);
 
-  const trimmedQuery = query.trim();
-  const hasQuery = trimmedQuery.length > 0;
+  const trimmedDraft = draftQuery.trim();
+  const hasSubmittedQuery = submittedQuery.length > 0;
+  const isDirty = trimmedDraft !== submittedQuery;
 
   const { filteredGroups, totalMatches } = useMemo(() => {
-    if (!hasQuery) {
+    if (!hasSubmittedQuery) {
       return {
         filteredGroups: [] as Array<{ label: string; items: PaletteItem[] }>,
         totalMatches: 0,
@@ -509,7 +524,7 @@ export function CommandPalette({
     const scored: Array<{ item: PaletteItem; score: number }> = [];
 
     for (const item of allItems) {
-      const s = scoreSearchCandidate(trimmedQuery, {
+      const s = scoreSearchCandidate(submittedQuery, {
         title: item.title,
         subtitle: item.subtitle,
         keywords: [item.meta, ...item.keywords],
@@ -546,16 +561,12 @@ export function CommandPalette({
       }
     }
     return { filteredGroups: groups, totalMatches: scored.length };
-  }, [allItems, hasQuery, trimmedQuery]);
+  }, [allItems, hasSubmittedQuery, submittedQuery]);
 
   const flatItems = useMemo(
     () => filteredGroups.flatMap((group) => group.items),
     [filteredGroups],
   );
-
-  useEffect(() => {
-    setActiveIndex(0);
-  }, [trimmedQuery]);
 
   useEffect(() => {
     if (activeIndex >= flatItems.length && flatItems.length > 0) {
@@ -564,17 +575,29 @@ export function CommandPalette({
   }, [activeIndex, flatItems.length]);
 
   useEffect(() => {
-    if (!hasQuery) return;
+    if (!hasSubmittedQuery) return;
     const container = listRef.current;
     if (!container) return;
     const activeEl = container.querySelector<HTMLElement>(
       `[data-cmd-index="${activeIndex}"]`,
     );
     activeEl?.scrollIntoView({ block: "nearest" });
-  }, [activeIndex, hasQuery]);
+  }, [activeIndex, hasSubmittedQuery]);
+
+  const handleFormSubmit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (isDirty) {
+      submitSearch(draftQuery);
+      inputRef.current?.focus();
+      return;
+    }
+    if (hasSubmittedQuery) {
+      flatItems[activeIndex]?.onSelect();
+    }
+  };
 
   const handleKeyDown = (event: ReactKeyboardEvent<HTMLDivElement>) => {
-    if (!hasQuery) return;
+    if (!hasSubmittedQuery) return;
 
     if (event.key === "ArrowDown") {
       event.preventDefault();
@@ -598,14 +621,6 @@ export function CommandPalette({
     if (event.key === "End") {
       event.preventDefault();
       if (flatItems.length > 0) setActiveIndex(flatItems.length - 1);
-      return;
-    }
-    if (event.key === "Enter") {
-      const target = flatItems[activeIndex];
-      if (target) {
-        event.preventDefault();
-        target.onSelect();
-      }
     }
   };
 
@@ -618,11 +633,11 @@ export function CommandPalette({
         <DialogPrimitive.Viewport className="cmd-viewport">
           <DialogPrimitive.Popup
             className="cmd-popup"
-            data-has-query={hasQuery ? "true" : undefined}
+            data-has-query={hasSubmittedQuery ? "true" : undefined}
             aria-label="Workspace command search"
             onKeyDown={handleKeyDown}
           >
-            <div className="cmd-input-row">
+            <form className="cmd-input-row" onSubmit={handleFormSubmit}>
               <HugeiconsIcon
                 icon={Search01Icon}
                 size={15}
@@ -633,23 +648,21 @@ export function CommandPalette({
               <input
                 ref={inputRef}
                 type="text"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder="Search entries, apps, or commands…"
+                enterKeyHint="search"
+                value={draftQuery}
+                onChange={(e) => setDraftQuery(e.target.value)}
+                placeholder="Type keywords and press Enter…"
                 aria-label="Search workspace"
                 autoComplete="off"
                 autoCorrect="off"
                 spellCheck={false}
                 className="cmd-input"
               />
-              {query ? (
+              {draftQuery || hasSubmittedQuery ? (
                 <button
                   type="button"
                   className="cmd-clear-btn"
-                  onClick={() => {
-                    setQuery("");
-                    inputRef.current?.focus();
-                  }}
+                  onClick={clearSearch}
                   aria-label="Clear search query"
                 >
                   <HugeiconsIcon
@@ -660,10 +673,22 @@ export function CommandPalette({
                   />
                 </button>
               ) : null}
+              {isDirty && trimmedDraft ? (
+                <button
+                  type="submit"
+                  className="cmd-submit-btn"
+                  title="Press Enter to search"
+                  aria-label="Run search"
+                >
+                  <kbd className="cmd-kbd" aria-hidden>
+                    ↵
+                  </kbd>
+                </button>
+              ) : null}
               <kbd className="cmd-kbd">Esc</kbd>
-            </div>
+            </form>
 
-            {hasQuery ? (
+            {hasSubmittedQuery ? (
               <>
                 <div
                   ref={listRef}
@@ -674,8 +699,8 @@ export function CommandPalette({
                   {flatItems.length === 0 ? (
                     <div className="cmd-empty">
                       {loadingIndex
-                        ? "Indexing published entries…"
-                        : `No matches for “${trimmedQuery}”.`}
+                        ? "Searching published entries…"
+                        : `No matches for “${submittedQuery}”.`}
                     </div>
                   ) : (
                     filteredGroups.map((group) => (
@@ -710,13 +735,7 @@ export function CommandPalette({
                               <span className="cmd-row-title">
                                 {item.title}
                               </span>
-                              {item.shortcut ? (
-                                <kbd className="cmd-kbd">{item.shortcut}</kbd>
-                              ) : (
-                                <span className="cmd-row-meta">
-                                  {item.meta}
-                                </span>
-                              )}
+                              <span className="cmd-row-meta">{item.meta}</span>
                             </button>
                           );
                         })}
@@ -731,12 +750,13 @@ export function CommandPalette({
                       <kbd className="cmd-kbd">↑↓</kbd> Navigate
                     </span>
                     <span>
-                      <kbd className="cmd-kbd">↵</kbd> Open
+                      <kbd className="cmd-kbd">↵</kbd>{" "}
+                      {isDirty ? "Search" : "Open"}
                     </span>
                   </div>
                   <span className="cmd-footer-count">
                     {loadingIndex
-                      ? "Indexing…"
+                      ? "Searching…"
                       : `${totalMatches} ${totalMatches === 1 ? "match" : "matches"}`}
                   </span>
                 </footer>

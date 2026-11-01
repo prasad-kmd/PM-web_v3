@@ -81,7 +81,7 @@ export function ClockPopover() {
     <Popover>
       <PopoverTrigger
         className="menu-bar-clock-btn"
-        aria-label="Open calendar and Kandy local time"
+        aria-label="Open calendar and local time"
       >
         <time className="menu-bar-clock">{formatted}</time>
       </PopoverTrigger>
@@ -103,7 +103,7 @@ export function ClockPopover() {
             </PopoverTitle>
             <span className="clock-popover-sub">
               <HugeiconsIcon icon={Location01Icon} strokeWidth={2} size={12} />
-              Kandy, Sri Lanka · Open to collaboration
+              Sri Lanka · Open to collaboration
             </span>
           </div>
         </div>

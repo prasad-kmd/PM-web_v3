@@ -162,7 +162,7 @@ export function notifyCommentPosted(input: NotifyCommentPostedInput): void {
     const authorLine = `${cleanSingleLine(input.comment.name, 80) || "Anonymous"}${handleSuffix}`;
     const bodyPreview = input.comment.content.trim().slice(0, 1200);
     const networkLine = country ? `${ip} (${country})` : ip;
-    const colomboTime = `${formatColomboTimestamp(now)} (UTC+05:30)`;
+    const colomboTime = formatColomboTimestamp(now);
 
     const htmlLines: string[] = [`<b>${escapeTelegramHtml(headline)}</b>`, ""];
 

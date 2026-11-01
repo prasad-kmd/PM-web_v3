@@ -62,7 +62,7 @@ export default function ContactPage() {
             </p>
             <EmailReveal siteKey={key} />
             <div className="contact-aside-divider" />
-            <p>Based in Kandy, Sri Lanka.</p>
+            <p>Based in Sri Lanka.</p>
           </aside>
         </div>
       </div>

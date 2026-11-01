@@ -150,7 +150,10 @@ export function DesktopContextMenuContent({
           {locked ? "Locked workspace" : "Workspace"}
         </ContextMenuLabel>
         {!locked && onOpenCommandPalette ? (
-          <ContextMenuItem onClick={onOpenCommandPalette}>
+          <ContextMenuItem
+            onClick={onOpenCommandPalette}
+            aria-keyshortcuts="Meta+K Control+K"
+          >
             <MenuIcon icon={Search01Icon} />
             Find in workspace…
             <ContextMenuShortcut>⌘K</ContextMenuShortcut>
