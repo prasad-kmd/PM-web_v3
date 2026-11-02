@@ -2,6 +2,7 @@
 
 import {
   Alert02Icon,
+  Cancel01Icon,
   CheckmarkCircle02Icon,
   Copy01Icon,
 } from "@hugeicons/core-free-icons";
@@ -10,7 +11,20 @@ import type { ReactNode } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardPanel } from "@/components/ui/card";
-import { Field, FieldDescription, FieldLabel } from "@/components/ui/field";
+import {
+  Field,
+  FieldDescription,
+  FieldError,
+  FieldLabel,
+} from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectItem,
+  SelectPopup,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Textarea, type TextareaProps } from "@/components/ui/textarea";
 import { WorkspaceTooltip } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
@@ -57,11 +71,13 @@ export function ToolSection({
 export function ToolField({
   label,
   hint,
+  error,
   children,
   className,
 }: {
   label: string;
   hint?: string;
+  error?: string | null;
   children: ReactNode;
   className?: string;
 }) {
@@ -70,6 +86,7 @@ export function ToolField({
       <FieldLabel>{label}</FieldLabel>
       {children}
       {hint ? <FieldDescription>{hint}</FieldDescription> : null}
+      {error ? <FieldError>{error}</FieldError> : null}
     </Field>
   );
 }
@@ -216,4 +233,211 @@ export function ToolOption({
       {children}
     </div>
   );
+}
+
+export function ToolNumberField({
+  label,
+  value,
+  onChange,
+  unit,
+  hint,
+  error,
+  min,
+  max,
+  step,
+  placeholder,
+  className,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  unit?: string;
+  hint?: string;
+  error?: string | null;
+  min?: string | number;
+  max?: string | number;
+  step?: string | number;
+  placeholder?: string;
+  className?: string;
+}) {
+  return (
+    <ToolField label={label} hint={hint} error={error} className={className}>
+      <div className={cn("tool-number-wrap", unit && "has-unit")}>
+        <Input
+          unstyled
+          nativeInput
+          type="number"
+          className="tool-input"
+          value={value}
+          onChange={(event) => onChange(event.currentTarget.value)}
+          aria-label={label}
+          aria-invalid={error ? true : undefined}
+          min={min}
+          max={max}
+          step={step}
+          placeholder={placeholder}
+          inputMode="decimal"
+        />
+        {unit ? <span className="tool-number-unit">{unit}</span> : null}
+      </div>
+    </ToolField>
+  );
+}
+
+export type ToolSelectItem = { value: string; label: string };
+
+export function ToolSelectField({
+  label,
+  items,
+  value,
+  onValueChange,
+  hint,
+  placeholder = "Choose…",
+  className,
+}: {
+  label: string;
+  items: readonly ToolSelectItem[];
+  value: string;
+  onValueChange: (value: string) => void;
+  hint?: string;
+  placeholder?: string;
+  className?: string;
+}) {
+  return (
+    <ToolField label={label} hint={hint} className={className}>
+      <Select
+        items={items}
+        value={value}
+        onValueChange={(next) => {
+          if (next !== null) onValueChange(next);
+        }}
+      >
+        <SelectTrigger aria-label={label}>
+          <SelectValue placeholder={placeholder} />
+        </SelectTrigger>
+        <SelectPopup>
+          {items.map((item) => (
+            <SelectItem key={item.value} value={item.value}>
+              {item.label}
+            </SelectItem>
+          ))}
+        </SelectPopup>
+      </Select>
+    </ToolField>
+  );
+}
+
+export function ToolResultGrid({
+  children,
+  className,
+}: {
+  children: ReactNode;
+  className?: string;
+}) {
+  return <div className={cn("tool-result-grid", className)}>{children}</div>;
+}
+
+export function ToolResultCard({
+  label,
+  value,
+  unit,
+  detail,
+  tone = "neutral",
+}: {
+  label: string;
+  value: string;
+  unit?: string;
+  detail?: string;
+  tone?: ToolStatusTone;
+}) {
+  return (
+    <div className={cn("tool-result-card", `is-${tone}`)}>
+      <span className="tool-result-label">{label}</span>
+      <div className="tool-result-value-row">
+        <span className="tool-result-value">{value}</span>
+        {unit ? <span className="tool-result-unit">{unit}</span> : null}
+      </div>
+      {detail ? <span className="tool-result-detail">{detail}</span> : null}
+    </div>
+  );
+}
+
+export function ToolComplianceRow({
+  label,
+  threshold,
+  pass,
+}: {
+  label: string;
+  threshold: string;
+  pass: boolean;
+}) {
+  const Icon = pass ? CheckmarkCircle02Icon : Cancel01Icon;
+  return (
+    <div className={cn("tool-compliance-row", pass ? "is-pass" : "is-fail")}>
+      <span className="tool-compliance-label">{label}</span>
+      <span className="tool-compliance-threshold">{threshold}</span>
+      <span className="tool-compliance-state">
+        <HugeiconsIcon icon={Icon} strokeWidth={2} size={14} aria-hidden />
+        {pass ? "Pass" : "Fail"}
+      </span>
+    </div>
+  );
+}
+
+export function ToolColorField({
+  label,
+  value,
+  onChange,
+  error,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  error?: string | null;
+}) {
+  const pickerValue = /^#[0-9a-f]{6}$/i.test(value) ? value : "#000000";
+  return (
+    <ToolField
+      label={label}
+      hint="Three- or six-digit hex, with or without the leading #."
+      error={error}
+    >
+      <div className="tool-color-row">
+        <input
+          type="color"
+          className="tool-color-picker"
+          value={pickerValue}
+          onChange={(event) => onChange(event.currentTarget.value)}
+          aria-label={`${label} picker`}
+        />
+        <Input
+          unstyled
+          nativeInput
+          className="tool-input"
+          value={value}
+          onChange={(event) => onChange(event.currentTarget.value)}
+          aria-label={label}
+          aria-invalid={error ? true : undefined}
+          spellCheck={false}
+          placeholder="#000000"
+        />
+      </div>
+    </ToolField>
+  );
+}
+
+export function ToolBadge({
+  children,
+  tone = "neutral",
+}: {
+  children: ReactNode;
+  tone?: ToolStatusTone;
+}) {
+  return <span className={cn("tool-badge", `is-${tone}`)}>{children}</span>;
+}
+
+export function formatDecimal(value: number, digits = 3): string {
+  if (!Number.isFinite(value)) return "—";
+  if (Object.is(value, -0) || value === 0) return "0";
+  return Number(value.toFixed(digits)).toString();
 }

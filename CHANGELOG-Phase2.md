@@ -2,7 +2,7 @@
 
 **Date:** 2026-11-02  
 **Trigger:** you approved P1 and chose **"Approve P1 → start P2"** when asked how to continue.  
-**Scope:** P2 only, then stop for review. `PM-Web-V3-Phase2.zip` is **cumulative** — it contains every P1 file plus the P2 changes, so it supersedes `PM-Web-V3-Phase1.zip` for a clean clone.  
+**Scope:** P2 only, then stop for review. `PM-Web-V3-Phase2.zip` is **cumulative** — it contains every P1 file plus the P2 changes, so it superseded `PM-Web-V3-Phase1.zip` for a clean clone; it is now itself superseded by `PM-Web-V3-Phase3.zip`.  
 **Target:** clean `pm-web_v3` at remote `main` `56297e7b68ae7acab80c5c4c37b211417abe742c`. No commit or push was made. `package.json`, `pnpm-lock.yaml`, `app/manifest.ts`, `lib/pwa.ts`, `lib/legal.ts`, `public/sw.js`, `SW_VERSION` and cache names are unchanged in P2; no new dependency or storage key was added.
 
 ## What shipped
@@ -77,4 +77,4 @@ Then run the manual checklists in `docs/tools-and-offline.md` (P1 + P2) and revi
 
 ## Next gate
 
-**Stop here for review.** P3 (six converters/simple calculators: unit converter, CSS unit converter, colour contrast checker, stream compressor, PWM→voltage, LED resistor) starts only after you approve P2, with its own cumulative zip and fix-first verification gate.
+P2 was approved by **"Continue to next phase"**; P3 shipped in `PM-Web-V3-Phase3.zip` with `CHANGELOG-Phase3.md` and `P3-VERIFICATION.md`. This file is kept as the P2 record. **Next gate:** stop for review before P4.

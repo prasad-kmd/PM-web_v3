@@ -11,11 +11,11 @@ export type ToolLoader = () => Promise<ToolModule>;
 /**
  * One lazy loader per ported tool.
  *
- * Phase 2 registers the five text/data tools. A later phase adds another entry
- * here and flips that tool's `status` to `ported` in `lib/tools/catalog.ts`.
- * Keep the key equal to the catalogue id. The dynamic import boundary is what
- * lets a ported tool be opened offline after its chunk has been warmed by
- * `warmToolModules()`.
+ * Phase 2 registered five text/data tools; Phase 3 adds six converters and
+ * simple calculators. A later phase adds another entry here and flips that
+ * tool's `status` to `ported` in `lib/tools/catalog.ts`. Keep the key equal to
+ * the catalogue id. The dynamic import boundary is what lets a ported tool be
+ * opened offline after its chunk has been warmed by `warmToolModules()`.
  */
 export const TOOL_LOADERS: Record<string, ToolLoader> = {
   "json-formatter": () => import("@/components/tools/views/JsonFormatter"),
@@ -23,6 +23,16 @@ export const TOOL_LOADERS: Record<string, ToolLoader> = {
   "data-transform": () => import("@/components/tools/views/DataTransform"),
   "diff-checker": () => import("@/components/tools/views/DiffChecker"),
   "regex-architect": () => import("@/components/tools/views/RegexArchitect"),
+  "unit-converter": () => import("@/components/tools/views/UnitConverter"),
+  "css-unit-converter": () =>
+    import("@/components/tools/views/CssUnitConverter"),
+  "color-contrast-checker": () =>
+    import("@/components/tools/views/ColorContrastChecker"),
+  compressor: () => import("@/components/tools/views/Compressor"),
+  "pwm-voltage-converter": () =>
+    import("@/components/tools/views/PwmVoltageConverter"),
+  "led-resistor-calculator": () =>
+    import("@/components/tools/views/LedResistorCalculator"),
 };
 
 export function getToolLoader(toolId: string): ToolLoader | null {

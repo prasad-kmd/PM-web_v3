@@ -1,7 +1,7 @@
 # PM Web v3 — Phase 1 changelog (Tool Bench shell)
 
 **Date:** 2026-11-02  
-**Scope:** P1 only. No v1 tool calculation was ported. **Superseded for clean clones by `PM-Web-V3-Phase2.zip`** (cumulative P1 + P2); kept here as the P1 record.  
+**Scope:** P1 only. No v1 tool calculation was ported. **Superseded for clean clones by `PM-Web-V3-Phase3.zip`** (cumulative P1 + P2 + P3); kept here as the P1 record.  
 **Target:** clean `pm-web_v3` at remote `main` `56297e7b68ae7acab80c5c4c37b211417abe742c`. No commit or push was made. `package.json`, `pnpm-lock.yaml`, `app/manifest.ts`, `lib/pwa.ts`, `SW_VERSION` and cache names are unchanged; no new dependency was added.
 
 ## Amendments applied (supersede parts of v2)

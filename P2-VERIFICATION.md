@@ -57,6 +57,6 @@ See `docs/tools-and-offline.md` → **"P2 verification checklist (manual)"**. It
 
 ## Known limitations
 
-- No P3+ tools are implemented; 29 catalogue entries still show **Not installed yet** and the LaTeX slot shows **Available soon**.
+- P3 is now shipped in `PM-Web-V3-Phase3.zip` (see `P3-VERIFICATION.md`). After P3, 23 catalogue entries still show **Not installed yet** and the LaTeX slot still shows **Available soon**.
 - Recents still record any catalogue selection, including placeholders, so the navigation is testable.
 - The production build and dev server could not be completed in this sandbox; local `pnpm build` / `pnpm dev` with normal memory is required before merging.

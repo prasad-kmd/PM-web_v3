@@ -1,10 +1,11 @@
-# Tool Bench and offline contract (Phases 1–2)
+# Tool Bench and offline contract (Phases 1–3)
 
 Phase 1 added one native DesktopOS window — **Tool Bench** — and the local
-infrastructure every later phase reuses. Phase 2 ports the first five text/data
-tools. No v1 formula or flow was copied unchanged: every port keeps the
-project's fix-first verification gate, and the five known P2 v1 defects were
-fixed before the tools were marked `ported`.
+infrastructure every later phase reuses. Phase 2 ported five text/data tools;
+Phase 3 adds six converters and simple calculators. No v1 formula or flow was
+copied unchanged: every port keeps the project's fix-first verification gate,
+and the documented P2 and P3 v1 defects were fixed before the tools were marked
+`ported`.
 
 ## What shipped in P1
 
@@ -46,6 +47,24 @@ registered as lazy loaders in `lib/tools/registry.ts`. `warmToolModules()` now
 warms five chunks. No new storage key, dependency, cache name or service-worker
 version was introduced. Full golden-case results are in `P2-VERIFICATION.md`.
 
+## What shipped in P3
+
+| Tool                      | v1 defect fixed                                         | Implementation                                                                                                        |
+| ------------------------- | ------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| `unit-converter`          | mile factor 1609.34 and `factor                         |                                                                                                                       | 1` hiding zero                  | Exact NIST factors, positive-factor validation, affine temperature through Celsius, 1 kWh → 3.6 MJ. |
+| `css-unit-converter`      | `parseFloat(x)                                          |                                                                                                                       | default` replaced zero contexts | Explicit finite/positive parsing, px/rem/em/%/vw/vh, generated CSS, no guessed defaults.            |
+| `color-contrast-checker`  | invalid hex returned luminance 0 and a plausible ratio  | Strict 3/6-digit hex validation before WCAG 2.1 luminance, ratio and AA/AAA rows.                                     |
+| `compressor`              | `@ts-expect-error` and no `CompressionStream` detection | Structural stream types, explicit support gate, gzip/deflate/deflate-raw round-trip, clear unsupported-browser error. |
+| `pwm-voltage-converter`   | `parseFloat(x)                                          |                                                                                                                       | 0` hid invalid/zero input       | Validated peak, 0–100% duty and target; 8/10-bit register values; impossible targets flagged.       |
+| `led-resistor-calculator` | `                                                       |                                                                                                                       | 0`/`                            |                                                                                                     | 1` defaults and loose E24 rounding | Exact Ohm's law, integer LED count, voltage margin check, next-higher E12/E24 value, 2× power recommendation. |
+
+All six views reuse `components/tools/views/shared.tsx` (extended with numeric,
+select, result, compliance and colour fields) and the P3 CSS in
+`app/tools.css`. `TOOL_LOADERS` now registers eleven chunks, so
+`warmToolModules()` warms eleven. No new storage key, dependency, cache name,
+service-worker version or other desktop UI change was introduced. Full
+golden-case results are in `P3-VERIFICATION.md`.
+
 ## Catalogue statuses
 
 - `ported` — a loader exists in `lib/tools/registry.ts` and the view renders.
@@ -54,10 +73,11 @@ version was introduced. Full golden-case results are in `P2-VERIFICATION.md`.
 - `soon` — one reserved space for the deferred LaTeX editor/converter; the shell
   shows **Available soon**.
 
-P1 shipped zero `ported` entries; **P2 ships five**. The remaining 29 `planned`
-entries and the one `soon` entry can still be searched, opened, starred and
-remembered locally, but their workspaces show **Not installed yet** or
-**Available soon**.
+P1 shipped zero `ported` entries; **P2 shipped five and P3 shipped six more**, so
+the catalogue is now **11 ported · 23 planned · 1 `soon`**. The remaining
+`planned` entries and the one `soon` entry can still be searched, opened,
+starred and remembered locally, but their workspaces show **Not installed yet**
+or **Available soon**.
 
 ### Scope decisions carried into the catalogue
 
@@ -71,13 +91,14 @@ remembered locally, but their workspaces show **Not installed yet** or
 ## Adding a ported tool in a later phase
 
 1. Verify the v1 formula/flow first; do not assume it is correct. The v2 inventory
-   lists 12 known defects. **P2 fixed five**: the naive diff, Unicode `btoa`,
-   `charCodeAt` surrogate pairs, unguarded `RegExp`/no timeout, and `parseInt`
-   without radix / NaN indent. Remaining gates cover the eval-based calculator,
-   `CompressionStream` feature detection, colour validation, sanitised preview,
-   LaTeX conversion, PID Euler divergence, PDF dark theme, resume migrations and
-   Tailwind v3 presets. Each port has its own verification gate in the phase
-   plan.
+   lists 12 known defects. **P2 fixed five** (naive diff, Unicode `btoa`,
+   surrogate pairs, unguarded `RegExp`, radix/NaN indent). **P3 fixed six more**
+   (mile factor and `factor || 1`, CSS defaulted contexts, invalid-hex
+   luminance, `CompressionStream` detection, PWM zero-hiding, and LED
+   defaults/E-series rounding). Remaining gates cover the eval-based calculator,
+   sanitised preview, LaTeX conversion, PID Euler divergence, PDF dark theme,
+   resume migrations, Tailwind v3 presets and the P4–P6 formula checks. Each
+   port has its own verification gate in the phase plan.
 2. Create `components/tools/views/<Tool>.tsx` as a client component accepting
    `ToolViewProps` (`{ toolId }`). Use the provided Coss/Base UI/Animate UI
    primitives and `DESIGN.md` tokens, not v1's Lucide card grid.
@@ -117,7 +138,8 @@ visitor, no tracking) is unchanged.
   Settings → Clear offline cache.
 - `warmToolModules()` waits for `controllerchange` (or an 8 s fallback) before
   loading `TOOL_LOADERS`, so first-install chunks are actually intercepted by
-  the worker. P2 registers five loaders, so those chunks are warmed on idle.
+  the worker. P3 registers eleven loaders in total, so all ported chunks are
+  warmed on idle.
 - API calls are still excluded. Search, tabs, recents and favourites are entirely
   local. The connectivity toast is informational and does not gate the UI.
 
@@ -147,7 +169,7 @@ visitor, no tracking) is unchanged.
 10. In a production PWA install, go offline before ever visiting `/tools` and
     open **Tools** from the offline page or shortcut; the shell, catalogue,
     search and favourites should work. After the worker has warmed them, the
-    five P2 tool chunks should also open offline.
+    eleven P2/P3 tool chunks should also open offline.
 11. Check Privacy Policy / Settings storage table lists `pm-tools-state-v1`.
 12. Confirm no other desktop UI changed (no menubar chip, no new Settings tab,
     no open-windows list).
@@ -169,14 +191,37 @@ visitor, no tracking) is unchanged.
    error; a deliberately catastrophic pattern is stopped after 300 ms.
 7. Toggle light/dark and a narrow window; the two-pane grids stack, focus rings
    remain visible, and no tool uses v1's Lucide card grid or gradients.
-8. Confirm the sidebar foot now reads **5 ready · 29 planned · 1 available
-   soon**, and Privacy Policy still lists only `pm-tools-state-v1` as new
-   storage.
+8. Confirm the sidebar foot now reads **11 ready · 23 planned · 1 available
+   soon** after P3, and Privacy Policy still lists only `pm-tools-state-v1` as
+   new storage.
+
+## P3 verification checklist (manual)
+
+1. Open each of the six P3 tools from the catalogue; confirm the lazy view loads
+   with the shared header, breadcrumb and no network request.
+2. Unit converter: `0 °C → 32 °F`, `1 mi → 1609.344 m`, `1 kWh → 3.6 MJ`;
+   invalid text shows an error, swap copies the result into the input.
+3. CSS units: defaults `16 px / 16 px / 1920 / 1080` give `1 rem`, `100%`,
+   `0.833 vw`, `1.481 vh`; a zero base or viewport reports an error rather than
+   falling back to a default.
+4. Contrast: `#000/#fff` reports `21.00:1` with all four WCAG rows passing;
+   `#777/#fff` reports `4.48:1` with AA normal failing; `rgb(0,0,0)` is
+   rejected before any ratio appears.
+5. Compressor: gzip, deflate and raw-deflate round-trip a Unicode text file;
+   the unsupported-browser path shows a named `CompressionStream` error; no file
+   is uploaded.
+6. PWM: `5 V` at `0/50/100%` gives `0/2.5/5 V`; a `6 V` target at `5 V` is
+   marked impossible; `101%` duty reports an error.
+7. LED: `5 V / 2 V / 20 mA / 1 LED` gives `150 Ω`, `0.06 W` and a `0.125 W`
+   recommendation; `12 V / 2 V / 20 mA / 3 LEDs` gives `300 Ω` exact and
+   `330 Ω` E12; `V_s ≤ N × V_f` reports an error.
+8. Toggle light/dark and a narrow window; form grids and result grids stack,
+   focus rings remain visible, and no tool uses v1's Lucide card grid or
+   gradients.
 
 ## Later phases
 
-P2 is **shipped**. Remaining: P3 converters/simple calculators (6), P4
-electronics (6), P5a mechanical (6), P5b mechatronics (4), P6a math/data (4),
-P6b content/core (3 shipped + the deferred LaTeX slot). Each phase is delivered
-as its own cumulative zip with its own verification gate; stop for review after
-each one.
+P2 and P3 are **shipped**. Remaining: P4 electronics (6), P5a mechanical (6),
+P5b mechatronics (4), P6a math/data (4), P6b content/core (3 shipped + the
+deferred LaTeX slot). Each phase is delivered as its own cumulative zip with its
+own verification gate; stop for review after each one.
