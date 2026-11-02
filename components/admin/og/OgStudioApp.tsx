@@ -1195,7 +1195,7 @@ export function OgStudioApp() {
 
             <div className="og-stage-telemetry tabular-nums">
               <span>
-                {dimensions.width} × {dimensions.height}
+                {/* {dimensions.width} × {dimensions.height} */}
               </span>
               {formattedSize && <span>· {formattedSize}</span>}
               {rendering && (
@@ -1242,7 +1242,7 @@ export function OgStudioApp() {
                 </div>
                 <div className="og-social-card-meta">
                   <span className="og-social-domain">
-                    {config.siteUrl || "pmengineer.lk"}
+                    {config.siteUrl || "prasad-madhuranga.vercel.app"}
                   </span>
                   <strong className="og-social-title">{config.title}</strong>
                   {config.description && (

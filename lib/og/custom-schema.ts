@@ -217,7 +217,7 @@ export const OgCustomSchema = z.object({
   tags: z.string().trim().max(160).default("Kinematics, Control, CAD"),
   author: z.string().trim().max(80).default("Prasad Madhuranga"),
   siteName: z.string().trim().max(80).default("Prasad Madhuranga"),
-  siteUrl: z.string().trim().max(80).default("pmengineer.lk"),
+  siteUrl: z.string().trim().max(80).default("prasad-madhuranga.vercel.app"),
   icon: z
     .enum([
       "pm",

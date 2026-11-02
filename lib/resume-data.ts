@@ -1,14 +1,14 @@
 export const resumeProfile = {
   name: "Prasad Madhuranga",
-  shortName: "Prasad M.",
-  role: "Mechanical + Mechatronics Engineer",
+  shortName: "PrasadM",
+  role: "Mechatronics Engineering Undergraduate",
   status:
-    "BSc (Hons) Mechatronics — reading at The Open University of Sri Lanka",
-  tagline: "Machines, firmware and the seam between them.",
+    "BSc (Hons) Mechatronics - The Open University of Sri Lanka",
+  tagline: "Creative Ideas came with Infinite Imagination.",
   location: "Kandy, Sri Lanka",
   availability: "Open to collaboration",
   summary:
-    "A motivated engineer with a foundation in mechanical engineering and a practical interest in automation and robotics. This is a working record of my education, experience, interests, and selected work.",
+    "I am a highly motivated and results-oriented Mechatronics Engineering student with a strong foundation in mechanical engineering principles and a passion for automation and robotics. I am a quick learner with the ability to grasp complex concepts and apply them effectively in practical scenarios. My academic background, combined with my hands-on project experience and dedication to continuous improvement, has equipped me with the skills and mindset to excel in the fast-paced world of engineering.",
 };
 
 export const personalDetails = [

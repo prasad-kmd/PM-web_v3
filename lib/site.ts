@@ -87,9 +87,9 @@ export function contactHref(subject?: string): string {
     : CONTACT_PATH;
 }
 
-export const SITE_NAME = "Prasad M. — Desktop Workspace";
+export const SITE_NAME = "Prasad Madhuranga - Engineering Workspace";
 export const SITE_DESCRIPTION =
-  "Prasad Madhuranga — Mechanical and Mechatronics Engineer. A personal engineering portfolio and workspace.";
+  "Prasad Madhuranga - Mechatronics Engineering Undergraduate. A personal engineering portfolio and workspace.";
 export function absoluteUrl(path: string): string {
   return new URL(path, getSiteUrl()).toString();
 }

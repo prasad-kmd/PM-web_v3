@@ -13,7 +13,7 @@ export type Project = {
 export const projects: Project[] = [
   {
     id: "pm-engine",
-    title: "PMEngineer.lk — Field Platform",
+    title: "prasad-madhuranga.vercel.app — Field Platform",
     subtitle: "Civil engineering toolkit for site workflows",
     description:
       "A field-first web platform for quantity surveying, scheduling, and on-site documentation. Built with Next.js and a mobile-optimized design system.",

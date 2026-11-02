@@ -117,7 +117,7 @@ export function MenuBar({
                   <p className="truncate text-[11px] leading-tight text-muted-foreground">
                     {authenticated
                       ? "Signed in · Owner"
-                      : "Mechanical + Mechatronics"}
+                      : "Mechatronics Engineering Undergraduate"}
                   </p>
                 </div>
               </div>

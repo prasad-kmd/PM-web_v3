@@ -423,8 +423,7 @@ function AboutTab() {
         <p className="settings-description">
           A personal portfolio presented as a persistent desktop workspace. No
           advertising cookies or third-party analytics scripts are used;
-          preferences live in this browser, while entry pages record aggregate
-          read counts.
+          preferences stored in this browser.
         </p>
 
         <div className="settings-card settings-about-hero">
@@ -433,13 +432,13 @@ function AboutTab() {
             className="settings-about-mark"
             src="/images/profile-placeholder.jpg"
             alt="Portrait of Prasad Madhuranga"
-            width={48}
-            height={48}
+            width={90}
+            height={90}
           />
           <div>
             <div className="settings-about-name">Prasad Madhuranga</div>
             <div className="settings-about-line">
-              Mechanical + Mechatronics Engineer
+              Undergraduate - Mechatronics Engineering
             </div>
             <div className="settings-about-line">Sri Lanka</div>
             <span className="settings-about-status">
@@ -476,7 +475,7 @@ function AboutTab() {
             <div className="settings-list-row">
               <span className="settings-list-key">Interface</span>
               <span className="settings-list-value">
-                Animate UI · Coss UI · Base UI
+                Animate UI · Coss UI · Base UI · Rare UI
               </span>
             </div>
             <div className="settings-list-row">
@@ -586,8 +585,7 @@ function AboutTab() {
             ) : null}
           </div>
           <p className="settings-about-note">
-            Only presence is reported — the route never returns a token, an id
-            or any part of a value.
+            System Functionalities are shown.
           </p>
         </div>
 
@@ -676,7 +674,7 @@ function AboutTab() {
           </div>
           <p className="settings-about-note">
             Public pages you visit can reopen offline. API calls, form
-            submissions, comment actions and owner tools always stay
+            submissions, comment actions and some tools always stay
             network-only and are never served from this cache.
           </p>
           <div
@@ -733,7 +731,7 @@ function AboutTab() {
           </p>
         </div>
 
-        <div className="settings-group">
+        {/* <div className="settings-group">
           <p className="settings-group-title">Controls</p>
           <div className="settings-card">
             {KEYBOARD_GROUPS.map((group) => (
@@ -764,28 +762,26 @@ function AboutTab() {
               </div>
             ))}
           </div>
-        </div>
+        </div> */}
 
         <div className="settings-group" id="settings-privacy-storage">
           <p className="settings-group-title">Privacy &amp; storage</p>
-          <p className="settings-about-note" style={{ marginBottom: 10 }}>
+          {/* <p className="settings-about-note" style={{ marginBottom: 10 }}>
             Visitor cookies are listed below. Entry pages also record aggregate
             reads by entry, day, country and referring host; the Privacy Policy
             explains that first-party count, every local/session key and the
             offline caches listed above.
-          </p>
-          <div className="settings-card">
+          </p> */}
+          {/* <div className="settings-card">
             {COOKIE_TABLE.map((row) => (
               <div className="settings-list-row" key={row.name}>
                 <span className="settings-list-key mono">{row.name}</span>
                 <span className="settings-list-value">{`${row.purpose} · ${row.duration}`}</span>
               </div>
             ))}
-          </div>
+          </div> */}
           <p className="settings-about-note">
-            Comments are public and stored with the entry in Notion; the email
-            address is stripped from the public comment feed. There is no
-            visitor account or profile. See the{" "}
+            Comments are public and the email address is stripped from the public comment feed. There is no visitor account or profile. See the{" "}
             <Link href="/privacy-policy#cookies-and-browser-storage">
               full cookie and storage register
             </Link>
@@ -848,7 +844,7 @@ function AboutTab() {
             <div className="settings-list-row">
               <span className="settings-list-key">Interface</span>
               <span className="settings-list-value">
-                Animate UI · Coss UI · Base UI
+                Animate UI · Coss UI · Base UI · Rare UI
               </span>
             </div>
             <div className="settings-list-row">
@@ -860,15 +856,19 @@ function AboutTab() {
               <span className="settings-list-value">Outfit (SIL OFL)</span>
             </div>
             <div className="settings-list-row">
+              <span className="settings-list-key">Content License</span>
+              <span className="settings-list-value">CC BY-NC-ND 4.0</span>
+            </div>
+            <div className="settings-list-row">
               <span className="settings-list-key">Source</span>
               <a
                 className="settings-list-value"
-                href="https://github.com/prasad-kmd/PM-Web_V3"
+                href="https://github.com/prasad-kmd/"
                 target="_blank"
                 rel="noreferrer"
                 style={{ display: "inline-flex", alignItems: "center", gap: 4 }}
               >
-                github.com/prasad-kmd/PM-Web_V3
+                github.com
                 <HugeiconsIcon
                   icon={ArrowUpRight01Icon}
                   strokeWidth={2}
@@ -878,11 +878,11 @@ function AboutTab() {
               </a>
             </div>
           </div>
-          <p className="settings-about-note">
+          {/* <p className="settings-about-note">
             Operator-authored content and code are published under CC BY-NC-ND
             4.0 unless a specific item or source file states otherwise.
             Third-party and upstream components keep their own licences.
-          </p>
+          </p> */}
         </div>
       </section>
     </>

@@ -400,9 +400,12 @@ export function InvoicePdfDocument({
 
   return (
     <Document
-      title={`Invoice ${invoice.invoiceNumber}`}
+      title={`Invoice ${invoice.invoiceNumber} for ${invoice.client.name}`}
       author={settings.businessName}
-      subject={`Invoice ${invoice.invoiceNumber} for ${invoice.client.name}`}
+      subject={`Computer Generated Invoice ${invoice.invoiceNumber} - ${invoice.client.name}`}
+      keywords={`${invoice.invoiceNumber}, ${invoice.client.name}, LKR, Sri Lanka, Prasad Madhuranga`}
+      creator="Prasad Madhuranga (via prasad-madhuranga.vercel.app)"
+      producer="PrasadM Blogfolio"
     >
       <Page size="A4" style={styles.page}>
         <View style={styles.topAccentBar} />
@@ -613,8 +616,8 @@ export function InvoicePdfDocument({
         {/* Fixed Footer */}
         <View style={styles.footer} fixed>
           <Text style={styles.footerLeft}>
-            Computer-generated invoice — no signature required.
-            {siteHref ? " · " : ""}
+            This computer-generated invoice is valid and does not require a physical signature.
+            {siteHref ? " · Generated via " : ""}
             {siteHref ? (
               <Link src={siteHref} style={styles.footerLink}>
                 {cleanSiteLabel}

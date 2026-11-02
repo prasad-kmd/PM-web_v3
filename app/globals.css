@@ -1246,8 +1246,8 @@ input:focus-visible {
 }
 
 .settings-about-mark {
-  width: 48px;
-  height: 48px;
+  width: 90px;
+  height: 90px;
   flex: 0 0 auto;
   border: 1px solid var(--border);
   border-radius: 10px;

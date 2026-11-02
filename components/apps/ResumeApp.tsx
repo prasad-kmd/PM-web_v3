@@ -44,7 +44,7 @@ type ProjectState = {
  * The CV is a file, not a build step: drop it at `public/cv/resume-v2.pdf` and
  * this link opens it in a new tab, the way v1's `/portfolio` hero does.
  */
-const CV_HREF = "/cv/resume-v2.pdf";
+const CV_HREF = "/cv/Prasad_Madhuranga_Resume.pdf";
 
 const pad = (value: number) => String(value).padStart(2, "0");
 

@@ -827,7 +827,7 @@ export async function buildCustomOgImage(
                     color: mutedInk,
                   }}
                 >
-                  {dimensions.width} × {dimensions.height}
+                  {/* {dimensions.width} × {dimensions.height} */}
                 </span>
               </div>
             )}

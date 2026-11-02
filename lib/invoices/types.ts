@@ -110,10 +110,10 @@ export const InvoiceSettingsSchema = z.object({
     .string()
     .trim()
     .max(160)
-    .default("Mechanical & Mechatronics Engineering"),
-  email: z.string().trim().max(160).default("contact@pmengineer.lk"),
+    .default("Mechatronics Engineering Undergraduate"),
+  email: z.string().trim().max(160).default("prasad.madhuranga@pm.me"),
   phone: z.string().trim().max(80).default(""),
-  website: z.string().trim().max(160).default("https://pmengineer.lk"),
+  website: z.string().trim().max(160).default("https://prasad-madhuranga.vercel.app"),
   address: z.string().trim().max(400).default("Sri Lanka"),
   logoUrl: z.string().trim().max(500_000).default("/favicon-pm.svg"),
   invoicePrefix: z.string().trim().min(1).max(20).default("INV-"),

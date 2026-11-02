@@ -259,15 +259,15 @@ export function BootSequence({ ready }: { ready: boolean }) {
       className={`boot-sequence${exiting ? " is-exiting" : ""}`}
       data-phase={phase}
       data-variant={variant}
-      aria-label="Starting Prasad M. desktop workspace"
+      aria-label="Starting Prasad Madhuranga's Personal Website"
     >
       <div className="boot-full">
         <div className="boot-wordmark" key={`full-${runId}`}>
           <PmLogo size={176} className="boot-logo" />
           <p className="boot-name">Prasad Madhuranga</p>
-          <p className="boot-role">Mechanical + Mechatronics Engineer</p>
+          <p className="boot-role">Mechatronics Engineering Undergraduate</p>
           <span className="boot-rule" aria-hidden />
-          <p className="boot-tag">Desktop Workspace</p>
+          <p className="boot-tag">Personal Website</p>
         </div>
         <div className="boot-status-dock">
           {statusIcon}

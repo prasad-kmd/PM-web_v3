@@ -31,7 +31,7 @@ export function ProfileWidget() {
           <div className="profile-card-identity">
             <CardTitle>Prasad Madhuranga</CardTitle>
             <CardDescription>
-              Mechanical + Mechatronics Engineer
+              Mechatronics Engineering Undergraduate
             </CardDescription>
           </div>
         </CardHeader>
@@ -58,7 +58,7 @@ export function ProfileWidget() {
                 />
                 Focus
               </dt>
-              <dd>Robotics · automation · machine vision</dd>
+              <dd>Robotics · Automation · Bio-Robotics</dd>
             </div>
           </dl>
         </CardPanel>
