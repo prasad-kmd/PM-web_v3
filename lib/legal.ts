@@ -15,6 +15,7 @@ import {
   PWA_PAGES_CACHE,
   PWA_STATIC_CACHE,
 } from "./pwa";
+import { TOOL_STATE_STORAGE_KEY } from "./tools/storage";
 
 /**
  * Canonical legal metadata and the shared cookie/browser-storage register.
@@ -33,9 +34,9 @@ export const COOKIE_NOTICE_OPEN_EVENT = "pm:open-cookie-notice";
 
 export const COOKIE_NOTICE_TITLE = "Cookies & browser storage";
 export const COOKIE_NOTICE_BODY =
-  "This workspace uses first-party storage to remember appearance, window layout, saved items and reader preferences. Its service worker also keeps public pages and assets you visit in Cache Storage for offline use; APIs and owner tools are never cached. If you comment, it can also remember your name, email and handles on this device. There are no advertising cookies or third-party analytics scripts. Entry pages record aggregate read counts; the Privacy Policy lists every cookie and storage key.";
+  "This workspace uses first-party storage to remember appearance, window layout, saved items, Tool Bench recents and favourites, and reader preferences. Its service worker also keeps public pages and assets you visit in Cache Storage for offline use; APIs and owner tools are never cached. If you comment, it can also remember your name, email and handles on this device. There are no advertising cookies or third-party analytics scripts. Entry pages record aggregate read counts; the Privacy Policy lists every cookie and storage key.";
 export const COOKIE_NOTICE_BODY_COMPACT =
-  "First-party storage remembers appearance, windows, saved items and reader preferences, and keeps visited public pages available offline. No advertising cookies or third-party analytics scripts are used.";
+  "First-party storage remembers appearance, windows, saved items, Tool Bench recents and favourites, reader preferences, and keeps visited public pages available offline. No advertising cookies or third-party analytics scripts are used.";
 
 export type LegalDocumentId = "privacy" | "terms" | "disclaimer";
 
@@ -250,6 +251,14 @@ export const STORAGE_REGISTER: readonly StorageRegisterEntry[] = [
     type: "Local storage",
     purpose:
       "Counts workspace visits and remembers whether the one-time install hint was dismissed",
+    duration: "Until cleared",
+    scope: "visitor",
+  },
+  {
+    name: TOOL_STATE_STORAGE_KEY,
+    type: "Local storage",
+    purpose:
+      "Recently opened and favourite tools in the Tool Bench; not sent anywhere",
     duration: "Until cleared",
     scope: "visitor",
   },

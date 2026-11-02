@@ -39,6 +39,14 @@ const ContentInsightsApp = dynamic(
   },
 );
 
+const ToolsApp = dynamic(
+  () => import("@/components/tools/ToolsApp").then((mod) => mod.ToolsApp),
+  {
+    ssr: false,
+    loading: () => <LoadingView label="Tools" layout="listing" />,
+  },
+);
+
 /** Keep desktop windows and direct app routes on the same application body. */
 export function AppBody({
   appId,
@@ -58,6 +66,16 @@ export function AppBody({
             onHomeClick={onNavigateHome}
           />
           <SettingsApp />
+        </div>
+      );
+    case "tools":
+      return (
+        <div className="tools-app">
+          <WindowBreadcrumb
+            items={[{ label: "Tools" }]}
+            onHomeClick={onNavigateHome}
+          />
+          <ToolsApp />
         </div>
       );
     case "resume":

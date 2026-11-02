@@ -331,8 +331,9 @@ const PRIVACY_SECTIONS: readonly LegalSection[] = [
           control in Settings clears this site’s named cookies and local storage
           and removes visited offline pages and images. Reading public content
           does not require accepting optional preferences, but blocking storage
-          can prevent appearance, window layout, saved items, reader
-          preferences, offline reading and commenter prefill from persisting.
+          can prevent appearance, window layout, saved items, Tool Bench recents
+          and favourites, reader preferences, offline reading and commenter
+          prefill from persisting.
         </p>
       </>
     ),

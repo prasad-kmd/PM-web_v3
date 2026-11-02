@@ -5,6 +5,7 @@ A personal engineering portfolio presented as an interactive desktop workspace. 
 ## Features
 
 - **Desktop workspace** — draggable, resizable, focusable native windows, desktop shortcuts, menus, wallpapers and locally persisted layouts.
+- **Tool Bench** — a native desktop window with an offline engineering-tool catalogue, gliding category tabs, search, recents and favourites, and an install-time offline copy. Tool workspaces are ported in phases; see [Tools and offline](docs/tools-and-offline.md).
 - **Notion publishing and taxonomy** — six published collections (projects, blog, articles, tutorials, glossary and news), rich readers, search, and global category/tag browsing across every collection.
 - **Static delivery with a one-hour revalidation window** — public pages, feeds, the sitemap and `llms.txt` are rendered ahead of time and served from the CDN, so a read does not invoke a function. Search and pagination run in the browser over the data already in the page.
 - **Reading and engagement** — guest comments with moderation, aggregate readership counts, local bookmarks, reader preferences and collection view choices.

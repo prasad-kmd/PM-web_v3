@@ -26,6 +26,7 @@ import {
   SparklesIcon,
   SunMediumIcon,
   Tag01Icon,
+  ToolsIcon,
   UserCircleIcon,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
@@ -88,6 +89,7 @@ const APP_ICON: Record<AppId, typeof Folder01Icon> = {
   contact: Mail01Icon,
   legal: Shield01Icon,
   settings: Settings02Icon,
+  tools: ToolsIcon,
   "og-studio": Image02Icon,
   invoices: Invoice02Icon,
   insights: ChartLineData02Icon,

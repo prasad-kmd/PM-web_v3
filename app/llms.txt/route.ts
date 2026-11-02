@@ -31,6 +31,7 @@ export async function GET() {
     "",
     `- [Desktop](${base}/): Interactive desktop workspace.`,
     `- [Resume](${base}/resume): Profile and experience.`,
+    `- [Tools](${base}/tools): Offline engineering utilities and calculators in a DesktopOS window.`,
     `- [Contact](${base}/contact): Get in touch.`,
     `- [RSS feed](${base}/feed.xml): Recent published entries.`,
     `- [Legal](${base}${LEGAL_HUB_ROUTE}): Privacy, terms, disclaimer and browser-storage information.`,

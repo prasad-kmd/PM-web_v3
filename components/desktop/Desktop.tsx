@@ -39,8 +39,10 @@ import { CONTENT_TYPES } from "@/lib/content-types";
 import { BootSequence } from "@/components/system/BootSequence";
 import { InstallPrompt } from "@/components/system/InstallPrompt";
 import { PwaInstallToasts } from "@/components/system/PwaInstallToasts";
+import { ConnectivityListener } from "@/components/system/ConnectivityListener";
 import { ServiceWorkerRegistrar } from "@/components/system/ServiceWorkerRegistrar";
 import { LoadingView } from "@/components/system/states/LoadingView";
+import { warmToolModules } from "@/lib/tools/warm";
 import type { Area } from "@/lib/windows";
 import { DesktopContextMenu, DesktopContextMenuContent } from "./ContextMenu";
 import { DesktopIcons } from "./DesktopIcons";
@@ -177,6 +179,10 @@ function DesktopWorkspace({
   const lastSyncedAppRef = useRef<AppId | null>(null);
   const currentTopAppRef = useRef<AppId | null>(topAppId);
   currentTopAppRef.current = topAppId;
+
+  useEffect(() => {
+    warmToolModules();
+  }, []);
 
   const openApp = useCallback(
     (appId: AppId) => {
@@ -549,6 +555,7 @@ function DesktopWorkspace({
         }}
       />
       <ServiceWorkerRegistrar />
+      <ConnectivityListener />
       <PwaInstallToasts />
       <InstallPrompt />
       <CommandPalette

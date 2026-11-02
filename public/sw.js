@@ -34,6 +34,7 @@ const CURRENT_CACHES = new Set([
 ]);
 
 const OFFLINE_URL = "/~offline";
+const TOOLS_URL = "/tools";
 const NAVIGATION_TIMEOUT_MS = 6000;
 /**
  * The site's ISR window. A document copy older than this is no longer
@@ -42,7 +43,7 @@ const NAVIGATION_TIMEOUT_MS = 6000;
  */
 const DOCUMENT_FRESHNESS_MS = 60 * 60 * 1000;
 const CACHE_LIMITS = {
-  [STATIC_CACHE]: 160,
+  [STATIC_CACHE]: 240,
   [PAGES_CACHE]: 40,
   [IMAGES_CACHE]: 80,
 };
@@ -124,6 +125,11 @@ function normalizedPageKey(url) {
   if (key.searchParams.get("source") === "pwa") {
     key.searchParams.delete("source");
   }
+  // The Tool Bench keeps the selected tool in ?tool= and replaces history
+  // without an RSC request. Every selection is the same cached document.
+  if (key.pathname === TOOLS_URL) {
+    key.searchParams.delete("tool");
+  }
   return key.toString();
 }
 
@@ -186,6 +192,59 @@ async function precacheCore() {
       }
     }),
   );
+}
+
+/**
+ * Make the Tool Bench shell available on the very first offline visit, before
+ * the visitor has navigated to it. The document is static and public; the
+ * hashed chunks referenced by it are warmed into the static cache so the
+ * catalogue, tabs, search, recents and favourites work without a connection.
+ * Ported tool chunks are warmed later by `warmToolModules()` on the client.
+ */
+async function precacheToolsDocument() {
+  try {
+    const response = await fetch(
+      new Request(TOOLS_URL, {
+        cache: "reload",
+        credentials: "same-origin",
+      }),
+    );
+    if (!response.ok || !isHtmlResponse(response)) return;
+
+    const cacheKey = new URL(TOOLS_URL, self.location.origin).toString();
+    const html = await response.clone().text();
+    await putInCache(PAGES_CACHE, cacheKey, response.clone());
+
+    const assetPattern = /(?:src|href)=["'](\/_next\/static\/[^"']+)["']/g;
+    const assets = new Set();
+    let match;
+    while ((match = assetPattern.exec(html)) !== null) {
+      try {
+        const assetUrl = new URL(match[1], self.location.origin);
+        if (assetUrl.origin === self.location.origin) {
+          assets.add(assetUrl.pathname + assetUrl.search);
+        }
+      } catch {
+        // Ignore a malformed URL in the document.
+      }
+    }
+
+    await Promise.allSettled(
+      [...assets].map(async (path) => {
+        const asset = await fetch(
+          new Request(path, {
+            cache: "reload",
+            credentials: "same-origin",
+          }),
+        );
+        if (isCacheableResponse(asset)) {
+          await putInCache(STATIC_CACHE, path, asset.clone());
+        }
+      }),
+    );
+  } catch {
+    // A failed tools precache must never fail service-worker installation.
+  }
 }
 
 async function getOfflineResponse() {
@@ -326,7 +385,7 @@ async function networkFirstManifest(event, request) {
 self.addEventListener("install", (event) => {
   // Do not skipWaiting() here. An update stays waiting until the visitor
   // accepts the explicit "Workspace updated — Reload" action.
-  event.waitUntil(precacheCore());
+  event.waitUntil(Promise.all([precacheCore(), precacheToolsDocument()]));
 });
 
 self.addEventListener("activate", (event) => {
@@ -349,7 +408,12 @@ self.addEventListener("message", (event) => {
     event.waitUntil(self.skipWaiting());
   }
   if (type === "PM_RECACHE_CORE") {
-    event.waitUntil(precacheCore().catch(() => undefined));
+    event.waitUntil(
+      Promise.all([
+        precacheCore().catch(() => undefined),
+        precacheToolsDocument(),
+      ]),
+    );
   }
 });
 

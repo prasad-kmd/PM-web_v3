@@ -13,6 +13,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const staticPaths: MetadataRoute.Sitemap = [
     { url: base, changeFrequency: "weekly", priority: 1 },
     { url: `${base}/resume`, changeFrequency: "monthly", priority: 0.7 },
+    { url: `${base}/tools`, changeFrequency: "monthly", priority: 0.6 },
     { url: `${base}/contact`, changeFrequency: "monthly", priority: 0.5 },
     ...CONTENT_TYPES.map((type) => ({
       url: `${base}/${type}`,

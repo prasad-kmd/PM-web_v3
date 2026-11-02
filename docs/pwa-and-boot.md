@@ -66,11 +66,13 @@ The worker is `public/sw.js`. Keep `SW_VERSION` there in sync with `PWA_CACHE_VE
 | Cache          | Contents                                                                            | Strategy/limit                                                                           |
 | -------------- | ----------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
 | `pm-core-v3`   | `/~offline`, manifest, Outfit font, favicon and core app icons                      | Essential-only precache; manifest is network-first                                       |
-| `pm-static-v3` | Same-origin scripts, styles, workers, fonts and public `.json`/`.txt`/`.xml` assets | Cache-first; non-hashed files revalidate behind the cached response; maximum 160 entries |
+| `pm-static-v3` | Same-origin scripts, styles, workers, fonts and public `.json`/`.txt`/`.xml` assets | Cache-first; non-hashed files revalidate behind the cached response; maximum 240 entries |
 | `pm-pages-v3`  | Public HTML documents the visitor has opened                                        | Network-first with a 6-second timeout, then cache, then `/~offline`; maximum 40 entries  |
 | `pm-images-v3` | Public same-origin images shown on visited pages                                    | Stale-while-revalidate; maximum 80 entries                                               |
 
 The root document is not precached, so the current Desktop, appearance cookies and boot decision are not frozen into an install-time shell. The installed start URL `/?source=pwa` is normalised to `/` when stored as a visited page.
+
+`/tools` is the one deliberate install-time exception: its static document is precached into `pm-pages-v3` and the `/_next/static/*` assets it references are warmed into `pm-static-v3`, so the Tool Bench shell opens on a first offline visit. The selected-tool `?tool=` parameter is normalised away because it uses `history.replaceState`, not an RSC navigation. Later phases warm the ported tool chunks with `warmToolModules()` once the worker controls the page. `SW_VERSION` and the cache names are unchanged; no existing key is invalidated.
 
 The worker only handles same-origin `GET` requests. It does not handle or store:
 
@@ -105,11 +107,11 @@ Public pages are served as **static output with a one-hour revalidation window**
 - A quiet one-time hint can appear after 60 seconds on a first production visit or after 5 seconds on a return visit, once boot and the cookie notice are gone. Dismissal is remembered in `pm-pwa-install-hint-v1`, which is listed in the Privacy Policy storage register.
 - When a Chromium prompt is accepted, a shared toast changes from **Installing workspace…** to **Workspace installed** if `appinstalled` arrives. If no completion event arrives before the hook's safety timeout, the loading toast is dismissed rather than left spinning.
 
-In Settings, **Clear offline cache** deletes the `pm-*` caches and asks the active worker to restore only the essential core. **Reset preferences on this device** also removes visited offline pages and images. Neither action uninstalls the installed app or unregisters the worker; use the browser/OS app controls for that.
+In Settings, **Clear offline cache** deletes the `pm-*` caches and asks the active worker to restore the essential core and the Tool Bench document. **Reset preferences on this device** also removes visited offline pages and images. Neither action uninstalls the installed app or unregisters the worker; use the browser/OS app controls for that.
 
 ## Privacy and storage maintenance
 
-The boot sequence adds no storage. The PWA adds the four Cache Storage names above and the install-hint local-storage key. `lib/legal.ts` imports those names into `STORAGE_REGISTER`, which drives both the Privacy Policy table and the Settings privacy surface.
+The boot sequence adds no storage. The PWA adds the four Cache Storage names above and the install-hint local-storage key. The Tool Bench adds one more visitor-only local-storage key, `pm-tools-state-v1`, for recent and favourite tools; it is never sent anywhere. `lib/legal.ts` imports those names into `STORAGE_REGISTER`, which drives both the Privacy Policy table and the Settings privacy surface.
 
 Before shipping any change to storage behaviour:
 

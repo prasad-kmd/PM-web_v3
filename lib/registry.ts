@@ -1,5 +1,6 @@
 export type AppId =
   | "settings"
+  | "tools"
   | "resume"
   | "projects"
   | "blog"
@@ -21,7 +22,6 @@ export type AppMeta = {
   title: string;
   kind: string;
   description: string;
-  icon: string;
   route: `/${AppId}`;
   /** Additional canonical paths that open this same routed window. */
   aliases?: readonly string[];
@@ -33,7 +33,6 @@ export const APP_REGISTRY: Record<AppId, AppMeta> = {
     title: "Resume",
     kind: "Professional portfolio",
     description: "Profile, experience, education, and research interests",
-    icon: "/icons/fluent-color/document.svg",
     route: "/resume",
   },
   projects: {
@@ -41,7 +40,6 @@ export const APP_REGISTRY: Record<AppId, AppMeta> = {
     title: "Projects",
     kind: "Selected work",
     description: "Engineering work, experiments, and projects",
-    icon: "/icons/fluent-color/folder.svg",
     route: "/projects",
   },
   blog: {
@@ -49,7 +47,6 @@ export const APP_REGISTRY: Record<AppId, AppMeta> = {
     title: "Blog",
     kind: "Field notes",
     description: "Notes, ideas, and observations",
-    icon: "/icons/fluent-color/document.svg",
     route: "/blog",
   },
   articles: {
@@ -57,7 +54,6 @@ export const APP_REGISTRY: Record<AppId, AppMeta> = {
     title: "Articles",
     kind: "Long-form writing",
     description: "Engineering, technology, and research articles",
-    icon: "/icons/fluent-color/document.svg",
     route: "/articles",
   },
   tutorials: {
@@ -65,7 +61,6 @@ export const APP_REGISTRY: Record<AppId, AppMeta> = {
     title: "Tutorials",
     kind: "Practical guides",
     description: "Guides, examples, and walkthroughs",
-    icon: "/icons/fluent-color/documents_folder.svg",
     route: "/tutorials",
   },
   glossary: {
@@ -73,7 +68,6 @@ export const APP_REGISTRY: Record<AppId, AppMeta> = {
     title: "Glossary",
     kind: "Reference",
     description: "Engineering terms and concepts",
-    icon: "/icons/fluent-color/archive_folder.svg",
     route: "/glossary",
   },
   news: {
@@ -81,7 +75,6 @@ export const APP_REGISTRY: Record<AppId, AppMeta> = {
     title: "News",
     kind: "Updates",
     description: "Short updates from engineering, technology, and research",
-    icon: "/icons/fluent-color/file.svg",
     route: "/news",
   },
   categories: {
@@ -89,7 +82,6 @@ export const APP_REGISTRY: Record<AppId, AppMeta> = {
     title: "Categories",
     kind: "Browse by category",
     description: "Content grouped by category across every collection",
-    icon: "/icons/fluent-color/folder.svg",
     route: "/categories",
   },
   tags: {
@@ -97,7 +89,6 @@ export const APP_REGISTRY: Record<AppId, AppMeta> = {
     title: "Tags",
     kind: "Browse by tag",
     description: "Content grouped by tag and technical topic",
-    icon: "/icons/fluent-color/file.svg",
     route: "/tags",
   },
   bookmarks: {
@@ -105,7 +96,6 @@ export const APP_REGISTRY: Record<AppId, AppMeta> = {
     title: "Saved",
     kind: "Saved items",
     description: "Content saved in this browser",
-    icon: "/icons/fluent-color/favorite_folder.svg",
     route: "/bookmarks",
   },
   contact: {
@@ -113,7 +103,6 @@ export const APP_REGISTRY: Record<AppId, AppMeta> = {
     title: "Contact",
     kind: "Get in touch",
     description: "Send a message to Prasad",
-    icon: "/icons/fluent-color/account.svg",
     route: "/contact",
   },
   legal: {
@@ -122,7 +111,6 @@ export const APP_REGISTRY: Record<AppId, AppMeta> = {
     kind: "Privacy & terms",
     description:
       "Privacy Policy, Terms and Conditions, Disclaimer, and cookies",
-    icon: "/icons/fluent-color/document.svg",
     route: "/legal",
     aliases: ["/privacy-policy", "/terms-and-conditions", "/disclaimer"],
   },
@@ -131,15 +119,20 @@ export const APP_REGISTRY: Record<AppId, AppMeta> = {
     title: "Settings",
     kind: "Workspace preferences",
     description: "Theme and desktop wallpaper preferences",
-    icon: "/icons/fluent-color/program.svg",
     route: "/settings",
+  },
+  tools: {
+    id: "tools",
+    title: "Tools",
+    kind: "Engineering utilities",
+    description: "Offline engineering utilities and calculators",
+    route: "/tools",
   },
   "og-studio": {
     id: "og-studio",
     title: "OG Image Studio",
     kind: "Brand graphics",
     description: "Compose and export social share artwork",
-    icon: "/icons/fluent-color/program.svg",
     route: "/og-studio",
     adminOnly: true,
   },
@@ -148,7 +141,6 @@ export const APP_REGISTRY: Record<AppId, AppMeta> = {
     title: "Invoice Studio",
     kind: "Workspace ledger",
     description: "Compose invoices, manage clients, and export PDFs",
-    icon: "/icons/fluent-color/document.svg",
     route: "/invoices",
     adminOnly: true,
   },
@@ -157,7 +149,6 @@ export const APP_REGISTRY: Record<AppId, AppMeta> = {
     title: "Content Insights",
     kind: "Readership",
     description: "Public content readership trends and top entries",
-    icon: "/icons/fluent-color/math_folder.svg",
     route: "/insights",
     adminOnly: true,
   },
@@ -173,6 +164,7 @@ export const DESKTOP_APPS: AppId[] = [
   "bookmarks",
   "contact",
   "settings",
+  "tools",
 ];
 export const PINNED_ORDER: AppId[] = ["resume", "settings"];
 export const DOCK_ORDER: AppId[] = ["resume", "settings"];

@@ -1,0 +1,574 @@
+/* Tool Bench — a three-pane native window: gliding category tabs, catalogue,
+   and the selected tool. Mirrors Settings' fixed-height TabsContents treatment
+   so each pane owns its own scroll container. Uses only semantic tokens. */
+
+.window-body:has(> .tools-app),
+.route-content-surface:has(.tools-app) {
+  overflow: hidden;
+}
+
+.tools-app {
+  display: flex;
+  height: 100%;
+  min-height: 0;
+  flex-direction: column;
+}
+
+.tools-app > .tools-layout {
+  min-height: 0;
+  flex: 1;
+  overflow: hidden;
+}
+
+.tools-layout {
+  display: flex;
+  height: 100%;
+  min-height: 0;
+  background: var(--card);
+  color: var(--card-foreground);
+}
+
+/* Sidebar ---------------------------------------------------------------- */
+.tools-sidebar {
+  width: 208px;
+  flex: 0 0 208px;
+  align-self: stretch;
+  display: flex;
+  min-height: 0;
+  flex-direction: column;
+  gap: 12px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  border-right: 1px solid var(--border);
+  background: var(--background);
+  padding: 14px 10px;
+  scrollbar-width: thin;
+}
+
+.tools-sidebar-head {
+  padding: 0 8px;
+}
+
+.tools-eyebrow {
+  margin: 0 0 2px;
+  color: var(--foreground);
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.tools-sidebar-copy {
+  margin: 0;
+  color: var(--muted-foreground);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.tools-search {
+  display: flex;
+  height: 32px;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--input);
+  border-radius: 6px;
+  background: var(--background);
+  padding: 0 4px 0 8px;
+  color: var(--muted-foreground);
+}
+
+.tools-search:focus-within {
+  border-color: var(--ring);
+  box-shadow: 0 0 0 2px color-mix(in oklch, var(--ring) 35%, transparent);
+}
+
+.tools-search-icon {
+  flex: 0 0 auto;
+}
+
+.tools-search-input-wrap {
+  flex: 1;
+  min-width: 0;
+}
+
+.tools-search-input-wrap input {
+  height: 30px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--foreground);
+  font-size: 13px;
+  line-height: 30px;
+  outline: none;
+}
+
+.tools-search-input-wrap input::placeholder {
+  color: var(--muted-foreground);
+}
+
+.tools-search-clear {
+  flex: 0 0 auto;
+}
+
+.tools-tabs-list {
+  position: relative;
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  flex-direction: column;
+  gap: 4px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+}
+
+.tools-tab-item {
+  display: block;
+  width: 100%;
+}
+
+.tools-tab-highlight {
+  inset: 0;
+  border-radius: 6px;
+  background: var(--accent);
+}
+
+.tools-nav-item {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 8px;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--muted-foreground);
+  cursor: pointer;
+  font-size: 13px;
+  padding: 7px 8px;
+  text-align: left;
+  transition: color 140ms ease;
+}
+
+.tools-nav-item:hover,
+.tools-nav-item[data-state="active"] {
+  color: var(--accent-foreground);
+}
+
+.tools-nav-item:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 1px;
+}
+
+.tools-nav-item > span:nth-child(2) {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tools-tab-count {
+  flex: 0 0 auto;
+  border-radius: 4px;
+  background: var(--muted);
+  color: var(--muted-foreground);
+  font-size: 11px;
+  line-height: 16px;
+  min-width: 16px;
+  padding: 0 4px;
+  text-align: center;
+}
+
+.tools-nav-item[data-state="active"] .tools-tab-count {
+  background: var(--background);
+  color: var(--foreground);
+}
+
+.tools-sidebar-foot {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border-top: 1px solid var(--border);
+  padding: 10px 8px 0;
+  color: var(--muted-foreground);
+  font-size: 11px;
+}
+
+.tools-dot {
+  width: 6px;
+  height: 6px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: var(--primary);
+}
+
+/* Catalogue pane --------------------------------------------------------- */
+.tools-tabs-contents {
+  min-width: 0;
+  width: 288px;
+  flex: 0 0 288px;
+  align-self: stretch;
+  height: 100% !important;
+  min-height: 0;
+  overflow: hidden;
+  border-right: 1px solid var(--border);
+  background: var(--card);
+}
+
+.tools-tabs-contents > div,
+.tools-tabs-contents > div > div {
+  height: 100% !important;
+  min-height: 0;
+}
+
+.tools-tab-content {
+  display: block;
+  height: 100% !important;
+  min-height: 0;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  overscroll-behavior: contain;
+  padding: 12px;
+  scrollbar-width: thin;
+}
+
+.tool-catalog-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 0 2px 10px;
+}
+
+.tool-catalog-title {
+  margin: 0;
+  color: var(--foreground);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.tool-catalog-count {
+  color: var(--muted-foreground);
+  font-size: 11px;
+}
+
+.tool-catalog-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tool-row {
+  display: flex;
+  align-items: stretch;
+  gap: 2px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: transparent;
+  transition:
+    background-color 140ms ease,
+    border-color 140ms ease;
+}
+
+.tool-row:hover {
+  background: color-mix(in oklch, var(--accent) 45%, transparent);
+}
+
+.tool-row[data-active="true"] {
+  border-color: var(--border);
+  background: var(--accent);
+}
+
+.tool-row-main {
+  flex: 1;
+  min-width: 0;
+  display: block;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  padding: 8px 6px 8px 8px;
+  text-align: left;
+}
+
+.tool-row-main:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 1px;
+}
+
+.tool-row-title {
+  display: block;
+  overflow: hidden;
+  color: var(--foreground);
+  font-size: 13px;
+  font-weight: 500;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tool-row-desc {
+  display: -webkit-box;
+  margin: 2px 0 6px;
+  overflow: hidden;
+  color: var(--muted-foreground);
+  font-size: 12px;
+  line-height: 1.4;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.tool-row-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.tool-badge {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--muted);
+  color: var(--muted-foreground);
+  font-size: 10px;
+  line-height: 16px;
+  padding: 0 5px;
+  white-space: nowrap;
+}
+
+.tool-badge[data-status="soon"] {
+  border-color: color-mix(in oklch, var(--primary) 45%, transparent);
+  color: var(--primary);
+}
+
+.tool-phase {
+  color: var(--muted-foreground);
+  font-size: 10px;
+}
+
+.tool-row-fav {
+  flex: 0 0 auto;
+  display: flex;
+  width: 30px;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--muted-foreground);
+  cursor: pointer;
+}
+
+.tool-row-fav:hover,
+.tool-row-fav[aria-pressed="true"] {
+  color: var(--primary);
+}
+
+.tool-row-fav:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 1px;
+}
+
+.tool-catalog-empty {
+  display: flex;
+  min-height: 140px;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 8px;
+  border: 1px dashed var(--border);
+  border-radius: 6px;
+  padding: 16px;
+  color: var(--muted-foreground);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.tool-catalog-empty-title {
+  color: var(--foreground);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+/* Tool view pane --------------------------------------------------------- */
+.tools-view {
+  min-width: 0;
+  flex: 1;
+  align-self: stretch;
+  display: flex;
+  min-height: 0;
+  flex-direction: column;
+  background: var(--card);
+}
+
+.tool-shell-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  border-bottom: 1px solid var(--border);
+  padding: 14px 16px;
+}
+
+.tool-shell-heading {
+  min-width: 0;
+  flex: 1;
+}
+
+.tool-shell-category {
+  margin: 0 0 2px;
+  color: var(--muted-foreground);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.tool-shell-title {
+  margin: 0;
+  color: var(--foreground);
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.tool-shell-desc {
+  margin: 4px 0 0;
+  color: var(--muted-foreground);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.tool-shell-actions {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 2px;
+}
+
+.tool-shell-action.is-active {
+  color: var(--primary);
+}
+
+.tool-shell-body {
+  min-height: 0;
+  flex: 1;
+  overflow: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+}
+
+.tool-view-pane {
+  min-height: 100%;
+  padding: 18px 20px 28px;
+}
+
+.tool-state {
+  display: flex;
+  min-height: 260px;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 10px;
+  padding: 28px 24px;
+}
+
+.tool-state-icon {
+  display: flex;
+  width: 38px;
+  height: 38px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--muted);
+  color: var(--muted-foreground);
+}
+
+.tool-state-title {
+  margin: 0;
+  color: var(--foreground);
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.tool-state-copy {
+  max-width: 46ch;
+  margin: 0;
+  color: var(--muted-foreground);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.tool-state-meta {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 2px;
+}
+
+.tool-state-link {
+  color: var(--primary);
+  font-size: 12px;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tool-row,
+  .tools-nav-item {
+    transition: none;
+  }
+}
+
+@container window-body (max-width: 820px) {
+  .tools-layout {
+    flex-direction: column;
+  }
+
+  .tools-sidebar {
+    width: 100%;
+    flex: 0 0 auto;
+    gap: 8px;
+    border-right: 0;
+    border-bottom: 1px solid var(--border);
+    padding: 10px;
+  }
+
+  .tools-sidebar-head,
+  .tools-sidebar-foot {
+    display: none;
+  }
+
+  .tools-tabs-list {
+    flex: 0 0 auto;
+    flex-direction: row;
+    overflow-x: auto;
+    overflow-y: hidden;
+  }
+
+  .tools-tab-item {
+    width: auto;
+    flex: 0 0 auto;
+  }
+
+  .tools-nav-item {
+    padding: 6px 10px;
+    white-space: nowrap;
+  }
+
+  .tools-tabs-contents {
+    width: 100%;
+    flex: 0 0 200px;
+    height: 200px !important;
+    border-right: 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .tools-view {
+    flex: 1;
+  }
+}

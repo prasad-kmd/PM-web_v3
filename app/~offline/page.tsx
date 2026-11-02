@@ -35,6 +35,7 @@ const CACHED_AREAS = [
   { href: "/articles", label: "Articles" },
   { href: "/tutorials", label: "Tutorials" },
   { href: "/resume", label: "Resume" },
+  { href: "/tools", label: "Tools" },
 ] as const;
 
 export default function OfflinePage() {
@@ -50,9 +51,9 @@ export default function OfflinePage() {
         <p className="pm-offline-eyebrow">Prasad M. · Offline</p>
         <h1 id="pm-offline-title">You&apos;re offline</h1>
         <p className="pm-offline-copy">
-          This page hasn&apos;t been saved for offline use yet. Public pages you
-          have already visited may still open; forms, comments and owner tools
-          need a connection.
+          This page hasn&apos;t been saved for offline use yet. Public pages and
+          the Tool Bench you have already visited may still open; forms,
+          comments and owner studios need a connection.
         </p>
 
         <div className="pm-offline-actions">
