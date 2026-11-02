@@ -1,7 +1,7 @@
 # PM Web v3 — Phase 1 changelog (Tool Bench shell)
 
 **Date:** 2026-11-02  
-**Scope:** P1 only. No v1 tool calculation was ported. **Superseded for clean clones by `PM-Web-V3-Phase4.zip`** (cumulative P1 + P2 + P3 + P4); kept here as the P1 record.  
+**Scope:** P1 only. No v1 tool calculation was ported. **Superseded for clean clones by `PM-Web-V3-Phase5b.zip`** (cumulative P1 + P2 + P3 + P4 + P5a); kept here as the P1 record.  
 **Target:** clean `pm-web_v3` at remote `main` `56297e7b68ae7acab80c5c4c37b211417abe742c`. No commit or push was made. `package.json`, `pnpm-lock.yaml`, `app/manifest.ts`, `lib/pwa.ts`, `SW_VERSION` and cache names are unchanged; no new dependency was added.
 
 ## Amendments applied (supersede parts of v2)
@@ -80,4 +80,4 @@ Copy the full manual checklist from `docs/tools-and-offline.md` → **P1 verific
 
 ## Next gate
 
-**Stop for review.** P2 (5 text/data tools) starts only after you approve P1, with its own zip and fix-first verification gate.
+P2, P3, P4 and P5a followed in cumulative zips. P5b is now shipped in `PM-Web-V3-Phase5b.zip`. **Stop before P6.**

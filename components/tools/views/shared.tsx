@@ -5,6 +5,7 @@ import {
   Cancel01Icon,
   CheckmarkCircle02Icon,
   Copy01Icon,
+  Download01Icon,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import type { ReactNode } from "react";
@@ -181,6 +182,49 @@ export function ToolCopyButton({
         aria-label={label}
       >
         <HugeiconsIcon icon={Copy01Icon} strokeWidth={2} size={14} />
+      </Button>
+    </WorkspaceTooltip>
+  );
+}
+
+export function ToolDownloadButton({
+  content,
+  fileName,
+  mimeType = "text/plain;charset=utf-8",
+  label = "Download",
+}: {
+  content: string;
+  fileName: string;
+  mimeType?: string;
+  label?: string;
+}) {
+  const disabled = !content;
+  const download = () => {
+    if (disabled) return;
+    try {
+      const blob = new Blob([content], { type: mimeType });
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = fileName;
+      anchor.click();
+      URL.revokeObjectURL(url);
+      toast.success("Download started", { duration: 2500 });
+    } catch {
+      toast.error("Could not create the local file", { duration: 2500 });
+    }
+  };
+  return (
+    <WorkspaceTooltip label={label} side="bottom" align="end">
+      <Button
+        variant="ghost"
+        size="icon-sm"
+        className="tool-icon-btn"
+        onClick={download}
+        disabled={disabled}
+        aria-label={label}
+      >
+        <HugeiconsIcon icon={Download01Icon} strokeWidth={2} size={14} />
       </Button>
     </WorkspaceTooltip>
   );
@@ -515,6 +559,161 @@ export function ToolBandField({
 }
 
 export type ToolResistorBand = { hex: string; label: string };
+
+export type ToolDataColumn = {
+  key: string;
+  label: string;
+  align?: "left" | "right";
+};
+
+export function ToolDataTable({
+  columns,
+  rows,
+  caption,
+}: {
+  columns: readonly ToolDataColumn[];
+  rows: readonly Record<string, ReactNode>[];
+  caption?: string;
+}) {
+  return (
+    <div className="tool-table-wrap">
+      <table className="tool-table">
+        {caption ? <caption className="tool-hidden">{caption}</caption> : null}
+        <thead>
+          <tr>
+            {columns.map((column) => (
+              <th
+                key={column.key}
+                className={column.align === "right" ? "is-right" : undefined}
+                scope="col"
+              >
+                {column.label}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((row, index) => (
+            <tr key={index}>
+              {columns.map((column) => (
+                <td
+                  key={column.key}
+                  className={column.align === "right" ? "is-right" : undefined}
+                >
+                  {row[column.key]}
+                </td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+export function ToolCheckboxField({
+  label,
+  hint,
+  checked,
+  onChange,
+}: {
+  label: string;
+  hint?: string;
+  checked: boolean;
+  onChange: (checked: boolean) => void;
+}) {
+  return (
+    <ToolField label={label} hint={hint}>
+      <label className="tool-checkbox-row">
+        <input
+          type="checkbox"
+          className="tool-checkbox"
+          checked={checked}
+          onChange={(event) => onChange(event.currentTarget.checked)}
+          aria-label={label}
+        />
+        <span>{label}</span>
+      </label>
+    </ToolField>
+  );
+}
+
+export function ToolSparkline({
+  values,
+  label,
+  setpoint,
+}: {
+  values: readonly number[];
+  label: string;
+  setpoint?: number;
+}) {
+  const clean = values.filter(Number.isFinite);
+  if (clean.length < 2) {
+    return (
+      <div className="tool-sparkline-empty" role="img" aria-label={label}>
+        No stable samples.
+      </div>
+    );
+  }
+  const withSetpoint =
+    setpoint !== undefined && Number.isFinite(setpoint)
+      ? [...clean, setpoint]
+      : clean;
+  const min = Math.min(...withSetpoint);
+  const max = Math.max(...withSetpoint);
+  const span = max - min || 1;
+  const width = 320;
+  const height = 100;
+  const padding = 6;
+  const toY = (value: number) =>
+    padding + ((max - value) / span) * (height - padding * 2);
+  const points = clean
+    .map((value, index) => {
+      const x = (index / (clean.length - 1)) * width;
+      return `${x},${toY(value)}`;
+    })
+    .join(" ");
+  const setpointY = setpoint !== undefined ? toY(setpoint) : null;
+  return (
+    <div className="tool-sparkline-wrap">
+      <svg
+        className="tool-sparkline"
+        viewBox={`0 0 ${width} ${height}`}
+        role="img"
+        aria-label={label}
+        preserveAspectRatio="none"
+      >
+        <title>{label}</title>
+        <line
+          x1="0"
+          y1={height / 2}
+          x2={width}
+          y2={height / 2}
+          stroke="var(--border)"
+          strokeWidth="1"
+        />
+        {setpointY !== null ? (
+          <line
+            x1="0"
+            y1={setpointY}
+            x2={width}
+            y2={setpointY}
+            stroke="var(--muted-foreground)"
+            strokeWidth="1"
+            strokeDasharray="4 3"
+          />
+        ) : null}
+        <polyline
+          points={points}
+          fill="none"
+          stroke="var(--primary)"
+          strokeWidth="2"
+          vectorEffect="non-scaling-stroke"
+        />
+      </svg>
+    </div>
+  );
+}
 
 export function ToolResistorDiagram({
   bands,

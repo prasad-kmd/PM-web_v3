@@ -2,7 +2,7 @@
 
 **Date:** 2026-11-02  
 **Scope:** five P2 text/data tools. No v1 formula/flow was trusted; each known defect was fixed first and covered by a pure-logic gate.  
-**Cumulative zip:** `PM-Web-V3-Phase2.zip` (P1 + P2 repo files); superseded for clean clones by `PM-Web-V3-Phase4.zip`.  
+**Cumulative zip:** `PM-Web-V3-Phase2.zip` (P1 + P2 repo files); superseded for clean clones by `PM-Web-V3-Phase5b.zip`.  
 **Companion:** `CHANGELOG-Phase2.md`, `docs/tools-and-offline.md` → "P2 verification checklist (manual)".
 
 ## Automated logic gates
@@ -53,10 +53,10 @@ The worker-timeout path cannot be proven by a synchronous Node assertion without
 
 ## Manual UI / offline checklist
 
-See `docs/tools-and-offline.md` → **"P2 verification checklist (manual)"**. It covers all five views, light/dark, narrow-window stacking, focus rings, the **17 ready · 17 planned · 1 available soon** sidebar count after P4, the Privacy Policy storage row, and first-offline-visit chunk warming.
+See `docs/tools-and-offline.md` → **"P2 verification checklist (manual)"**. It covers all five views, light/dark, narrow-window stacking, focus rings, the **27 ready · 7 planned · 1 available soon** sidebar count after P5a, the Privacy Policy storage row, and first-offline-visit chunk warming.
 
 ## Known limitations
 
-- P3 and P4 are now shipped in `PM-Web-V3-Phase3.zip` and `PM-Web-V3-Phase4.zip` (see `P3-VERIFICATION.md` and `P4-VERIFICATION.md`). After P4, 17 catalogue entries still show **Not installed yet** and the LaTeX slot still shows **Available soon**.
+- P3 and P4 are now shipped in `PM-Web-V3-Phase3.zip` and `PM-Web-V3-Phase4.zip` (see `P3-VERIFICATION.md` and `P4-VERIFICATION.md`). After P4, 7 catalogue entries still show **Not installed yet** and the LaTeX slot still shows **Available soon**.
 - Recents still record any catalogue selection, including placeholders, so the navigation is testable.
 - The production build and dev server could not be completed in this sandbox; local `pnpm build` / `pnpm dev` with normal memory is required before merging.

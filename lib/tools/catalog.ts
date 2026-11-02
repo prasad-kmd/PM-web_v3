@@ -1,10 +1,10 @@
 /**
  * Local catalogue for the Tool Bench.
  *
- * Phase 1 shipped the shell; Phases 2–4 have since flipped seventeen tools to
- * `ported` and added matching loaders in `lib/tools/registry.ts`. The deferred
- * LaTeX tool remains `soon`, and the remaining entries stay `planned` for later
- * phases. The catalogue is deliberately dependency-free so search, recents and
+ * Phase 1 shipped the shell; Phases 2–5b have since flipped twenty-seven tools
+ * to `ported` and added matching loaders in `lib/tools/registry.ts`. The
+ * deferred LaTeX tool remains `soon`, and the remaining entries stay `planned`
+ * for later phases. The catalogue is deliberately dependency-free so search, recents and
  * favourites work without a network.
  */
 
@@ -221,7 +221,7 @@ export const TOOL_CATALOG: readonly ToolMeta[] = [
     category: "mechanical",
     description: "Compute second moments of area for standard sections.",
     keywords: ["inertia", "ixx", "iyy", "beam", "section"],
-    status: "planned",
+    status: "ported",
     phase: "P5a",
     offline: true,
   },
@@ -231,7 +231,7 @@ export const TOOL_CATALOG: readonly ToolMeta[] = [
     category: "mechanical",
     description: "Look up ISO 286 shaft and hole fits for a nominal diameter.",
     keywords: ["iso", "286", "fits", "tolerance", "h7", "g6"],
-    status: "planned",
+    status: "ported",
     phase: "P5a",
     offline: true,
   },
@@ -241,7 +241,7 @@ export const TOOL_CATALOG: readonly ToolMeta[] = [
     category: "mechanical",
     description: "Analyse cantilever and simply supported beam load cases.",
     keywords: ["beam", "deflection", "cantilever", "stress", "load"],
-    status: "planned",
+    status: "ported",
     phase: "P5a",
     offline: true,
   },
@@ -251,7 +251,7 @@ export const TOOL_CATALOG: readonly ToolMeta[] = [
     category: "mechanical",
     description: "Calculate output speed and torque for gear trains.",
     keywords: ["gear", "ratio", "torque", "speed", "belt"],
-    status: "planned",
+    status: "ported",
     phase: "P5a",
     offline: true,
   },
@@ -261,7 +261,7 @@ export const TOOL_CATALOG: readonly ToolMeta[] = [
     category: "mechanical",
     description: "Reference metric bolt torque by size and property class.",
     keywords: ["bolt", "torque", "metric", "property class", "fastener"],
-    status: "planned",
+    status: "ported",
     phase: "P5a",
     offline: true,
   },
@@ -271,7 +271,7 @@ export const TOOL_CATALOG: readonly ToolMeta[] = [
     category: "mechanical",
     description: "Browse a local dataset of common engineering materials.",
     keywords: ["material", "density", "modulus", "conductivity", "database"],
-    status: "planned",
+    status: "ported",
     phase: "P5a",
     offline: true,
   },
@@ -283,7 +283,7 @@ export const TOOL_CATALOG: readonly ToolMeta[] = [
     category: "mechatronics",
     description: "Compute steps per millimetre from motor and drive settings.",
     keywords: ["stepper", "motor", "steps", "microstep", "cnc"],
-    status: "planned",
+    status: "ported",
     phase: "P5b",
     offline: true,
   },
@@ -293,7 +293,7 @@ export const TOOL_CATALOG: readonly ToolMeta[] = [
     category: "mechatronics",
     description: "Estimate runtime from capacity, load and Peukert exponent.",
     keywords: ["battery", "runtime", "capacity", "peukert", "mah"],
-    status: "planned",
+    status: "ported",
     phase: "P5b",
     offline: true,
   },
@@ -303,7 +303,7 @@ export const TOOL_CATALOG: readonly ToolMeta[] = [
     category: "mechatronics",
     description: "Map voltage or current signals to engineering units.",
     keywords: ["sensor", "scaling", "4-20ma", "0-10v", "calibration"],
-    status: "planned",
+    status: "ported",
     phase: "P5b",
     offline: true,
   },
@@ -313,7 +313,7 @@ export const TOOL_CATALOG: readonly ToolMeta[] = [
     category: "mechatronics",
     description: "Simulate and tune a PID loop in one combined tool.",
     keywords: ["pid", "control", "simulator", "tuner", "step response"],
-    status: "planned",
+    status: "ported",
     phase: "P5b",
     offline: true,
   },

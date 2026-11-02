@@ -54,7 +54,7 @@ All logic modules under `lib/tools/logic/` (P2 + P3 + P4) and the P2 inline work
 | `node /tmp/p3verify.mjs`                                               | **8/8 P3 gates passed**.                                                                                                                                                                                                                                              |
 | `node /tmp/p2verify.mjs`                                               | **12/12 P2 gates passed**.                                                                                                                                                                                                                                            |
 | `node --check public/sw.js`                                            | Passed; worker unchanged from P3.                                                                                                                                                                                                                                     |
-| Catalogue guard                                                        | **17 ported · 17 planned · 1 soon**, 35 unique IDs.                                                                                                                                                                                                                   |
+| Catalogue guard                                                        | **27 ported · 7 planned · 1 soon**, 35 unique IDs.                                                                                                                                                                                                                    |
 | Loader guard                                                           | 17 lazy `TOOL_LOADERS` / 17 dynamic imports.                                                                                                                                                                                                                          |
 | CSS guard                                                              | `app/tools.css` braces **210 / 210**, balanced.                                                                                                                                                                                                                       |
 | Working tree                                                           | 63 dirty repo files; remote `main` still `56297e7b68ae7acab80c5c4c37b211417abe742c`.                                                                                                                                                                                  |
@@ -65,7 +65,7 @@ All logic modules under `lib/tools/logic/` (P2 + P3 + P4) and the P2 inline work
 
 ## Manual checklist
 
-See `docs/tools-and-offline.md` → **"P4 verification checklist (manual)"**. It covers all six views, golden 555 / divider / resistor / op-amp / IPC-2221 / IPC-2141 cases, light/dark, narrow-window stacking, focus rings, the **17 ready · 17 planned · 1 available soon** sidebar count, the Privacy Policy storage row, and first-offline-visit warming of all seventeen tool chunks.
+See `docs/tools-and-offline.md` → **"P4 verification checklist (manual)"**. It covers all six views, golden 555 / divider / resistor / op-amp / IPC-2221 / IPC-2141 cases, light/dark, narrow-window stacking, focus rings, the **27 ready · 7 planned · 1 available soon** sidebar count, the Privacy Policy storage row, and first-offline-visit warming of all twenty-seven tool chunks.
 
 ## Known limitations
 
@@ -75,4 +75,4 @@ See `docs/tools-and-offline.md` → **"P4 verification checklist (manual)"**. It
 
 ## Next gate
 
-**Stop here for review before P5.** P5a (six mechanical tools) and P5b (four mechatronics tools) start only after you approve P4.
+P4 was signed off by **"Continue to p5"**. P5a and P5b are shipped; `PM-Web-V3-Phase5b.zip` is the final P5 clean-clone zip; P5b is now shipped in `PM-Web-V3-Phase5b.zip`. **Stop before P6.**

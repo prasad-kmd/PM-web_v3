@@ -2,7 +2,7 @@
 
 **Date:** 2026-11-02  
 **Trigger:** you said **"Continue to next phase"** after the P2 handoff. That was read as P2 sign-off and authorization to start **P3 only**.  
-**Scope:** P3, then stop for review. `PM-Web-V3-Phase3.zip` is **cumulative** — it contains every P1 and P2 file plus the P3 changes, so it superseded both earlier phase zips for a clean clone; it is now superseded by `PM-Web-V3-Phase4.zip`.  
+**Scope:** P3, then stop for review. `PM-Web-V3-Phase3.zip` is **cumulative** — it contains every P1 and P2 file plus the P3 changes, so it superseded both earlier phase zips for a clean clone; it is now superseded by `PM-Web-V3-Phase5b.zip`.  
 **Target:** clean `pm-web_v3` at remote `main` `56297e7b68ae7acab80c5c4c37b211417abe742c`. No commit or push was made. `package.json`, `pnpm-lock.yaml`, `app/manifest.ts`, `lib/pwa.ts`, `lib/legal.ts`, `public/sw.js`, `SW_VERSION`, cache names and `COOKIE_NOTICE_VERSION` are unchanged in P3; no new dependency or storage key was added.
 
 ## What shipped
@@ -16,7 +16,7 @@
 | `pwm-voltage-converter`   | PWM to Voltage Converter | `parseFloat(x)                                                                                                                                                                                              |     | 0` replaced with validation of peak, duty and target; 8/10-bit register values; impossible targets flagged.              |
 | `led-resistor-calculator` | LED Series Resistor      | `                                                                                                                                                                                                           |     | 0`/`                                                                                                                     |     | 1` defaults removed; exact Ohm's law, integer LED count, voltage-margin check, next-higher E12/E24 resistor and 2× power recommendation. |
 
-Catalogue is now **17 ported · 17 planned · 1 `Available soon`** after P4. The sidebar foot count updates automatically. No v1 formula/flow was copied unchanged; see `P3-VERIFICATION.md` for the 8 P3 gates and 12 cumulative P2 gates, and `P4-VERIFICATION.md` for the 12 P4 gates.
+Catalogue is now **27 ported · 7 planned · 1 `Available soon`** after P5a. The sidebar foot count updates automatically. No v1 formula/flow was copied unchanged; see `P3-VERIFICATION.md` for the 8 P3 gates and 12 cumulative P2 gates, and `P4-VERIFICATION.md` for the 12 P4 gates.
 
 ## New repo files
 
@@ -41,7 +41,7 @@ Catalogue is now **17 ported · 17 planned · 1 `Available soon`** after P4. The
 | ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `components/tools/views/shared.tsx` | Added `ToolNumberField`, `ToolSelectField`, `ToolResultGrid`, `ToolResultCard`, `ToolComplianceRow`, `ToolColorField`, `ToolBadge`, `formatDecimal`, and an optional `error` prop on `ToolField`. |
 | `lib/tools/catalog.ts`              | Six `status: "planned"` → `"ported"`.                                                                                                                                                             |
-| `lib/tools/registry.ts`             | Six more lazy `TOOL_LOADERS` entries; eleven total at P3, seventeen after P4.                                                                                                                     |
+| `lib/tools/registry.ts`             | Six more lazy `TOOL_LOADERS` entries; eleven total at P3, seventeen after P5a.                                                                                                                    |
 | `app/tools.css`                     | Phase 3 styles: form/result grids, numeric units, colour picker/preview, compliance rows, file drop/row, badges, responsive stacking.                                                             |
 | `docs/tools-and-offline.md`         | P3 section, updated counts/statuses/offline notes, P3 manual checklist, remaining phases.                                                                                                         |
 | `docs/pwa-and-boot.md`              | Offline-warming note updated to the seventeen P2/P3/P4 chunks.                                                                                                                                    |
@@ -58,7 +58,7 @@ P1 and P2 repo files are included unchanged in the zip except where listed above
 - Cumulative P2 gates re-run with `node /tmp/p2verify.mjs` — **12/12 passed**.
 - P4 later added `tsc -p /tmp/tsconfig.p4.json` and `node /tmp/p4verify.mjs` — **12/12 P4 gates passed**; all 32 cumulative gates pass.
 - `node --check public/sw.js` — **passed** (unchanged).
-- Catalogue guard — **17 ported, 17 planned, 1 soon** after P4.
+- Catalogue guard — **27 ported, 7 planned, 1 soon** after P5a.
 - `next build` and `next dev --webpack` — **skipped**: earlier attempts were killed by the sandbox memory limit (exit 137 / V8 OOM), not by a reported code error. Per your instruction, no further slow validation was attempted; the zip is for local application/testing.
 - No lint run because `eslint` is not declared in this checkout.
 
@@ -84,4 +84,4 @@ Then run the manual checklists in `docs/tools-and-offline.md` (P1 + P2 + P3 + P4
 
 ## Next gate
 
-P3 was approved by **"Continue to Next phase"**; P4 shipped the six electronics tools in `PM-Web-V3-Phase4.zip` with `CHANGELOG-Phase4.md` and `P4-VERIFICATION.md`. **Stop here for review before P5.**
+P4 shipped the six electronics tools. P5a and P5b are now shipped; `PM-Web-V3-Phase5b.zip` is the final P5 clean-clone zip; P5b is now shipped in `PM-Web-V3-Phase5b.zip`. **Stop before P6.**

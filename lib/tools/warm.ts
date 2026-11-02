@@ -11,7 +11,7 @@ let started = false;
 
 /**
  * Fetch ported tool chunks while the browser is idle so they land in the
- * service worker's static cache. Phases 2–4 now register seventeen loaders;
+ * service worker's static cache. Phases 2–5b now register twenty-seven loaders;
  * the wiring stays here so later phases only add a loader and the offline
  * contract does not have to be redesigned.
  */

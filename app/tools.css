@@ -1460,3 +1460,79 @@
 .tool-section-badge {
   margin-top: 6px;
 }
+
+/* P5 shared data and chart primitives. */
+.tool-table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+}
+.tool-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.78rem;
+}
+.tool-table th,
+.tool-table td {
+  padding: 0.55rem 0.7rem;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+  vertical-align: top;
+}
+.tool-table th {
+  background: color-mix(in oklch, var(--muted) 45%, transparent);
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+}
+.tool-table tr:last-child td {
+  border-bottom: none;
+}
+.tool-table .is-right {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.tool-checkbox-row {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  min-height: 2.25rem;
+  cursor: pointer;
+  font-size: 0.84rem;
+}
+.tool-checkbox {
+  width: 1rem;
+  height: 1rem;
+  accent-color: var(--primary);
+}
+.tool-sparkline-wrap {
+  width: 100%;
+  height: 8.5rem;
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  background: color-mix(in oklch, var(--muted) 18%, transparent);
+  padding: 0.35rem;
+}
+.tool-sparkline {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.tool-sparkline-empty {
+  display: grid;
+  place-items: center;
+  min-height: 8.5rem;
+  border: 1px dashed var(--border);
+  border-radius: 0.75rem;
+  color: var(--muted-foreground);
+  font-size: 0.78rem;
+}
+@media (prefers-reduced-motion: reduce) {
+  .tool-sparkline-wrap,
+  .tool-sparkline {
+    animation: none !important;
+    transition: none !important;
+  }
+}

@@ -16,7 +16,7 @@
 | `pcb-trace-width`          | `parseFloat` with fallback, 1 oz approximated as `1.37` mils, constants kept in the view                     | IPC-2221 constants centralised, `1.378` mils/oz, `0.0254` mm/mil, external/internal `k`, 20% design margin.                                                     |
 | `pcb-impedance-calculator` | forbidden `pcb-imp-*` keys, unchecked thickness, wrong stripline `1.9h`, no validity warning                 | Corrected `1.9(2h + t)` symmetric stripline, positive geometry checks, `0.1 < w/h < 3` and `1 < εr < 15` warnings, zero persistence.                            |
 
-Catalogue is now **17 ported · 17 planned · 1 `Available soon`**. The sidebar foot count updates automatically. No v1 formula/flow was copied unchanged; see `P4-VERIFICATION.md` for the 12 P4 gates, plus the 8 P3 and 12 cumulative P2 gates.
+Catalogue is now **27 ported · 7 planned · 1 `Available soon`**. The sidebar foot count updates automatically. No v1 formula/flow was copied unchanged; see `P4-VERIFICATION.md` for the 12 P4 gates, plus the 8 P3 and 12 cumulative P2 gates.
 
 ## New repo files
 
@@ -37,16 +37,16 @@ Catalogue is now **17 ported · 17 planned · 1 `Available soon`**. The sidebar 
 
 ## Modified repo files
 
-| File                                | Change                                                                                                                             |
-| ----------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
-| `components/tools/views/shared.tsx` | Added `badge` to `ToolSection`, colour swatches, band fields, an accessible resistor SVG and the small `.tool-section-badge` hook. |
-| `lib/tools/catalog.ts`              | Six P4 entries `planned` → `ported`; top comment updated; impedance description mentions validity warnings.                        |
-| `lib/tools/registry.ts`             | Six more lazy `TOOL_LOADERS`; seventeen total.                                                                                     |
-| `lib/tools/warm.ts`                 | Comment now reflects seventeen warmed chunks.                                                                                      |
-| `app/tools.css`                     | Phase 4 styles for band swatches, resistor SVG and responsive stacking; braces 210/210.                                            |
-| `docs/tools-and-offline.md`         | P4 section, fixed P3 table, counts 17/17/1, seventeen warmed chunks, P4 manual checklist, later phases.                            |
-| `docs/pwa-and-boot.md`              | Warming note updated from eleven P2/P3 chunks to seventeen P2/P3/P4 chunks.                                                        |
-| `README.md`                         | Feature bullet now names seventeen ported tools.                                                                                   |
+| File                                | Change                                                                                                                                                                                         |
+| ----------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `components/tools/views/shared.tsx` | Added `badge` to `ToolSection`, colour swatches, band fields, an accessible resistor SVG and the small `.tool-section-badge` hook.                                                             |
+| `lib/tools/catalog.ts`              | Six P4 entries `planned` → `ported`; top comment updated; impedance description mentions validity warnings.                                                                                    |
+| `lib/tools/registry.ts`             | Six more lazy `TOOL_LOADERS`; seventeen total.                                                                                                                                                 |
+| `lib/tools/warm.ts`                 | Comment now reflects seventeen warmed chunks.                                                                                                                                                  |
+| `app/tools.css`                     | Phase 4 styles for band swatches, resistor SVG and responsive stacking; braces 210/210.                                                                                                        |
+| `docs/tools-and-offline.md`         | P4 section, fixed P3 table, counts 17/17/1 at P4, seventeen warmed chunks at P4, P4 manual checklist, later phases. The current document carries the P5b 27/7/1 and twenty-seven-chunk counts. |
+| `docs/pwa-and-boot.md`              | Warming note updated from eleven P2/P3 chunks to seventeen P2/P3/P4 chunks.                                                                                                                    |
+| `README.md`                         | Feature bullet now names seventeen ported tools.                                                                                                                                               |
 
 P1–P3 repo files are included unchanged in the zip except where listed above. Planning artifacts in the workspace root — `PM-Web-V3-Tools-Plan-v2.md`, `tools-inventory-v2.csv`, `PLAN-REVISIONS.md` and `PM-Web-V3-Tools-Plan-v2.zip` — were refreshed to mark P4 shipped; they are **not** repo files and are not inside `PM-Web-V3-Phase4.zip`.
 
@@ -54,7 +54,7 @@ P1–P3 repo files are included unchanged in the zip except where listed above. 
 
 `CHANGELOG-Phase1.md`, `CHANGELOG-Phase2.md`, `CHANGELOG-Phase3.md`, `CHANGELOG-Phase4.md`, `P2-VERIFICATION.md`, `P3-VERIFICATION.md`, `P4-VERIFICATION.md`.
 
-Earlier changelog/verification records were updated to note that P4 is the current clean-clone zip and to carry the 17/17/1 count forward.
+Earlier changelog/verification records were updated to note that P4 was the current clean-clone zip at this point. P5a and P5b have since shipped; P5b is now the current clean-clone zip with the 27/7/1 count.
 
 ## Validation performed
 
@@ -65,7 +65,7 @@ Earlier changelog/verification records were updated to note that P4 is the curre
 - `node /tmp/p3verify.mjs` — **8/8 P3 gates passed**.
 - `node /tmp/p2verify.mjs` — **12/12 P2 gates passed** (32 cumulative).
 - `node --check public/sw.js` — **passed** (unchanged).
-- Catalogue guard — **17 ported, 17 planned, 1 soon**, 35 unique IDs.
+- Catalogue guard — **27 ported, 7 planned, 1 soon**, 35 unique IDs.
 - Loader guard — **17 lazy loaders / 17 dynamic imports**.
 - CSS guard — **210/210 balanced braces**.
 - `git status` — **63 dirty repo files**; remote `main` still `56297e7b68ae7acab80c5c4c37b211417abe742c`.
@@ -92,4 +92,4 @@ Then run the manual checklists in `docs/tools-and-offline.md` (P1 + P2 + P3 + P4
 
 ## Next gate
 
-**Stop here for review before P5.** P5a (six mechanical tools) and P5b (four mechatronics tools) start only after you approve P4, with their own cumulative zips and fix-first verification gates.
+P4 was signed off by **"Continue to p5"**. P5a and P5b are now shipped; `PM-Web-V3-Phase5b.zip` is the final P5 clean-clone zip. **Stop before P6.**

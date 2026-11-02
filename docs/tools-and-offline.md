@@ -1,9 +1,10 @@
-# Tool Bench and offline contract (Phases 1–4)
+# Tool Bench and offline contract (Phases 1–5b)
 
 Phase 1 added one native DesktopOS window — **Tool Bench** — and the local
 infrastructure every later phase reuses. Phase 2 ported five text/data tools;
-Phase 3 added six converters and simple calculators; Phase 4 adds six
-electronics tools. No v1 formula or flow was copied unchanged: every port keeps
+Phase 3 added six converters and simple calculators; Phase 4 added six
+electronics tools; Phase 5a added six mechanical tools; Phase 5b adds four
+mechatronics tools. No v1 formula or flow was copied unchanged: every port keeps
 the project's fix-first verification gate, and the documented P2, P3 and P4 v1
 defects were fixed before the tools were marked `ported`.
 
@@ -61,8 +62,8 @@ service-worker version was introduced. Full golden-case results are in
 
 All six views reuse `components/tools/views/shared.tsx` (extended with numeric,
 select, result, compliance and colour fields) and the P3 CSS in
-`app/tools.css`. At P3 `TOOL_LOADERS` registered eleven chunks; P4 raises that
-to seventeen. No new storage key, dependency, cache name, service-worker
+`app/tools.css`. At P3 `TOOL_LOADERS` registered eleven chunks; P4 raised that to
+seventeen, P5a to twenty-three and P5b to twenty-seven. No new storage key, dependency, cache name, service-worker
 version or other desktop UI change was introduced. Full golden-case results are
 in `P3-VERIFICATION.md`.
 
@@ -79,12 +80,46 @@ in `P3-VERIFICATION.md`.
 
 All six views reuse `components/tools/views/shared.tsx` (extended with
 `ToolColorSwatches`, `ToolBandField` and `ToolResistorDiagram`) and the P4 CSS in
-`app/tools.css`. `TOOL_LOADERS` now registers seventeen chunks, so
-`warmToolModules()` warms seventeen. No KaTeX panel or new dependency was added:
+`app/tools.css`. `TOOL_LOADERS` now registers twenty-seven chunks, so
+`warmToolModules()` warms twenty-seven. No KaTeX panel or new dependency was added:
 formulas are plain semantic text, and the resistor diagram is an inline SVG with
 an accessible label and per-band titles. No new storage key, dependency, cache
 name, `SW_VERSION`, `COOKIE_NOTICE_VERSION` or other desktop UI change was
 introduced. Full golden-case results are in `P4-VERIFICATION.md`.
+
+## What shipped in P5a
+
+| Tool                           | v1 defect fixed                                                                  | Implementation                                                                                                                   |
+| ------------------------------ | -------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| `moment-of-inertia-calculator` | dark `#020617` html2canvas/jsPDF export; `moi-*` persistence; hidden zero inputs | Pure rectangle/circle/I-beam geometry with strict positive finite validation; local result copy and CSV replace the PDF export.  |
+| `iso-fits-tolerances`          | `parseInt` without radix; `                                                      |                                                                                                                                  | 0` fallbacks; simplified p deviation | Explicit IT6–IT9 tables, strict H/f/g/h/p classes, radix-10 parsing, up-to-and-including size steps and fit classification. |
+| `beam-deflection-calculator`   | hidden zero defaults; boundary cases not documented                              | Two Euler–Bernoulli cases with strict P/L/E/I validation, max moment, end slope and a 16× cantilever/simply-supported check.     |
+| `gear-ratio-calculator`        | v1 help divided torque while code multiplied it; no efficiency input             | Explicit reduction direction, integer teeth, 0–100% efficiency and power in/out; speed stays independent of efficiency.          |
+| `bolt-torque-chart`            | mixed static property-class values; no explicit assumptions                      | One consistent VDI 2230-style local M3–M20 dataset with µ ≈ 0.14 / 90% yield note, search and local CSV.                         |
+| `material-database`            | ambiguous units; invented single melting points for CFRP/polymer                 | Explicit kg/m³, GPa, W/m·K, °C and MPa fields, null melting point where not single-valued, search/category filter and local CSV. |
+
+All six views reuse `components/tools/views/shared.tsx` (extended with
+`ToolDataTable`, `ToolCheckboxField`, `ToolSparkline` and `ToolDownloadButton`)
+and the P5 CSS in `app/tools.css`. `TOOL_LOADERS` now registers twenty-three
+chunks. No new dependency, storage key, cache name, `SW_VERSION`,
+`COOKIE_NOTICE_VERSION` or other desktop UI change was introduced. Full
+golden-case results are in `P5A-VERIFICATION.md`.
+
+## What shipped in P5b
+
+| Tool                        | v1 defect fixed                                                                 | Implementation                                                                                                                                                                                                           |
+| --------------------------- | ------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `stepper-motor-calculator`  | `parseFloat(...)                                                                |                                                                                                                                                                                                                          | default` hid blank lead / microstep values | Strict step angle, integer microstepping, lead-screw and belt/pulley maths; steps/rev, steps/mm and mm/step with no silent defaults. |
+| `battery-life-estimator`    | hidden zero defaults, hardcoded 20 h rate, no efficiency or exponent validation | Explicit rated-hour Peukert `t = H·(C/(I·H))^k`, efficiency, reserve, 1 ≤ k ≤ 2 and strict capacity/current checks.                                                                                                      |
+| `sensor-scaling-calculator` | out-of-range inputs were extrapolated without warning or clamping               | Explicit linear map with raw/clamped values, slope, offset, reverse-range support and an equal-endpoint error.                                                                                                           |
+| `pid-controller-studio`     | two v1 tools; `setInterval` explicit Euler, integral windup, no reduced motion  | One merged tool with bounded semi-implicit steps, derivative on measurement, conditional anti-windup, output clamping, divergence guard, semantic SVG chart, `requestAnimationFrame` cleanup and reduced-motion support. |
+
+All four views reuse the P5 shared primitives. `TOOL_LOADERS` now registers
+twenty-seven chunks. The PID chart is an inline SVG using `var(--primary)`,
+`var(--border)` and `var(--muted-foreground)`; it avoids Recharts, gradients and
+persistent animation. No new dependency, storage key, cache name, `SW_VERSION`,
+`COOKIE_NOTICE_VERSION` or other desktop UI change was introduced. Full
+golden-case results are in `P5B-VERIFICATION.md`.
 
 ## Catalogue statuses
 
@@ -94,8 +129,8 @@ introduced. Full golden-case results are in `P4-VERIFICATION.md`.
 - `soon` — one reserved space for the deferred LaTeX editor/converter; the shell
   shows **Available soon**.
 
-P1 shipped zero `ported` entries; **P2 shipped five, P3 shipped six more and P4
-shipped six more**, so the catalogue is now **17 ported · 17 planned · 1
+P1 shipped zero `ported` entries; **P2 shipped five, P3 shipped six more, P4 shipped six more, P5a shipped six
+more and P5b shipped four more**, so the catalogue is now **27 ported · 7 planned · 1
 `soon`**. The remaining `planned` entries and the one `soon` entry can still be
 searched, opened, starred and remembered locally, but their workspaces show
 **Not installed yet** or **Available soon**.
@@ -112,12 +147,12 @@ searched, opened, starred and remembered locally, but their workspaces show
 ## Adding a ported tool in a later phase
 
 1. Verify the v1 formula/flow first; do not assume it is correct. The v2
-   inventory records the original audit findings; P2, P3 and P4 each added their
+   inventory records the original audit findings; P2, P3, P4, P5a and P5b each added their
    own fix-first gates. P2 fixed five text/data defects; P3 fixed six
-   converter/calculator defects; P4 fixed six electronics defects. Remaining
-   gates cover the eval-based calculator, sanitised preview, LaTeX conversion,
-   PID Euler divergence, PDF dark theme, resume migrations, Tailwind v3 presets
-   and the P5–P6 formula checks. Each port has its own verification gate in the
+   converter/calculator defects; P4 fixed six electronics defects; P5a fixed six
+   mechanical defects; P5b fixed four mechatronics defects. Remaining gates
+   cover the eval-based calculator, sanitised preview, LaTeX conversion, resume
+   migrations, Tailwind v3 presets and the P6 formula checks. Each port has its own verification gate in the
    phase plan.
 2. Create `components/tools/views/<Tool>.tsx` as a client component accepting
    `ToolViewProps` (`{ toolId }`). Use the provided Coss/Base UI/Animate UI
@@ -158,7 +193,7 @@ visitor, no tracking) is unchanged.
   Settings → Clear offline cache.
 - `warmToolModules()` waits for `controllerchange` (or an 8 s fallback) before
   loading `TOOL_LOADERS`, so first-install chunks are actually intercepted by
-  the worker. P4 registers seventeen loaders in total, so all ported chunks are
+  the worker. P5b registers twenty-seven loaders in total, so all ported chunks are
   warmed on idle.
 - API calls are still excluded. Search, tabs, recents and favourites are entirely
   local. The connectivity toast is informational and does not gate the UI.
@@ -189,7 +224,7 @@ visitor, no tracking) is unchanged.
 10. In a production PWA install, go offline before ever visiting `/tools` and
     open **Tools** from the offline page or shortcut; the shell, catalogue,
     search and favourites should work. After the worker has warmed them, the
-    seventeen P2/P3/P4 tool chunks should also open offline.
+    twenty-seven P2/P3/P4/P5a/P5b tool chunks should also open offline.
 11. Check Privacy Policy / Settings storage table lists `pm-tools-state-v1`.
 12. Confirm no other desktop UI changed (no menubar chip, no new Settings tab,
     no open-windows list).
@@ -211,8 +246,8 @@ visitor, no tracking) is unchanged.
    error; a deliberately catastrophic pattern is stopped after 300 ms.
 7. Toggle light/dark and a narrow window; the two-pane grids stack, focus rings
    remain visible, and no tool uses v1's Lucide card grid or gradients.
-8. Confirm the sidebar foot now reads **17 ready · 17 planned · 1 available
-   soon** after P4, and Privacy Policy still lists only `pm-tools-state-v1` as
+8. Confirm the sidebar foot now reads **27 ready · 7 planned · 1 available
+   soon** after P5b, and Privacy Policy still lists only `pm-tools-state-v1` as
    new storage.
 
 ## P3 verification checklist (manual)
@@ -269,15 +304,76 @@ visitor, no tracking) is unchanged.
 8. Toggle light/dark and a narrow window; form grids, result grids and band
    swatches stack, focus rings remain visible, and no tool uses v1's Lucide card
    grid, gradients or KaTeX dependency.
-9. Confirm the sidebar foot reads **17 ready · 17 planned · 1 available soon**;
+9. Confirm the sidebar foot reads **27 ready · 7 planned · 1 available soon**;
    the LaTeX slot still shows **Available soon**; Privacy Policy still lists
    only `pm-tools-state-v1`; no other desktop UI changed.
-10. In a production PWA install, confirm the service worker warms all seventeen
+10. In a production PWA install, confirm the service worker warms all twenty-seven
     tool chunks and each P4 tool opens offline after a hard offline load.
+
+## P5a verification checklist (manual)
+
+1. Open each of the six P5a tools from the catalogue; confirm the lazy view
+   loads with the shared header, breadcrumb and no network request.
+2. Moment of inertia: rectangle `100 × 200 mm` gives `6.6667e7 mm⁴` Ixx and
+   `1.6667e7 mm⁴` Iyy; circle `d = 100 mm` gives about `4.9087e6 mm⁴`; I-beam
+   `B = 150, tf = 10, Hw = 300, tw = 8` gives `9.0100e7 mm⁴` Ixx and
+   `5.6378e6 mm⁴` Iyy. Copy and CSV are local; no PDF button appears.
+3. ISO fits: `Ø25 H7/g6` gives `0 … +21 µm` hole, `−20 … −7 µm` shaft and
+   `7 … 41 µm` clearance; `Ø50 H7/g6` gives `9 … 50 µm`; `Ø25 H7/p6` is
+   interference; `Ø25 H7/h6` starts at zero clearance. Invalid classes or
+   `> 500 mm` show an error.
+4. Beam deflection: `1000 N / 2000 mm / 210000 MPa / 500000 mm⁴` gives
+   `25.3968 mm` cantilever and `1.5873 mm` simply supported (16× ratio); zero
+   or text input is rejected.
+5. Gear ratio: `12 → 36` teeth at `1500 rpm / 5 N·m` gives `3:1`, `500 rpm`,
+   `15 N·m`; `80%` efficiency gives `12 N·m`. Fractional teeth, zero driver or
+   efficiency outside 0–100% show an error.
+6. Bolt torque: `M8` is `24 / 35 / 41 N·m` for classes `8.8 / 10.9 / 12.9`;
+   search, copy and CSV work locally and the friction/yield assumptions are
+   visible.
+7. Material database: `Aluminium 6061-T6` shows `2700 kg/m³`, `68.9 GPa`,
+   `167 W/m·K`, `582 °C` and `276 MPa`; CFRP and polycarbonate show **not
+   single-valued** melting point. Search and category filter work offline.
+8. Toggle light/dark and a narrow window; tables scroll horizontally, result
+   grids stack, focus rings remain visible and reduced motion suppresses chart
+   animation.
+9. Confirm the sidebar foot reads **27 ready · 7 planned · 1 available soon**;
+   the LaTeX slot still shows **Available soon**; Privacy Policy still lists
+   only `pm-tools-state-v1`; no other desktop UI changed.
+10. In a production PWA install, confirm the service worker warms all
+    twenty-seven tool chunks and each P5a tool opens offline after a hard
+    offline load.
+
+## P5b verification checklist (manual)
+
+1. Open each of the four P5b tools from the catalogue; confirm the lazy view
+   loads with the shared header, breadcrumb and no network request.
+2. Stepper motor: `1.8° / 1/16 / 2 mm lead` gives `3,200 steps/rev`,
+   `1,600 steps/mm` and `0.000625 mm/step`; `2 mm belt pitch / 20 teeth` gives
+   `80 steps/mm`. Blank, zero or fractional pulley teeth show an error.
+3. Battery life: `2000 mAh / 100 mA / 20% reserve / 100% efficiency` gives
+   `16h 0m`; `80%` efficiency gives `12.8 h`. At the rated C/20 current,
+   Peukert `k = 1.0` and `k = 1.2` both give `20 h`; at `400 mA` they give `5 h`
+   and about `3.789 h`. Invalid reserve, efficiency or exponent show an error.
+4. Sensor scaling: `4–20 mA → 0–100 bar` gives `50 bar` at `12 mA`, slope
+   `6.25` and offset `−25`; `2 mA` clamps to `0` and `22 mA` clamps to `100`
+   while the raw extrapolated values remain visible. Equal input min/max shows
+   an error.
+5. PID studio: the default `Kp = 2.5 / Ki = 1.2 / Kd = 0.5` step response is
+   finite and stable; high gain with a low output limit activates anti-windup
+   and keeps every control sample clamped. Confirm Run / Pause / Reset, the
+   static SVG chart and that reduced motion reveals all samples immediately.
+6. Toggle light/dark and a narrow window; result grids stack, focus rings
+   remain visible and reduced motion suppresses chart animation.
+7. Confirm the sidebar foot reads **27 ready · 7 planned · 1 available soon**;
+   the LaTeX slot still shows **Available soon**; Privacy Policy still lists
+   only `pm-tools-state-v1`; no other desktop UI changed.
+8. In a production PWA install, confirm the service worker warms all
+   twenty-seven tool chunks and each P5b tool opens offline after a hard
+   offline load.
 
 ## Later phases
 
-P2, P3 and P4 are **shipped**. Remaining: P5a mechanical (6), P5b
-mechatronics (4), P6a math/data (4), P6b content/core (3 shipped + the deferred
-LaTeX slot). Each phase is delivered as its own cumulative zip with its own
+P2, P3, P4, P5a and P5b are **shipped**. Remaining: P6a math/data (4),
+P6b content/core (3 shipped + the deferred LaTeX slot). Each phase is delivered as its own cumulative zip with its own
 verification gate; stop for review after each one.

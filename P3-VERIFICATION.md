@@ -3,7 +3,7 @@
 **Date:** 2026-11-02  
 **Trigger:** you said **"Continue to next phase"** after the P2 handoff, which was read as P2 sign-off and authorization to start P3.  
 **Scope:** six converters/simple calculators. No v1 formula/flow was trusted; each documented P3 issue was fixed first and covered by a pure-logic gate.  
-**Cumulative zip:** `PM-Web-V3-Phase3.zip` (P1 + P2 + P3 repo files); superseded for clean clones by `PM-Web-V3-Phase4.zip`.  
+**Cumulative zip:** `PM-Web-V3-Phase3.zip` (P1 + P2 + P3 repo files); superseded for clean clones by `PM-Web-V3-Phase5b.zip`.  
 **Companion:** `CHANGELOG-Phase3.md`, `docs/tools-and-offline.md` → "P3 verification checklist (manual)". P4 adds `P4-VERIFICATION.md` and `CHANGELOG-Phase4.md`.
 
 ## Automated logic gates
@@ -43,7 +43,7 @@ Results: **ALL 8 P3 LOGIC GATES PASSED**, **ALL 12 P2 LOGIC GATES PASSED** and *
 
 ## Manual UI / offline checklist
 
-See `docs/tools-and-offline.md` → **"P3 verification checklist (manual)"**. It covers all six views, golden cases, light/dark, narrow-window stacking, focus rings, the **17 ready · 17 planned · 1 available soon** sidebar count after P4, the Privacy Policy storage row, and first-offline-visit chunk warming.
+See `docs/tools-and-offline.md` → **"P3 verification checklist (manual)"**. It covers all six views, golden cases, light/dark, narrow-window stacking, focus rings, the **27 ready · 7 planned · 1 available soon** sidebar count after P5a, the Privacy Policy storage row, and first-offline-visit chunk warming.
 
 ## Known limitations
 

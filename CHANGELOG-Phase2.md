@@ -77,4 +77,4 @@ Then run the manual checklists in `docs/tools-and-offline.md` (P1 + P2) and revi
 
 ## Next gate
 
-P2 was approved by **"Continue to next phase"**; P3 and P4 followed in `PM-Web-V3-Phase3.zip` and `PM-Web-V3-Phase4.zip`. This file is kept as the P2 record. **Next gate:** stop for review before P5.
+P3, P4 and P5a followed in cumulative zips. P5b is now shipped in `PM-Web-V3-Phase5b.zip`. This file is kept as the P2 record. **Stop before P6.**
