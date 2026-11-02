@@ -1,11 +1,11 @@
-# Tool Bench and offline contract (Phases 1–3)
+# Tool Bench and offline contract (Phases 1–4)
 
 Phase 1 added one native DesktopOS window — **Tool Bench** — and the local
 infrastructure every later phase reuses. Phase 2 ported five text/data tools;
-Phase 3 adds six converters and simple calculators. No v1 formula or flow was
-copied unchanged: every port keeps the project's fix-first verification gate,
-and the documented P2 and P3 v1 defects were fixed before the tools were marked
-`ported`.
+Phase 3 added six converters and simple calculators; Phase 4 adds six
+electronics tools. No v1 formula or flow was copied unchanged: every port keeps
+the project's fix-first verification gate, and the documented P2, P3 and P4 v1
+defects were fixed before the tools were marked `ported`.
 
 ## What shipped in P1
 
@@ -43,27 +43,48 @@ consumed `icon`.
 
 All five views are pure client code under `components/tools/views/`, share
 `shared.tsx` Coss/Base UI primitives, use the P2 CSS in `app/tools.css`, and are
-registered as lazy loaders in `lib/tools/registry.ts`. `warmToolModules()` now
-warms five chunks. No new storage key, dependency, cache name or service-worker
-version was introduced. Full golden-case results are in `P2-VERIFICATION.md`.
+registered as lazy loaders in `lib/tools/registry.ts`. At P2 `warmToolModules()`
+warmed five chunks. No new storage key, dependency, cache name or
+service-worker version was introduced. Full golden-case results are in
+`P2-VERIFICATION.md`.
 
 ## What shipped in P3
 
-| Tool                      | v1 defect fixed                                         | Implementation                                                                                                        |
-| ------------------------- | ------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
-| `unit-converter`          | mile factor 1609.34 and `factor                         |                                                                                                                       | 1` hiding zero                  | Exact NIST factors, positive-factor validation, affine temperature through Celsius, 1 kWh → 3.6 MJ. |
-| `css-unit-converter`      | `parseFloat(x)                                          |                                                                                                                       | default` replaced zero contexts | Explicit finite/positive parsing, px/rem/em/%/vw/vh, generated CSS, no guessed defaults.            |
-| `color-contrast-checker`  | invalid hex returned luminance 0 and a plausible ratio  | Strict 3/6-digit hex validation before WCAG 2.1 luminance, ratio and AA/AAA rows.                                     |
-| `compressor`              | `@ts-expect-error` and no `CompressionStream` detection | Structural stream types, explicit support gate, gzip/deflate/deflate-raw round-trip, clear unsupported-browser error. |
-| `pwm-voltage-converter`   | `parseFloat(x)                                          |                                                                                                                       | 0` hid invalid/zero input       | Validated peak, 0–100% duty and target; 8/10-bit register values; impossible targets flagged.       |
-| `led-resistor-calculator` | `                                                       |                                                                                                                       | 0`/`                            |                                                                                                     | 1` defaults and loose E24 rounding | Exact Ohm's law, integer LED count, voltage margin check, next-higher E12/E24 value, 2× power recommendation. |
+| Tool                      | v1 defect fixed                                                | Implementation                                                                                                        |
+| ------------------------- | -------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| `unit-converter`          | mile factor 1609.34 and a factor fallback hiding zero          | Exact NIST factors, positive-factor validation, affine temperature through Celsius, 1 kWh → 3.6 MJ.                   |
+| `css-unit-converter`      | `parseFloat` with a default fallback replaced zero contexts    | Explicit finite/positive parsing, px/rem/em/%/vw/vh, generated CSS, no guessed defaults.                              |
+| `color-contrast-checker`  | invalid hex returned luminance 0 and a plausible ratio         | Strict 3/6-digit hex validation before WCAG 2.1 luminance, ratio and AA/AAA rows.                                     |
+| `compressor`              | active `@ts-expect-error` and no `CompressionStream` detection | Structural stream types, explicit support gate, gzip/deflate/deflate-raw round-trip, clear unsupported-browser error. |
+| `pwm-voltage-converter`   | `parseFloat` with fallback hid invalid/zero input              | Validated peak, 0–100% duty and target; 8/10-bit register values; impossible targets flagged.                         |
+| `led-resistor-calculator` | zero/one defaults and loose E24 rounding                       | Exact Ohm's law, integer LED count, voltage margin check, next-higher E12/E24 value, 2× power recommendation.         |
 
 All six views reuse `components/tools/views/shared.tsx` (extended with numeric,
 select, result, compliance and colour fields) and the P3 CSS in
-`app/tools.css`. `TOOL_LOADERS` now registers eleven chunks, so
-`warmToolModules()` warms eleven. No new storage key, dependency, cache name,
-service-worker version or other desktop UI change was introduced. Full
-golden-case results are in `P3-VERIFICATION.md`.
+`app/tools.css`. At P3 `TOOL_LOADERS` registered eleven chunks; P4 raises that
+to seventeen. No new storage key, dependency, cache name, service-worker
+version or other desktop UI change was introduced. Full golden-case results are
+in `P3-VERIFICATION.md`.
+
+## What shipped in P4
+
+| Tool                       | v1 defect fixed                                                                                | Implementation                                                                                                                          |
+| -------------------------- | ---------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| `555-timer-calculator`     | `parseFloat` with fallback hid invalid values; rounded 1.44/1.1 constants                      | Strict positive finite parsing, explicit kΩ/µF scaling, coherent ln(2) astable timing and ln(3) monostable pulse.                       |
+| `voltage-divider-designer` | forbidden `vd-*` keys, zero-current reset to 1 mA, only ±1 pair candidates, string-based power | Full E12/E24 grid with balanced voltage/current error, numeric ohm power, ±tolerance worst-case Vout, no persistence keys.              |
+| `resistor-color-code`      | no `None` ±20% band, invalid bands became ±0%, defaults broke 5/6 bands                        | Explicit role-separated band table, valid defaults per band count, illegal-band errors, accessible neutral SVG resistor with labels.    |
+| `op-amp-gain-calculator`   | `parseFloat` with fallback, only R1 > 0 checked, no supply clipping                            | Strict R1/Rf/Vin/rail validation, explicit inverting sign, optional rail clipping, ideal-model note.                                    |
+| `pcb-trace-width`          | `parseFloat` with fallback, 1 oz approximated as 1.37 mils, constants in view                  | IPC-2221 constants centralised, 1.378 mils/oz, 0.0254 mm/mil, 20% design margin, external/internal k validated.                         |
+| `pcb-impedance-calculator` | forbidden `pcb-imp-*` keys, unchecked thickness, wrong stripline `1.9h`, no validity warning   | Corrected `1.9(2h + t)` symmetric stripline, positive geometry checks, `0.1 < w/h < 3` and `1 < εr < 15` warnings, no persistence keys. |
+
+All six views reuse `components/tools/views/shared.tsx` (extended with
+`ToolColorSwatches`, `ToolBandField` and `ToolResistorDiagram`) and the P4 CSS in
+`app/tools.css`. `TOOL_LOADERS` now registers seventeen chunks, so
+`warmToolModules()` warms seventeen. No KaTeX panel or new dependency was added:
+formulas are plain semantic text, and the resistor diagram is an inline SVG with
+an accessible label and per-band titles. No new storage key, dependency, cache
+name, `SW_VERSION`, `COOKIE_NOTICE_VERSION` or other desktop UI change was
+introduced. Full golden-case results are in `P4-VERIFICATION.md`.
 
 ## Catalogue statuses
 
@@ -73,11 +94,11 @@ golden-case results are in `P3-VERIFICATION.md`.
 - `soon` — one reserved space for the deferred LaTeX editor/converter; the shell
   shows **Available soon**.
 
-P1 shipped zero `ported` entries; **P2 shipped five and P3 shipped six more**, so
-the catalogue is now **11 ported · 23 planned · 1 `soon`**. The remaining
-`planned` entries and the one `soon` entry can still be searched, opened,
-starred and remembered locally, but their workspaces show **Not installed yet**
-or **Available soon**.
+P1 shipped zero `ported` entries; **P2 shipped five, P3 shipped six more and P4
+shipped six more**, so the catalogue is now **17 ported · 17 planned · 1
+`soon`**. The remaining `planned` entries and the one `soon` entry can still be
+searched, opened, starred and remembered locally, but their workspaces show
+**Not installed yet** or **Available soon**.
 
 ### Scope decisions carried into the catalogue
 
@@ -90,15 +111,14 @@ or **Available soon**.
 
 ## Adding a ported tool in a later phase
 
-1. Verify the v1 formula/flow first; do not assume it is correct. The v2 inventory
-   lists 12 known defects. **P2 fixed five** (naive diff, Unicode `btoa`,
-   surrogate pairs, unguarded `RegExp`, radix/NaN indent). **P3 fixed six more**
-   (mile factor and `factor || 1`, CSS defaulted contexts, invalid-hex
-   luminance, `CompressionStream` detection, PWM zero-hiding, and LED
-   defaults/E-series rounding). Remaining gates cover the eval-based calculator,
-   sanitised preview, LaTeX conversion, PID Euler divergence, PDF dark theme,
-   resume migrations, Tailwind v3 presets and the P4–P6 formula checks. Each
-   port has its own verification gate in the phase plan.
+1. Verify the v1 formula/flow first; do not assume it is correct. The v2
+   inventory records the original audit findings; P2, P3 and P4 each added their
+   own fix-first gates. P2 fixed five text/data defects; P3 fixed six
+   converter/calculator defects; P4 fixed six electronics defects. Remaining
+   gates cover the eval-based calculator, sanitised preview, LaTeX conversion,
+   PID Euler divergence, PDF dark theme, resume migrations, Tailwind v3 presets
+   and the P5–P6 formula checks. Each port has its own verification gate in the
+   phase plan.
 2. Create `components/tools/views/<Tool>.tsx` as a client component accepting
    `ToolViewProps` (`{ toolId }`). Use the provided Coss/Base UI/Animate UI
    primitives and `DESIGN.md` tokens, not v1's Lucide card grid.
@@ -138,7 +158,7 @@ visitor, no tracking) is unchanged.
   Settings → Clear offline cache.
 - `warmToolModules()` waits for `controllerchange` (or an 8 s fallback) before
   loading `TOOL_LOADERS`, so first-install chunks are actually intercepted by
-  the worker. P3 registers eleven loaders in total, so all ported chunks are
+  the worker. P4 registers seventeen loaders in total, so all ported chunks are
   warmed on idle.
 - API calls are still excluded. Search, tabs, recents and favourites are entirely
   local. The connectivity toast is informational and does not gate the UI.
@@ -169,7 +189,7 @@ visitor, no tracking) is unchanged.
 10. In a production PWA install, go offline before ever visiting `/tools` and
     open **Tools** from the offline page or shortcut; the shell, catalogue,
     search and favourites should work. After the worker has warmed them, the
-    eleven P2/P3 tool chunks should also open offline.
+    seventeen P2/P3/P4 tool chunks should also open offline.
 11. Check Privacy Policy / Settings storage table lists `pm-tools-state-v1`.
 12. Confirm no other desktop UI changed (no menubar chip, no new Settings tab,
     no open-windows list).
@@ -191,8 +211,8 @@ visitor, no tracking) is unchanged.
    error; a deliberately catastrophic pattern is stopped after 300 ms.
 7. Toggle light/dark and a narrow window; the two-pane grids stack, focus rings
    remain visible, and no tool uses v1's Lucide card grid or gradients.
-8. Confirm the sidebar foot now reads **11 ready · 23 planned · 1 available
-   soon** after P3, and Privacy Policy still lists only `pm-tools-state-v1` as
+8. Confirm the sidebar foot now reads **17 ready · 17 planned · 1 available
+   soon** after P4, and Privacy Policy still lists only `pm-tools-state-v1` as
    new storage.
 
 ## P3 verification checklist (manual)
@@ -219,9 +239,45 @@ visitor, no tracking) is unchanged.
    focus rings remain visible, and no tool uses v1's Lucide card grid or
    gradients.
 
+## P4 verification checklist (manual)
+
+1. Open each of the six P4 tools from the catalogue; confirm the lazy view loads
+   with the shared header, breadcrumb and no network request.
+2. 555 timer: astable `R1 = R2 = 10 kΩ`, `C = 10 µF` gives about `4.809 Hz`,
+   `207.94 ms` period, `138.63 ms` high, `69.31 ms` low and `66.67%` duty;
+   monostable `R = 10 kΩ`, `C = 10 µF` gives about `109.86 ms`; zero or text
+   input shows an error instead of a hidden zero.
+3. Voltage divider: `5 V → 3.3 V`, `1 mA`, `E24`, `±1%` selects `R1 = 1.8 kΩ`
+   and `R2 = 3.3 kΩ`, reports `3.235 V`, `1.96%` error and about `4.90 mW`
+   total dissipation; switching to `5 V → 2.5 V` gives E24 a better balanced
+   score than E12; zero current is rejected rather than reset to 1 mA.
+4. Resistor colour code: `brown-black-red-gold` gives `1 kΩ ±5%`;
+   `brown-black-black-red-brown` gives `10 kΩ ±1%`; adding a red sixth band
+   gives `50 ppm/K`; `None` as the tolerance band gives `±20%`; gold in a digit
+   slot shows an error. Confirm the SVG has an accessible label, band titles
+   and visible focus rings on the colour swatches.
+5. Op-amp: `R1 = 1 kΩ`, `Rf = 10 kΩ`, `Vin = 1 V` gives `+11` / `+11 V`
+   non-inverting and `−10` / `−10 V` inverting; entering `5 V` rails clips the
+   non-inverting output to `+5 V`; `R1 = 0` is rejected.
+6. PCB trace width: `1 A / 1 oz / 10 °C` gives about `0.300 mm` external and
+   `0.781 mm` internal (≈2.6×); the recommended width is 20% larger; zero
+   current or copper weight shows an error.
+7. PCB impedance: microstrip `εr = 4.3`, `h = 0.2 mm`, `w = 0.33 mm`,
+   `t = 0.035 mm` gives about `50.47 Ω`; stripline `εr = 4.2`, `h = 0.18 mm`,
+   `w = 0.2 mm`, `t = 0.035 mm` gives about `39.46 Ω`; negative thickness is
+   rejected and a `w/h` ratio outside 0.1–3 shows a warning.
+8. Toggle light/dark and a narrow window; form grids, result grids and band
+   swatches stack, focus rings remain visible, and no tool uses v1's Lucide card
+   grid, gradients or KaTeX dependency.
+9. Confirm the sidebar foot reads **17 ready · 17 planned · 1 available soon**;
+   the LaTeX slot still shows **Available soon**; Privacy Policy still lists
+   only `pm-tools-state-v1`; no other desktop UI changed.
+10. In a production PWA install, confirm the service worker warms all seventeen
+    tool chunks and each P4 tool opens offline after a hard offline load.
+
 ## Later phases
 
-P2 and P3 are **shipped**. Remaining: P4 electronics (6), P5a mechanical (6),
-P5b mechatronics (4), P6a math/data (4), P6b content/core (3 shipped + the
-deferred LaTeX slot). Each phase is delivered as its own cumulative zip with its
-own verification gate; stop for review after each one.
+P2, P3 and P4 are **shipped**. Remaining: P5a mechanical (6), P5b
+mechatronics (4), P6a math/data (4), P6b content/core (3 shipped + the deferred
+LaTeX slot). Each phase is delivered as its own cumulative zip with its own
+verification gate; stop for review after each one.

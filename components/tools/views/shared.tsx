@@ -36,12 +36,14 @@ export function ToolView({ children }: { children: ReactNode }) {
 export function ToolSection({
   title,
   description,
+  badge,
   actions,
   children,
   className,
 }: {
   title?: string;
   description?: string;
+  badge?: ReactNode;
   actions?: ReactNode;
   children: ReactNode;
   className?: string;
@@ -49,13 +51,14 @@ export function ToolSection({
   return (
     <Card className={cn("tool-card", className)}>
       <CardPanel className="tool-card-panel">
-        {(title || actions) && (
+        {(title || actions || badge) && (
           <header className="tool-section-head">
             <div className="tool-section-copy">
               {title ? <h3 className="tool-section-title">{title}</h3> : null}
               {description ? (
                 <p className="tool-section-desc">{description}</p>
               ) : null}
+              {badge ? <div className="tool-section-badge">{badge}</div> : null}
             </div>
             {actions ? (
               <div className="tool-section-actions">{actions}</div>
@@ -440,4 +443,150 @@ export function formatDecimal(value: number, digits = 3): string {
   if (!Number.isFinite(value)) return "—";
   if (Object.is(value, -0) || value === 0) return "0";
   return Number(value.toFixed(digits)).toString();
+}
+
+export type ToolColorSwatchItem = {
+  value: string;
+  label: string;
+  hex: string;
+};
+
+export function ToolColorSwatches({
+  label,
+  items,
+  value,
+  onChange,
+}: {
+  label: string;
+  items: readonly ToolColorSwatchItem[];
+  value: string;
+  onChange: (value: string) => void;
+}) {
+  return (
+    <div className="tool-band-grid" role="group" aria-label={label}>
+      {items.map((item) => {
+        const selected = item.value === value;
+        const transparent = item.hex === "transparent";
+        return (
+          <button
+            key={item.value}
+            type="button"
+            className={cn("tool-band-swatch", selected && "is-selected")}
+            onClick={() => onChange(item.value)}
+            aria-label={item.label}
+            aria-pressed={selected}
+          >
+            <span
+              className={cn(
+                "tool-band-swatch-color",
+                transparent && "is-transparent",
+              )}
+              style={transparent ? undefined : { backgroundColor: item.hex }}
+            />
+            <span className="tool-band-swatch-label">{item.label}</span>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+export function ToolBandField({
+  label,
+  items,
+  value,
+  onChange,
+}: {
+  label: string;
+  items: readonly ToolColorSwatchItem[];
+  value: string;
+  onChange: (value: string) => void;
+}) {
+  return (
+    <ToolField label={label} className="tool-band-field">
+      <ToolColorSwatches
+        label={label}
+        items={items}
+        value={value}
+        onChange={onChange}
+      />
+    </ToolField>
+  );
+}
+
+export type ToolResistorBand = { hex: string; label: string };
+
+export function ToolResistorDiagram({
+  bands,
+  label,
+}: {
+  bands: readonly ToolResistorBand[];
+  label: string;
+}) {
+  const digitCount = bands.length === 4 ? 2 : 3;
+  const positions = bands.map((_, index) => {
+    if (index < digitCount) return 72 + index * 30;
+    if (index === digitCount) return 72 + digitCount * 30;
+    if (index === bands.length - 1 && bands.length === 6) return 260;
+    return 232;
+  });
+  return (
+    <div className="tool-resistor-wrap">
+      <svg
+        className="tool-resistor-svg"
+        viewBox="0 0 320 96"
+        role="img"
+        aria-label={label}
+      >
+        <title>{label}</title>
+        <line
+          x1="8"
+          y1="48"
+          x2="312"
+          y2="48"
+          stroke="var(--muted-foreground)"
+          strokeWidth="3"
+        />
+        <rect
+          x="54"
+          y="26"
+          width="212"
+          height="44"
+          rx="16"
+          fill="var(--card)"
+          stroke="var(--border)"
+          strokeWidth="1.5"
+        />
+        {bands.map((band, index) => {
+          const transparent = band.hex === "transparent";
+          return (
+            <g key={index}>
+              <rect
+                x={positions[index]}
+                y="28"
+                width="12"
+                height="40"
+                rx="3"
+                fill={transparent ? "none" : band.hex}
+                stroke={transparent ? "var(--border)" : "var(--border)"}
+                strokeWidth={transparent ? 1 : 0.5}
+                strokeDasharray={transparent ? "3 2" : undefined}
+              >
+                <title>{`Band ${index + 1}: ${band.label}`}</title>
+              </rect>
+              <text
+                x={positions[index] + 6}
+                y="84"
+                fill="var(--muted-foreground)"
+                fontSize="8"
+                textAnchor="middle"
+              >
+                {index + 1}
+              </text>
+            </g>
+          );
+        })}
+      </svg>
+    </div>
+  );
 }

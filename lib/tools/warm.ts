@@ -11,9 +11,9 @@ let started = false;
 
 /**
  * Fetch ported tool chunks while the browser is idle so they land in the
- * service worker's static cache. Phase 1 has no loaders, so this is a no-op
- * until a later phase registers one; the wiring stays here so the offline
- * contract does not have to be redesigned then.
+ * service worker's static cache. Phases 2–4 now register seventeen loaders;
+ * the wiring stays here so later phases only add a loader and the offline
+ * contract does not have to be redesigned.
  */
 export function warmToolModules(): void {
   if (typeof window === "undefined" || started) return;

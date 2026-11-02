@@ -1,7 +1,7 @@
 # PM Web v3 — Phase 1 changelog (Tool Bench shell)
 
 **Date:** 2026-11-02  
-**Scope:** P1 only. No v1 tool calculation was ported. **Superseded for clean clones by `PM-Web-V3-Phase3.zip`** (cumulative P1 + P2 + P3); kept here as the P1 record.  
+**Scope:** P1 only. No v1 tool calculation was ported. **Superseded for clean clones by `PM-Web-V3-Phase4.zip`** (cumulative P1 + P2 + P3 + P4); kept here as the P1 record.  
 **Target:** clean `pm-web_v3` at remote `main` `56297e7b68ae7acab80c5c4c37b211417abe742c`. No commit or push was made. `package.json`, `pnpm-lock.yaml`, `app/manifest.ts`, `lib/pwa.ts`, `SW_VERSION` and cache names are unchanged; no new dependency was added.
 
 ## Amendments applied (supersede parts of v2)
@@ -15,39 +15,39 @@
 
 ## New files
 
-| Path | Purpose |
-| ---- | ------- |
-| `app/tools/page.tsx` | `/tools` metadata + null-returning route; DesktopOS opens the window. |
-| `app/tools.css` | Three-pane Tool Bench layout, gliding-tab styles, responsive/reduced-motion/focus rules. |
-| `components/tools/ToolsApp.tsx` | Tabs, search, recents/favourites state, `history.replaceState` deep links. |
-| `components/tools/ToolCatalog.tsx` | Searchable/filterable catalogue rows, status badges, favourite toggles. |
-| `components/tools/ToolShell.tsx` | Selected-tool header, lazy view boundary, copy-link/close actions. |
-| `components/tools/ToolStates.tsx` | Empty / Not installed yet / Available soon states. |
-| `components/system/ConnectivityListener.tsx` | v1-style sonner online/offline toast, Hugeicons, initial-offline fix. |
-| `hooks/use-tool-state.ts` | Local recents/favourites hook with hydration guard. |
-| `lib/tools/storage.ts` | Shared `pm-tools-state-v1` key. |
-| `lib/tools/catalog.ts` | 35 local entries: 34 `planned`, 1 `soon`, all offline-capable. |
-| `lib/tools/registry.ts` | Empty `TOOL_LOADERS` map + types for P2+ ports. |
-| `lib/tools/warm.ts` | Idle chunk warming once the service worker controls the page. |
-| `docs/tools-and-offline.md` | P1 contract, porting steps, storage/privacy, offline design, manual checklist. |
+| Path                                         | Purpose                                                                                  |
+| -------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| `app/tools/page.tsx`                         | `/tools` metadata + null-returning route; DesktopOS opens the window.                    |
+| `app/tools.css`                              | Three-pane Tool Bench layout, gliding-tab styles, responsive/reduced-motion/focus rules. |
+| `components/tools/ToolsApp.tsx`              | Tabs, search, recents/favourites state, `history.replaceState` deep links.               |
+| `components/tools/ToolCatalog.tsx`           | Searchable/filterable catalogue rows, status badges, favourite toggles.                  |
+| `components/tools/ToolShell.tsx`             | Selected-tool header, lazy view boundary, copy-link/close actions.                       |
+| `components/tools/ToolStates.tsx`            | Empty / Not installed yet / Available soon states.                                       |
+| `components/system/ConnectivityListener.tsx` | v1-style sonner online/offline toast, Hugeicons, initial-offline fix.                    |
+| `hooks/use-tool-state.ts`                    | Local recents/favourites hook with hydration guard.                                      |
+| `lib/tools/storage.ts`                       | Shared `pm-tools-state-v1` key.                                                          |
+| `lib/tools/catalog.ts`                       | 35 local entries: 34 `planned`, 1 `soon`, all offline-capable.                           |
+| `lib/tools/registry.ts`                      | Empty `TOOL_LOADERS` map + types for P2+ ports.                                          |
+| `lib/tools/warm.ts`                          | Idle chunk warming once the service worker controls the page.                            |
+| `docs/tools-and-offline.md`                  | P1 contract, porting steps, storage/privacy, offline design, manual checklist.           |
 
 ## Modified files
 
-| Path | Change |
-| ---- | ------ |
-| `lib/registry.ts` | Added `tools` to `AppId`, `APP_REGISTRY`, `DESKTOP_APPS`; removed the dead `icon` field and 16 unused `/icons/fluent-color/*` strings. |
-| `components/apps/AppBody.tsx` | Dynamic `ToolsApp` with `WindowBreadcrumb`; no route-surface freeze. |
-| `components/desktop/DesktopIcons.tsx` | `ToolsIcon` shortcut glyph. |
-| `components/command/CommandPalette.tsx` | `ToolsIcon` palette entry. |
-| `components/desktop/Desktop.tsx` | Mounts `ConnectivityListener` and calls `warmToolModules()` once. |
-| `app/layout.tsx` | Imports `tools.css`. |
-| `app/sitemap.ts`, `app/llms.txt/route.ts` | Add `/tools`. |
-| `app/~offline/page.tsx` | Add Tools to cached-area links; clarify offline copy. |
-| `public/sw.js` | Static cap 160→240; normalise `?tool=`; install-time `/tools` document + referenced asset precache; `PM_RECACHE_CORE` restores it. `SW_VERSION` stays 3. |
-| `lib/legal.ts` | Register `pm-tools-state-v1`; update cookie-notice copy. |
-| `components/legal/legal-documents.tsx` | Privacy Policy prose mentions Tool Bench recents/favourites. |
-| `docs/pwa-and-boot.md` | Cap, `/tools` precache, storage key, Clear-offline-cache wording. |
-| `README.md` | Tool Bench feature bullet + link to new doc. |
+| Path                                      | Change                                                                                                                                                   |
+| ----------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `lib/registry.ts`                         | Added `tools` to `AppId`, `APP_REGISTRY`, `DESKTOP_APPS`; removed the dead `icon` field and 16 unused `/icons/fluent-color/*` strings.                   |
+| `components/apps/AppBody.tsx`             | Dynamic `ToolsApp` with `WindowBreadcrumb`; no route-surface freeze.                                                                                     |
+| `components/desktop/DesktopIcons.tsx`     | `ToolsIcon` shortcut glyph.                                                                                                                              |
+| `components/command/CommandPalette.tsx`   | `ToolsIcon` palette entry.                                                                                                                               |
+| `components/desktop/Desktop.tsx`          | Mounts `ConnectivityListener` and calls `warmToolModules()` once.                                                                                        |
+| `app/layout.tsx`                          | Imports `tools.css`.                                                                                                                                     |
+| `app/sitemap.ts`, `app/llms.txt/route.ts` | Add `/tools`.                                                                                                                                            |
+| `app/~offline/page.tsx`                   | Add Tools to cached-area links; clarify offline copy.                                                                                                    |
+| `public/sw.js`                            | Static cap 160→240; normalise `?tool=`; install-time `/tools` document + referenced asset precache; `PM_RECACHE_CORE` restores it. `SW_VERSION` stays 3. |
+| `lib/legal.ts`                            | Register `pm-tools-state-v1`; update cookie-notice copy.                                                                                                 |
+| `components/legal/legal-documents.tsx`    | Privacy Policy prose mentions Tool Bench recents/favourites.                                                                                             |
+| `docs/pwa-and-boot.md`                    | Cap, `/tools` precache, storage key, Clear-offline-cache wording.                                                                                        |
+| `README.md`                               | Tool Bench feature bullet + link to new doc.                                                                                                             |
 
 ## Validation performed
 

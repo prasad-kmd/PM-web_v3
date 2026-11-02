@@ -1,10 +1,11 @@
 /**
  * Local catalogue for the Tool Bench.
  *
- * Phase 1 ships the shell only: every entry is `planned` except the deferred
- * LaTeX tool, which is `soon`. Later phases flip entries to `ported` and add a
- * matching loader in `lib/tools/registry.ts`. The catalogue is deliberately
- * dependency-free so search, recents and favourites work without a network.
+ * Phase 1 shipped the shell; Phases 2–4 have since flipped seventeen tools to
+ * `ported` and added matching loaders in `lib/tools/registry.ts`. The deferred
+ * LaTeX tool remains `soon`, and the remaining entries stay `planned` for later
+ * phases. The catalogue is deliberately dependency-free so search, recents and
+ * favourites work without a network.
  */
 
 export const TOOL_CATEGORIES = [
@@ -157,7 +158,7 @@ export const TOOL_CATALOG: readonly ToolMeta[] = [
     category: "electronics",
     description: "Design astable and monostable 555 timer circuits.",
     keywords: ["555", "timer", "astable", "monostable", "frequency"],
-    status: "planned",
+    status: "ported",
     phase: "P4",
     offline: true,
   },
@@ -167,7 +168,7 @@ export const TOOL_CATALOG: readonly ToolMeta[] = [
     category: "electronics",
     description: "Find standard E12/E24 resistor pairs for a target voltage.",
     keywords: ["voltage", "divider", "resistor", "e12", "e24"],
-    status: "planned",
+    status: "ported",
     phase: "P4",
     offline: true,
   },
@@ -177,7 +178,7 @@ export const TOOL_CATALOG: readonly ToolMeta[] = [
     category: "electronics",
     description: "Decode 4, 5 and 6-band resistors with a visual band diagram.",
     keywords: ["resistor", "colour", "color", "bands", "tolerance"],
-    status: "planned",
+    status: "ported",
     phase: "P4",
     offline: true,
   },
@@ -187,7 +188,7 @@ export const TOOL_CATALOG: readonly ToolMeta[] = [
     category: "electronics",
     description: "Calculate inverting and non-inverting amplifier gain.",
     keywords: ["opamp", "op-amp", "gain", "amplifier", "inverting"],
-    status: "planned",
+    status: "ported",
     phase: "P4",
     offline: true,
   },
@@ -197,7 +198,7 @@ export const TOOL_CATALOG: readonly ToolMeta[] = [
     category: "electronics",
     description: "Size PCB traces from IPC-2221 current and temperature rise.",
     keywords: ["pcb", "trace", "width", "ipc-2221", "current"],
-    status: "planned",
+    status: "ported",
     phase: "P4",
     offline: true,
   },
@@ -205,9 +206,10 @@ export const TOOL_CATALOG: readonly ToolMeta[] = [
     id: "pcb-impedance-calculator",
     title: "PCB Impedance Calculator",
     category: "electronics",
-    description: "Estimate microstrip and stripline characteristic impedance.",
+    description:
+      "Estimate IPC-2141 microstrip and stripline impedance with validity warnings.",
     keywords: ["pcb", "impedance", "microstrip", "stripline", "transmission"],
-    status: "planned",
+    status: "ported",
     phase: "P4",
     offline: true,
   },

@@ -72,7 +72,7 @@ The worker is `public/sw.js`. Keep `SW_VERSION` there in sync with `PWA_CACHE_VE
 
 The root document is not precached, so the current Desktop, appearance cookies and boot decision are not frozen into an install-time shell. The installed start URL `/?source=pwa` is normalised to `/` when stored as a visited page.
 
-`/tools` is the one deliberate install-time exception: its static document is precached into `pm-pages-v3` and the `/_next/static/*` assets it references are warmed into `pm-static-v3`, so the Tool Bench shell opens on a first offline visit. The selected-tool `?tool=` parameter is normalised away because it uses `history.replaceState`, not an RSC navigation. P2 and P3 now register eleven ported tool chunks; `warmToolModules()` warms them once the worker controls the page. `SW_VERSION` and the cache names are unchanged; no existing key is invalidated.
+`/tools` is the one deliberate install-time exception: its static document is precached into `pm-pages-v3` and the `/_next/static/*` assets it references are warmed into `pm-static-v3`, so the Tool Bench shell opens on a first offline visit. The selected-tool `?tool=` parameter is normalised away because it uses `history.replaceState`, not an RSC navigation. P2, P3 and P4 now register seventeen ported tool chunks; `warmToolModules()` warms them once the worker controls the page. `SW_VERSION` and the cache names are unchanged; no existing key is invalidated.
 
 The worker only handles same-origin `GET` requests. It does not handle or store:
 

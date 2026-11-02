@@ -1364,3 +1364,99 @@
     grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
   }
 }
+
+/* Phase 4 — electronics views */
+.tool-resistor-wrap {
+  margin-top: 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--muted);
+  padding: 6px;
+}
+
+.tool-resistor-svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 120px;
+}
+
+.tool-band-fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.tool-band-field {
+  min-width: 0;
+}
+
+.tool-band-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(64px, 1fr));
+  gap: 4px;
+}
+
+.tool-band-swatch {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  background: var(--background);
+  padding: 4px 2px;
+  color: var(--muted-foreground);
+  font-size: 11px;
+  line-height: 1.2;
+  cursor: pointer;
+}
+
+.tool-band-swatch:hover {
+  border-color: color-mix(in oklch, var(--ring) 45%, transparent);
+}
+
+.tool-band-swatch.is-selected {
+  border-color: var(--primary);
+  color: var(--foreground);
+  box-shadow: 0 0 0 1px color-mix(in oklch, var(--primary) 35%, transparent);
+}
+
+.tool-band-swatch:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 1px;
+}
+
+.tool-band-swatch-color {
+  width: 22px;
+  height: 12px;
+  border: 1px solid var(--border);
+  border-radius: 2px;
+}
+
+.tool-band-swatch-color.is-transparent {
+  background:
+    linear-gradient(45deg, var(--muted) 25%, transparent 25%),
+    linear-gradient(-45deg, var(--muted) 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, var(--muted) 75%),
+    linear-gradient(-45deg, transparent 75%, var(--muted) 75%);
+  background-size: 6px 6px;
+}
+
+.tool-band-swatch-label {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@container window-body (max-width: 720px) {
+  .tool-band-fields {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.tool-section-badge {
+  margin-top: 6px;
+}
