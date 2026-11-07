@@ -96,6 +96,8 @@ export function PlayerStage({
 
   const watchdogRef = useRef<number | null>(null);
   const autoSwitchedRef = useRef(false);
+  const onEpisodeChangeRef = useRef(onEpisodeChange);
+  const lastProgressRef = useRef<string | null>(null);
 
   const clearWatchdog = () => {
     if (watchdogRef.current !== null) {
@@ -148,13 +150,24 @@ export function PlayerStage({
     return () => controller.abort();
   }, [episode, mediaType, season, tmdbId]);
 
-  /* Remember where we are, so "Continue" is honest next time. */
+  /* Always call the latest callback without making it a dependency — a parent
+     closure in the dep array is an infinite loop (write → render → new → write). */
+  useEffect(() => {
+    onEpisodeChangeRef.current = onEpisodeChange;
+  }, [onEpisodeChange]);
+
+  /* Remember where we are, so "Continue" is honest next time. Guarded by the
+     last value we reported, so a re-render can never write the same progress
+     twice. */
   useEffect(() => {
     if (mediaType !== "tv") return;
     if (season === null) return;
+    const token = `${titleKey}:${season}:${episode ?? 0}`;
+    if (lastProgressRef.current === token) return;
+    lastProgressRef.current = token;
     saveProgress(titleKey, season, episode);
-    onEpisodeChange?.(season, episode);
-  }, [episode, mediaType, onEpisodeChange, season, titleKey]);
+    onEpisodeChangeRef.current?.(season, episode);
+  }, [episode, mediaType, season, titleKey]);
 
   const active = sources[activeIndex] ?? sources[0] ?? null;
 

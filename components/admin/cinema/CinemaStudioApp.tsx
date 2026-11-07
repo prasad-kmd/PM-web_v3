@@ -196,7 +196,6 @@ function CinemaStudioShell() {
     <TitleView
       mediaType={route.mediaType}
       tmdbId={route.tmdbId}
-      onBack={back}
       onOpenTitle={openTitle}
       onOpenPerson={openPerson}
     />

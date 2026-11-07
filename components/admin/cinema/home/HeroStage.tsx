@@ -8,7 +8,7 @@ import {
 import { HugeiconsIcon } from "@hugeicons/react";
 import { useShouldReduceMotion } from "@animate-ui/react/utils/motion";
 import { AnimatePresence, motion } from "motion/react";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { TMDB_IMAGE_SIZES_ATTR } from "@/lib/cinema/config";
@@ -42,6 +42,12 @@ export function HeroStage({
   const [paused, setPaused] = useState(false);
   const [hidden, setHidden] = useState(false);
 
+  /* Milliseconds already spent on the current slide, so hovering *pauses* the
+     dwell instead of restarting it. */
+  const elapsedRef = useRef(0);
+  const slideRef = useRef(index);
+  const barRef = useRef<HTMLSpanElement | null>(null);
+
   useEffect(() => {
     setIndex((current) =>
       pool.length > 0 ? Math.min(current, pool.length - 1) : 0,
@@ -63,10 +69,41 @@ export function HeroStage({
 
   const running = !paused && !hidden && !reduceMotion && pool.length > 1;
 
+  /* One animation frame loop drives both the hairline and the advance, so the
+     bar always shows the time actually left. Pausing parks the clock; resuming
+     continues from where it stopped. */
   useEffect(() => {
+    if (slideRef.current !== index) {
+      slideRef.current = index;
+      elapsedRef.current = 0;
+      if (barRef.current) barRef.current.style.transform = "scaleX(0)";
+    }
     if (!running) return;
-    const timer = window.setTimeout(() => step(1), AUTO_ADVANCE_MS);
-    return () => window.clearTimeout(timer);
+
+    const startedAt = performance.now() - elapsedRef.current;
+    let frame = 0;
+
+    const tick = (now: number) => {
+      const progress = Math.min(1, (now - startedAt) / AUTO_ADVANCE_MS);
+      if (barRef.current) {
+        barRef.current.style.transform = `scaleX(${progress})`;
+      }
+      if (progress >= 1) {
+        elapsedRef.current = 0;
+        step(1);
+        return;
+      }
+      frame = window.requestAnimationFrame(tick);
+    };
+
+    frame = window.requestAnimationFrame(tick);
+    return () => {
+      window.cancelAnimationFrame(frame);
+      elapsedRef.current = Math.min(
+        AUTO_ADVANCE_MS,
+        performance.now() - startedAt,
+      );
+    };
   }, [index, running, step]);
 
   if (pool.length === 0) return null;
@@ -193,10 +230,7 @@ export function HeroStage({
 
       {pool.length > 1 ? (
         <div className="cinema-hero-progress" aria-hidden>
-          <span
-            key={`${index}-${running}`}
-            className="cinema-hero-progress-bar"
-          />
+          <span ref={barRef} className="cinema-hero-progress-bar" />
         </div>
       ) : null}
     </section>

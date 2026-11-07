@@ -34,13 +34,19 @@ export function EpisodeBar({
     `/api/cinema/season?tv=${tvId}&season=${value.season}`,
   );
 
-  const seasonItems = seasons.map((season) => ({
-    value: String(season.seasonNumber),
-    label:
-      season.seasonNumber === 0
-        ? "Specials"
-        : `${season.name}${season.episodeCount > 0 ? ` · ${season.episodeCount} eps` : ""}`,
-  }));
+  /* `items` must be referentially stable: Base UI re-registers the list in an
+     effect, and a fresh array on every render is a render loop. */
+  const seasonItems = useMemo(
+    () =>
+      seasons.map((season) => ({
+        value: String(season.seasonNumber),
+        label:
+          season.seasonNumber === 0
+            ? "Specials"
+            : `${season.name}${season.episodeCount > 0 ? ` · ${season.episodeCount} eps` : ""}`,
+      })),
+    [seasons],
+  );
 
   const episodeItems = useMemo(() => {
     if (state.kind !== "ready") return [];

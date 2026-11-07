@@ -187,18 +187,25 @@ function DesktopWorkspace({
         (windowState) => windowState.appId === appId && !windowState.exiting,
       );
 
-      if (isCollection && !isAlreadyOpen) {
-        // Route memory belongs to a live window, not its desktop shortcut. A
-        // closed (or closing) collection always launches at its canonical index.
+      /* Route memory belongs to a live window, not its desktop shortcut. A
+         closed (or closing) window relaunches at its canonical index — this is
+         what stops the cinema studio from reopening on the last film you
+         watched, and it is the rule collections already followed. */
+      const resetsOnReopen =
+        isCollection || Boolean(APP_REGISTRY[appId].deepLinks);
+
+      if (resetsOnReopen && !isAlreadyOpen) {
         const listingPath = getPathnameForApp(appId);
         routePaths.current[appId] = listingPath;
-        setSnapshots((current) => {
-          if (!current[appId]) return current;
-          const next = { ...current };
-          delete next[appId];
-          return next;
-        });
-        setLaunchingCollection(appId);
+        if (isCollection) {
+          setSnapshots((current) => {
+            if (!current[appId]) return current;
+            const next = { ...current };
+            delete next[appId];
+            return next;
+          });
+          setLaunchingCollection(appId);
+        }
         expectedRouteAppRef.current = appId;
         handlingRouteChangeRef.current = true;
         lastSyncedAppRef.current = appId;

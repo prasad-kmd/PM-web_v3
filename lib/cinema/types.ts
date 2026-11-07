@@ -121,6 +121,14 @@ export const TmdbVideoSchema = z.object({
   published_at: z.string().nullish(),
 });
 
+export const TmdbProviderSchema = z.object({
+  provider_id: z.number().nullish(),
+  provider_name: z.string().nullish(),
+  logo_path: z.string().nullish(),
+  display_priority: z.number().nullish(),
+});
+export type TmdbProvider = z.infer<typeof TmdbProviderSchema>;
+
 export const TmdbTitleDetailSchema = z.object({
   id: z.number(),
   imdb_id: z.string().nullish(),
@@ -147,10 +155,21 @@ export const TmdbTitleDetailSchema = z.object({
   adult: z.boolean().nullish(),
   genres: z.array(TmdbGenreSchema).nullish(),
   spoken_languages: z
-    .array(z.object({ english_name: z.string().nullish() }))
+    .array(
+      z.object({
+        english_name: z.string().nullish(),
+        name: z.string().nullish(),
+        iso_639_1: z.string().nullish(),
+      }),
+    )
     .nullish(),
   production_countries: z
-    .array(z.object({ iso_3166_1: z.string().nullish() }))
+    .array(
+      z.object({
+        iso_3166_1: z.string().nullish(),
+        name: z.string().nullish(),
+      }),
+    )
     .nullish(),
   belongs_to_collection: z
     .object({ id: z.number(), name: z.string().nullish() })
@@ -174,6 +193,155 @@ export const TmdbTitleDetailSchema = z.object({
         overview: z.string().nullish(),
       }),
     )
+    .nullish(),
+  /* Everything below arrives through `append_to_response` and is optional. */
+  budget: z.number().nullish(),
+  revenue: z.number().nullish(),
+  homepage: z.string().nullish(),
+  type: z.string().nullish(),
+  in_production: z.boolean().nullish(),
+  production_companies: z
+    .array(
+      z.object({
+        id: z.number(),
+        name: z.string().nullish(),
+        logo_path: z.string().nullish(),
+        origin_country: z.string().nullish(),
+      }),
+    )
+    .nullish(),
+  networks: z
+    .array(
+      z.object({
+        id: z.number(),
+        name: z.string().nullish(),
+        logo_path: z.string().nullish(),
+        origin_country: z.string().nullish(),
+      }),
+    )
+    .nullish(),
+  created_by: z
+    .array(
+      z.object({
+        id: z.number(),
+        name: z.string().nullish(),
+        profile_path: z.string().nullish(),
+      }),
+    )
+    .nullish(),
+  keywords: z
+    .object({
+      keywords: z
+        .array(z.object({ id: z.number(), name: z.string().nullish() }))
+        .nullish(),
+      results: z
+        .array(z.object({ id: z.number(), name: z.string().nullish() }))
+        .nullish(),
+    })
+    .nullish(),
+  external_ids: z
+    .object({
+      imdb_id: z.string().nullish(),
+      wikidata_id: z.string().nullish(),
+      facebook_id: z.string().nullish(),
+      instagram_id: z.string().nullish(),
+      twitter_id: z.string().nullish(),
+    })
+    .nullish(),
+  alternative_titles: z
+    .object({
+      titles: z
+        .array(
+          z.object({
+            iso_3166_1: z.string().nullish(),
+            title: z.string().nullish(),
+            type: z.string().nullish(),
+          }),
+        )
+        .nullish(),
+    })
+    .nullish(),
+  release_dates: z
+    .object({
+      results: z
+        .array(
+          z.object({
+            iso_3166_1: z.string().nullish(),
+            release_dates: z
+              .array(
+                z.object({
+                  certification: z.string().nullish(),
+                  release_date: z.string().nullish(),
+                  type: z.number().nullish(),
+                }),
+              )
+              .nullish(),
+          }),
+        )
+        .nullish(),
+    })
+    .nullish(),
+  content_ratings: z
+    .object({
+      results: z
+        .array(
+          z.object({
+            iso_3166_1: z.string().nullish(),
+            rating: z.string().nullish(),
+          }),
+        )
+        .nullish(),
+    })
+    .nullish(),
+  reviews: z
+    .object({
+      results: z
+        .array(
+          z.object({
+            id: z.string(),
+            author: z.string().nullish(),
+            content: z.string().nullish(),
+            created_at: z.string().nullish(),
+            author_details: z
+              .object({ rating: z.number().nullish() })
+              .nullish(),
+          }),
+        )
+        .nullish(),
+    })
+    .nullish(),
+  "watch/providers": z
+    .object({
+      results: z
+        .record(
+          z.string(),
+          z.object({
+            link: z.string().nullish(),
+            flatrate: z.array(TmdbProviderSchema).nullish(),
+            rent: z.array(TmdbProviderSchema).nullish(),
+            buy: z.array(TmdbProviderSchema).nullish(),
+            free: z.array(TmdbProviderSchema).nullish(),
+            ads: z.array(TmdbProviderSchema).nullish(),
+          }),
+        )
+        .nullish(),
+    })
+    .nullish(),
+  last_episode_to_air: z
+    .object({
+      season_number: z.number().nullish(),
+      episode_number: z.number().nullish(),
+      name: z.string().nullish(),
+      air_date: z.string().nullish(),
+    })
+    .nullish(),
+  next_episode_to_air: z
+    .object({
+      season_number: z.number().nullish(),
+      episode_number: z.number().nullish(),
+      name: z.string().nullish(),
+      air_date: z.string().nullish(),
+    })
     .nullish(),
 });
 export type TmdbTitleDetail = z.infer<typeof TmdbTitleDetailSchema>;
@@ -320,17 +488,93 @@ export type CinemaSeasonSummary = {
   overview: string;
 };
 
+export type CinemaCompany = {
+  id: number;
+  name: string;
+  logoPath: string | null;
+  logoText: string | null;
+  country: string | null;
+};
+
+export type CinemaCreatorCredit = {
+  tmdbId: number;
+  name: string;
+  profilePath: string | null;
+};
+
+/** A named group of crew names — "Music by", "Cinematography", … */
+export type CinemaCrewGroup = {
+  label: string;
+  names: string[];
+};
+
+export type CinemaReview = {
+  id: string;
+  author: string;
+  excerpt: string;
+  createdAt: string | null;
+  rating: number | null;
+};
+
+export type CinemaProvider = {
+  name: string;
+  logoPath: string | null;
+  kind: "stream" | "rent" | "buy" | "free" | "ads";
+};
+
+export type CinemaEpisodeRef = {
+  season: number;
+  episode: number;
+  name: string;
+  airDate: string | null;
+};
+
+export type CinemaExternalLinks = {
+  imdbId: string | null;
+  homepage: string | null;
+  wikidata: string | null;
+  facebook: string | null;
+  instagram: string | null;
+  twitter: string | null;
+};
+
 export type CinemaTitleDetail = CinemaTitle & {
   tagline: string;
   status: string | null;
+  /** Full ISO date of release / first air date. */
+  releaseDate: string | null;
+  lastAirDate: string | null;
   runtimeMinutes: number | null;
   seasons: number | null;
   episodes: number | null;
   genres: string[];
   imdbId: string | null;
+  originalTitle: string;
+  originalLanguage: string | null;
+  /** BBFC / MPAA / TV-MA style certificate, best guess by region priority. */
+  certification: string | null;
+  /** "Scripted", "Miniseries", … TV only. */
+  showType: string | null;
+  inProduction: boolean | null;
+  budget: number | null;
+  revenue: number | null;
   countries: string[];
+  countryCodes: string[];
   languages: string[];
+  companies: CinemaCompany[];
+  networks: CinemaCompany[];
+  createdBy: CinemaCreatorCredit[];
   directors: string[];
+  writers: string[];
+  crewGroups: CinemaCrewGroup[];
+  keywords: string[];
+  alternativeTitles: string[];
+  external: CinemaExternalLinks;
+  providers: CinemaProvider[];
+  providerLink: string | null;
+  reviews: CinemaReview[];
+  nextEpisode: CinemaEpisodeRef | null;
+  lastEpisode: CinemaEpisodeRef | null;
   cast: CinemaCastCredit[];
   crew: CinemaCrewCredit[];
   videos: CinemaVideo[];

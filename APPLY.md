@@ -4,7 +4,7 @@ Admin-only film & TV studio for **pm-web_v3**, at `/cinema`.
 Built against the repo as cloned (`PM-Web_V3 v3.2.9`, Next 16.3.5, React 19.2.8, pnpm 11.9.0).
 
 **65 files · no `.diff`/`.patch` · no new npm dependencies · lockfile untouched.**
-This archive supersedes the previous drop — unzip it over the same paths.
+This archive supersedes every previous drop — unzip it over the same paths.
 
 ---
 
@@ -16,7 +16,7 @@ unzip -o cinema-studio.zip -d .
 rm APPLY.md            # optional — the guide is also in docs/cinema-setup.md
 ```
 
-Two paths moved since the last drop, so **delete the old ones first** if you
+Two paths moved in the second drop, so **delete the old ones first** if you
 applied it:
 
 ```bash
@@ -49,28 +49,54 @@ cinema styling lives in the new `app/cinema.css`.
 
 ### What changed in this drop
 
+**Iteration 3 — title page, detail depth, hero timing**
+
+1. **One back button, not two.** The title banner no longer carries its own back
+   arrow; the studio toolbar owns Back (`⌘[` still works).
+2. **Two columns under the banner.** Left: episode picker + player — theater mode
+   still escapes the column and fills the window. Right: poster and airing card,
+   then the **library panel**, then synopsis and every detail card. Collapses to
+   a single column below ~900 px of window width.
+3. **Far more detail.** The title route now asks TMDB for `credits, videos,
+   keywords, external_ids, alternative_titles, watch/providers` plus
+   `release_dates` (films) or `content_ratings` + `aggregate_credits` (series) in
+   one request, and renders: original title, status, release date, first/last air
+   dates, series type + in-production flag, season and episode counts, episode
+   length, next and last episode, certificate (US → GB → CA → AU → DE → FR),
+   budget and box office, countries, languages, original language, networks,
+   studios, collection, creators, a role-grouped crew (written / produced /
+   music / camera / editing / design / casting / VFX / sound), TMDB votes and
+   popularity, IMDb and Wikidata ids, keywords, alternate titles, an OMDb card
+   (rated, released, runtime, awards, box office), “where to watch” providers,
+   outward links (site, IMDb, Wikidata, Facebook, Instagram, X, TMDB), member
+   reviews, extra videos, and a 30-deep cast rail. Anything TMDB omits is simply
+   not rendered, so sparse titles still read as a finished page.
+4. **Hero pauses instead of restarting.** The 9 s dwell is driven by
+   `requestAnimationFrame` and keeps its elapsed time, so hovering pauses both
+   the slide and the hairline exactly where they were and resumes from there.
+5. **Dead CSS removed** (`title-body`, `title-info`, `title-meta`,
+   `title-overview`, `title-actions`, banner back-button rules); the stylesheet
+   is still the single `app/cinema.css`, and it is PostCSS-clean.
+
+**Iteration 2 — URLs, cache, player**
+
 1. **Real URLs.** One catch-all page (`app/cinema/[[...segments]]/page.tsx`)
    plus a `deepLinks` flag in the registry means `/cinema/movie/550`,
    `/cinema/tv/1396`, `/cinema/person/287`, `/cinema/list/row/trending`,
-   `/cinema/search?q=…`, `/cinema/library` and `/cinema/settings` are all real,
-   shareable, reloadable addresses. Browser **Back/Forward now work** and the
-   window no longer reloads on every step, because the app id is resolved from
-   the path prefix instead of falling through to `null`.
+   `/cinema/search?q=…`, `/cinema/library` and `/cinema/settings` are real,
+   shareable, reloadable addresses. Browser **Back/Forward work**, and the window
+   no longer reloads on every step, because the app id resolves from the path
+   prefix instead of falling through to `null`.
 2. **Caching.** `store/use-cinema-fetch.ts` keeps a five-minute module cache, so
    going Back to a title paints from memory with no skeleton and no refetch.
-3. **Title page.** Full-width backdrop **banner** with scrim, back button in the
-   corner, then the **player mounted immediately** — no Play gate — then poster,
-   facts, cast, seasons, recommendations, downloads.
-4. **Autoplay query removed.** Embeds are built as bare
-   `{base}/embed/{movie|tv}/{id}[/{s}/{e}]` — no `?autoplay=1`, no query string
-   at all. That parameter is what makes these hosts answer “unavailable”.
-5. **Spoiler blur is gone** — the preference, the schema field, the setting row
-   and the CSS. Synopses always readable.
-6. **YTS** now calls `https://movies-api.accel.li/api/v2`.
-7. **Hero auto-rotates** every 9 s (cross-fade, hairline progress, pauses on
-   hover/focus/hidden tab, off under `prefers-reduced-motion`), and the
-   top tabs slide with an Animate UI-style shared pill plus an animated view
-   transition between screens.
+3. **Player up front.** Title pages mount the player immediately — no Play gate.
+4. **No autoplay query.** Embeds are bare
+   `{base}/embed/{movie|tv}/{id}[/{s}/{e}]`; `?autoplay=1` is what makes these
+   hosts answer “unavailable”.
+5. **Spoiler blur removed** everywhere — preference, schema field, setting row, CSS.
+6. **YTS** uses `https://movies-api.accel.li/api/v2`.
+7. **Animated shell.** Sliding tab pill (`layoutId`), animated view transitions,
+   auto-rotating hero.
 
 ---
 
@@ -78,13 +104,14 @@ cinema styling lives in the new `app/cinema.css`.
 
 ```dotenv
 TMDB_API_KEY=                 # v3 key (32 chars) OR v4 read token (eyJ…)
-OMDB_API_KEY=                 # optional — IMDb + Metacritic chips
+OMDB_API_KEY=                 # optional — IMDb + Metacritic chips, awards, box office
 NOTION_CINEMA_FAVORITES_ID=   # data source id of your library database
 ```
 
 - **YTS needs no variable** (keyless public API; base URL is hard-coded).
 - **No `CINEMA_*` variables.** Provider order, probe/watchdog timeouts, cache
-  windows, paging, locale — all literals in `lib/cinema/config.ts`.
+  windows, paging, locale, region (used for certificates and “where to watch”)
+  — all literals in `lib/cinema/config.ts`.
 - **No dedicated Notion integration.** The library reuses the existing chain
   (`NOTION_API_KEY` → `NOTION_AUTH_TOKEN` → `NOTION_API_TOKEN` → `NOTION_TOKEN`).
 
@@ -102,8 +129,8 @@ Full detail in `docs/cinema-setup.md`. The short version:
    absent. `Payload JSON` (rich text) holds a lossless envelope, so no data is
    lost even with a two-column database.
 4. Preferences live as one `__cinema_prefs` row in the **same** database — that
-   is why there is no second variable. The row now holds `defaultProviderId` and
-   `posterDensity` only (the spoiler flag is gone).
+   is why there is no second variable. The row holds `defaultProviderId` and
+   `posterDensity` only.
 
 Leave the variable unset and the studio still works: it falls back to a
 session-only store and the toolbar pill says so.
@@ -112,23 +139,24 @@ session-only store and the toolbar pill says so.
 
 ## 4. What you get
 
-**Browse** — a hero that auto-rotates every 9 s (dots, arrows, progress
-hairline, pause on hover/focus), mood strip, ranked trending rail, four curated
-rails, six collection tiles. Every “See all” is real and server-paged.
+**Browse** — a hero that auto-rotates every 9 s (dots, arrows, progress hairline,
+hover pauses rather than restarts), mood strip, ranked trending rail, four
+curated rails, six collection tiles. Every “See all” is real and server-paged.
 
 **Search** — debounced 280 ms, films + series + **people** in one response,
 filter chips, recents, load-more. The term lives in `?q=`, written with
 `replaceState` so typing costs no navigation and Back still returns to the list.
 
-**Title** — banner header, metadata in tabular figures, TMDB/IMDb/Metacritic
-chips, synopsis, player immediately, in-page season chips, cast rail,
-recommendations, YTS download table, library panel (status / 1–10 rating /
-notes).
+**Title** — banner with score chips (TMDB, IMDb, Metacritic, RT) and genres, then
+two columns: episode picker + player on the left, poster, library panel and the
+full detail stack on the right. Below: reviews, cast rail, recommendations, YTS
+download table.
 
 **Playback** — `vidsrc.to` primary with four mirrors behind it, server-side
 reachability probe (2 s, cached 5 min), always-visible provider strip, 9 s
-watchdog with one automatic failover, theater mode (Esc exits), remembered
-provider, season 0 labelled *Specials*, per-episode progress into the library.
+watchdog with one automatic failover, theater mode (Esc exits) that escapes the
+two-column grid, remembered provider, season 0 labelled *Specials*, per-episode
+progress into the library.
 
 **Filmography** — click any face in a cast list: merged `combined_credits`,
 dedupe, self-appearances dropped, filters (films / series / acting / crew) and
@@ -155,18 +183,19 @@ Manual checklist:
 1. Signed out → `http://localhost:3000/cinema/movie/550` returns a **404**. That
    is the stealth guard, not a bug.
 2. Sign in → **Profile → Studio → Cinema Studio** (also `⌘K` → “Cinema Studio”).
-3. Home renders and the hero **changes on its own** after nine seconds; hovering
-   pauses it. Posters load (this proves CSP `img-src`).
-4. Open a film → the URL becomes `/cinema/movie/{id}` and the player is already
-   there. **Reload that URL** — the window comes back on the same film.
-5. Press browser **Back** → you return to the home grid with no reload flash;
-   press **Forward** → the film again. `⌘[` / `Ctrl+[` does the same.
-6. If the iframe is black, the CSP `frame-src` edit did not apply — check the
+3. Home renders; the hero **changes on its own** after nine seconds, and hovering
+   **pauses** it mid-slide (the hairline stops too) instead of restarting.
+4. Open a film → URL becomes `/cinema/movie/{id}`, the player is already there,
+   and the page is two columns. Only one back button (toolbar).
+5. Hit **theater mode** on the player — it fills the window; Esc returns.
+6. Reload that URL — the window comes back on the same film.
+7. Press browser **Back** → home grid, no reload flash; **Forward** → the film.
+8. If the iframe is black, the CSP `frame-src` edit did not apply — check the
    Network tab for a CSP violation. Switch providers with mouse *and* keyboard.
-7. Open a series → pick a season including **Specials** if present.
-8. Save a title to **Watchlist** → toolbar pill, Library tab and the Notion row
-   agree within a second.
-9. Open a cast member → filmography → open a credit → Back twice.
+9. Open a series → season + episode selects, season 0 labelled **Specials**.
+10. Save a title to **Watchlist** → toolbar pill, Library tab and the Notion row
+    agree within a second.
+11. Open a cast member → filmography → open a credit → Back twice.
 
 ---
 
@@ -204,20 +233,22 @@ it. The app leaves no other trace.
 - **The probe is advisory.** It checks the provider's origin, not every embed
   path. A red dot means “did not answer a server request”, which these hosts
   sometimes do while serving fine in an iframe.
-- **No autoplay.** The session starts paused inside the provider's own player,
-  because every query parameter we tried on these hosts — `?autoplay=1`
-  included — pushed them into “unavailable”.
+- **No autoplay.** The session starts paused inside the provider's own player.
+- **Detail depth is TMDB's, not ours.** Budget, revenue and certificates exist
+  for most films and few series; “where to watch” is the US (`CINEMA_REGION`)
+  row of TMDB's provider feed, which is availability metadata — not a stream.
 - **The five-minute cache is per tab.** A hard reload always refetches; nothing
-  is persisted to storage, so stale data cannot outlive the visit.
-- **TMDB's `discover/tv` has no `with_cast`.** TV filmography is therefore
-  filtered client-side from `combined_credits`; films could be paged
-  server-side, series cannot.
+  is persisted to storage.
+- **TMDB's `discover/tv` has no `with_cast`.** TV filmography is filtered
+  client-side from `combined_credits`.
 - **Notion rate limits** (≈3 req/s) apply to writes. Saves are sequential and
   optimistic, and a failure rolls back rather than drifting.
 - **Legal**: `vidsrc.*` embeds and YTS torrents are unlicensed third-party
   distribution in most jurisdictions. The page is owner-only and noindexed,
   which limits exposure but is not a shield.
 - **Not run here**: `next build`. The turbopack production build exceeded the
-  sandbox, so verification rests on `tsc --noEmit` (clean) plus prettier. Your
-  local `pnpm build` is the real gate — nothing in this delivery adds a
-  dependency, so a lockfile surprise is not possible.
+  sandbox, so verification rests on `tsc --noEmit` (clean), `prettier --check`
+  (clean), a **PostCSS parse** of `app/cinema.css` (clean — the same parser the
+  build uses), and a Node harness that feeds realistic TMDB payloads through the
+  zod schema and the title mapper for both `movie` and `tv`. Your local
+  `pnpm build` is still the real gate — nothing here adds a dependency.

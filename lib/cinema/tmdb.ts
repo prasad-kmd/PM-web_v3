@@ -28,10 +28,17 @@ import {
   type CinemaResult,
   type CinemaSearchResults,
   type CinemaSeasonSummary,
+  type CinemaCompany,
+  type CinemaCreatorCredit,
+  type CinemaCrewGroup,
+  type CinemaEpisodeRef,
+  type CinemaProvider,
+  type CinemaReview,
   type CinemaTitle,
   type CinemaTitleDetail,
   type TmdbMediaItem,
   type TmdbPerson,
+  type TmdbProvider,
   type TmdbTitleDetail,
 } from "./types";
 
@@ -178,6 +185,87 @@ function toTitles(
   return output;
 }
 
+const CREW_JOB_GROUPS: { label: string; jobs: readonly string[] }[] = [
+  {
+    label: "Written by",
+    jobs: ["Screenplay", "Writer", "Story", "Teleplay", "Characters"],
+  },
+  { label: "Produced by", jobs: ["Producer"] },
+  { label: "Executive producers", jobs: ["Executive Producer"] },
+  { label: "Music by", jobs: ["Original Music Composer", "Music"] },
+  { label: "Cinematography", jobs: ["Director of Photography"] },
+  { label: "Editing", jobs: ["Editor", "Additional Editor"] },
+  { label: "Production design", jobs: ["Production Design", "Art Direction"] },
+  { label: "Costume design", jobs: ["Costume Design"] },
+  { label: "Casting", jobs: ["Casting", "Casting Director"] },
+  {
+    label: "Visual effects",
+    jobs: ["Visual Effects Supervisor", "VFX Supervisor", "Visual Effects"],
+  },
+  {
+    label: "Sound",
+    jobs: [
+      "Sound Designer",
+      "Supervising Sound Editor",
+      "Sound Re-Recording Mixer",
+    ],
+  },
+];
+
+/** Regions tried in order when picking a certificate. */
+const CERT_REGIONS = [CINEMA_REGION, "GB", "CA", "AU", "NZ", "DE", "FR"];
+
+function bestCertification(detail: TmdbTitleDetail): string | null {
+  const ratings = detail.content_ratings?.results ?? [];
+  for (const region of CERT_REGIONS) {
+    const hit = ratings.find(
+      (entry) => entry.iso_3166_1 === region && entry.rating?.trim(),
+    );
+    if (hit?.rating) return hit.rating.trim();
+  }
+  const anyRating = ratings.find((entry) => entry.rating?.trim());
+  if (anyRating?.rating) return anyRating.rating.trim();
+
+  const releases = detail.release_dates?.results ?? [];
+  for (const region of CERT_REGIONS) {
+    const hit = releases.find((entry) => entry.iso_3166_1 === region);
+    if (!hit) continue;
+    const dates = hit.release_dates ?? [];
+    const certified =
+      dates.find((date) => date.certification?.trim() && date.type === 3) ??
+      dates.find((date) => date.certification?.trim());
+    if (certified?.certification) return certified.certification.trim();
+  }
+  for (const region of releases) {
+    const certified = (region.release_dates ?? []).find((date) =>
+      date.certification?.trim(),
+    );
+    if (certified?.certification) return certified.certification.trim();
+  }
+  return null;
+}
+
+function trimTo(value: string, limit: number): string {
+  const text = value.trim();
+  if (text.length <= limit) return text;
+  const cut = text.slice(0, limit);
+  const space = cut.lastIndexOf(" ");
+  return `${(space > limit * 0.6 ? cut.slice(0, space) : cut).trimEnd()}…`;
+}
+
+function uniqueNames(values: (string | null | undefined)[], max = 6): string[] {
+  const seen = new Set<string>();
+  const names: string[] = [];
+  for (const value of values) {
+    const name = value?.trim();
+    if (!name || seen.has(name)) continue;
+    seen.add(name);
+    names.push(name);
+    if (names.length >= max) break;
+  }
+  return names;
+}
+
 export function toCinemaTitleDetail(
   detail: TmdbTitleDetail,
   mediaType: CinemaMediaType,
@@ -186,6 +274,10 @@ export function toCinemaTitleDetail(
     mediaType === "movie"
       ? (detail.title ?? detail.original_title)
       : (detail.name ?? detail.original_name)
+  )?.trim();
+
+  const originalTitle = (
+    mediaType === "movie" ? detail.original_title : detail.original_name
   )?.trim();
 
   const base: CinemaTitle = {
@@ -207,7 +299,7 @@ export function toCinemaTitleDetail(
 
   const cast = (detail.credits?.cast ?? [])
     .filter((member) => Boolean(member.name))
-    .slice(0, 24)
+    .slice(0, 30)
     .map((member) => ({
       tmdbId: member.id,
       name: member.name,
@@ -226,13 +318,46 @@ export function toCinemaTitleDetail(
       profilePath: member.profile_path ?? null,
     }));
 
-  const directors = Array.from(
-    new Set(
-      crew
-        .filter((member) => member.job === "Director")
-        .map((member) => member.name),
-    ),
+  /* Crew, grouped by role, then de-duplicated so a composer credited under both
+     "Music by" and "Sound" only appears once. */
+  const claimed = new Set<string>();
+  const crewGroups: CinemaCrewGroup[] = [];
+  for (const group of CREW_JOB_GROUPS) {
+    const names: string[] = [];
+    for (const member of crew) {
+      if (!member.job || !group.jobs.includes(member.job)) continue;
+      if (claimed.has(member.name)) continue;
+      claimed.add(member.name);
+      names.push(member.name);
+      if (names.length >= 4) break;
+    }
+    if (names.length > 0) crewGroups.push({ label: group.label, names });
+  }
+
+  const directors = uniqueNames(
+    crew.filter((member) => member.job === "Director").map((m) => m.name),
+    4,
   );
+
+  const writers = uniqueNames(
+    crew
+      .filter((member) =>
+        ["Screenplay", "Writer", "Story", "Teleplay"].includes(
+          member.job ?? "",
+        ),
+      )
+      .map((m) => m.name),
+    6,
+  );
+
+  const createdBy: CinemaCreatorCredit[] = (detail.created_by ?? [])
+    .filter((person) => Boolean(person.name))
+    .slice(0, 6)
+    .map((person) => ({
+      tmdbId: person.id,
+      name: (person.name as string).trim(),
+      profilePath: person.profile_path ?? null,
+    }));
 
   const videos = (detail.videos?.results ?? [])
     .filter((video) => video.site === "YouTube" && Boolean(video.key))
@@ -267,10 +392,112 @@ export function toCinemaTitleDetail(
     })
     .sort((a, b) => a.seasonNumber - b.seasonNumber);
 
+  const companies: CinemaCompany[] = (detail.production_companies ?? [])
+    .filter((company) => Boolean(company.name))
+    .slice(0, 10)
+    .map((company) => {
+      const companyName = (company.name as string).trim();
+      return {
+        id: company.id,
+        name: companyName,
+        logoPath: company.logo_path ?? null,
+        logoText: companyName.slice(0, 2).toUpperCase(),
+        country: company.origin_country?.trim() || null,
+      };
+    });
+
+  const networks: CinemaCompany[] = (detail.networks ?? [])
+    .filter((network) => Boolean(network.name))
+    .slice(0, 8)
+    .map((network) => {
+      const networkName = (network.name as string).trim();
+      return {
+        id: network.id,
+        name: networkName,
+        logoPath: network.logo_path ?? null,
+        logoText: networkName.slice(0, 2).toUpperCase(),
+        country: network.origin_country?.trim() || null,
+      };
+    });
+
+  const keywords = uniqueNames(
+    (detail.keywords?.keywords ?? detail.keywords?.results ?? []).map(
+      (keyword) => keyword.name,
+    ),
+    14,
+  );
+
+  const alternativeTitles = uniqueNames(
+    (detail.alternative_titles?.titles ?? [])
+      .filter((entry) => entry.type === "" || entry.type === undefined)
+      .map((entry) => entry.title),
+    8,
+  ).filter((entry) => entry !== base.title && entry !== originalTitle);
+
+  /* Where to watch: the region's row from TMDB's provider feed. */
+  const region = detail["watch/providers"]?.results?.[CINEMA_REGION];
+  const providerBuckets: [CinemaProvider["kind"], TmdbProvider[]][] = [];
+  if (region) {
+    providerBuckets.push(
+      ["stream", region.flatrate ?? []],
+      ["free", region.free ?? []],
+      ["ads", region.ads ?? []],
+      ["rent", region.rent ?? []],
+      ["buy", region.buy ?? []],
+    );
+  }
+  const providerSeen = new Set<string>();
+  const providers: CinemaProvider[] = [];
+  for (const [kind, list] of providerBuckets) {
+    for (const provider of list) {
+      const providerName = provider.provider_name?.trim();
+      if (!providerName || providerSeen.has(providerName)) continue;
+      providerSeen.add(providerName);
+      providers.push({
+        name: providerName,
+        logoPath: provider.logo_path ?? null,
+        kind,
+      });
+      if (providers.length >= 12) break;
+    }
+  }
+
+  const reviews: CinemaReview[] = (detail.reviews?.results ?? [])
+    .filter((review) => Boolean(review.content?.trim()))
+    .slice(0, 4)
+    .map((review) => ({
+      id: review.id,
+      author: review.author?.trim() || "TMDB member",
+      excerpt: trimTo(review.content ?? "", 460),
+      createdAt: review.created_at ?? null,
+      rating: review.author_details?.rating ?? null,
+    }));
+
+  const countryNames = (detail.production_countries ?? [])
+    .map((country) => country.name?.trim() || country.iso_3166_1?.trim() || "")
+    .filter(Boolean);
+
+  const countryCodes = (detail.production_countries ?? [])
+    .map((country) => country.iso_3166_1?.trim() ?? "")
+    .filter(Boolean);
+
+  const languages = uniqueNames(
+    (detail.spoken_languages ?? []).map(
+      (language) => language.english_name ?? language.name,
+    ),
+    8,
+  );
+
+  const imdbId = detail.imdb_id?.trim() || detail.external_ids?.imdb_id?.trim();
+
   return {
     ...base,
     tagline: detail.tagline?.trim() ?? "",
     status: detail.status ?? null,
+    releaseDate:
+      (mediaType === "movie" ? detail.release_date : detail.first_air_date) ??
+      null,
+    lastAirDate: detail.last_air_date ?? null,
     runtimeMinutes:
       runtimeMinutes && runtimeMinutes > 0 ? runtimeMinutes : null,
     seasons:
@@ -281,14 +508,52 @@ export function toCinemaTitleDetail(
     genres: (detail.genres ?? [])
       .map((genre) => genre.name?.trim() ?? "")
       .filter(Boolean),
-    imdbId: detail.imdb_id?.trim() || null,
-    countries: (detail.production_countries ?? [])
-      .map((country) => country.iso_3166_1?.trim() ?? "")
-      .filter(Boolean),
-    languages: (detail.spoken_languages ?? [])
-      .map((language) => language.english_name?.trim() ?? "")
-      .filter(Boolean),
+    imdbId: imdbId || null,
+    originalTitle: originalTitle || base.title,
+    originalLanguage: base.originalLanguage,
+    certification: bestCertification(detail),
+    showType: mediaType === "tv" ? detail.type?.trim() || null : null,
+    inProduction: mediaType === "tv" ? (detail.in_production ?? null) : null,
+    budget: detail.budget && detail.budget > 0 ? detail.budget : null,
+    revenue: detail.revenue && detail.revenue > 0 ? detail.revenue : null,
+    countries: countryNames,
+    countryCodes,
+    languages,
+    companies,
+    networks,
+    createdBy,
     directors,
+    writers,
+    crewGroups,
+    keywords,
+    alternativeTitles,
+    external: {
+      imdbId: imdbId || null,
+      homepage: detail.homepage?.trim() || null,
+      wikidata: detail.external_ids?.wikidata_id?.trim() || null,
+      facebook: detail.external_ids?.facebook_id?.trim() || null,
+      instagram: detail.external_ids?.instagram_id?.trim() || null,
+      twitter: detail.external_ids?.twitter_id?.trim() || null,
+    },
+    providers,
+    providerLink: region?.link?.trim() || null,
+    reviews,
+    nextEpisode: detail.next_episode_to_air?.season_number
+      ? {
+          season: detail.next_episode_to_air.season_number,
+          episode: detail.next_episode_to_air.episode_number ?? 0,
+          name: detail.next_episode_to_air.name?.trim() || "Next episode",
+          airDate: detail.next_episode_to_air.air_date ?? null,
+        }
+      : null,
+    lastEpisode: detail.last_episode_to_air?.season_number
+      ? {
+          season: detail.last_episode_to_air.season_number,
+          episode: detail.last_episode_to_air.episode_number ?? 0,
+          name: detail.last_episode_to_air.name?.trim() || "Episode",
+          airDate: detail.last_episode_to_air.air_date ?? null,
+        }
+      : null,
     cast,
     crew,
     videos,
@@ -480,6 +745,13 @@ export async function searchCinema(
 /* Detail                                                                     */
 /* -------------------------------------------------------------------------- */
 
+/** `release_dates` only exists for films, `content_ratings` only for series. */
+const TITLE_APPEND: Record<CinemaMediaType, string> = {
+  movie:
+    "credits,videos,recommendations,similar,keywords,external_ids,alternative_titles,release_dates,watch/providers",
+  tv: "credits,videos,recommendations,similar,keywords,external_ids,alternative_titles,content_ratings,watch/providers,aggregate_credits",
+};
+
 export async function fetchCinemaTitle(
   mediaType: CinemaMediaType,
   tmdbId: number,
@@ -494,7 +766,7 @@ export async function fetchCinemaTitle(
     path,
     TmdbTitleDetailSchema,
     `TMDB ${mediaType} ${tmdbId}`,
-    { append_to_response: "credits,videos,recommendations,similar" },
+    { append_to_response: TITLE_APPEND[mediaType] },
     {
       revalidate: options.revalidate ?? CINEMA_REVALIDATE.title,
       tags: options.tags,
