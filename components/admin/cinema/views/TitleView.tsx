@@ -13,6 +13,7 @@ import { useEffect, useState } from "react";
 import { PosterRail } from "@/components/admin/cinema/home/PosterRail";
 import { CastRail } from "@/components/admin/cinema/parts/CastRail";
 import { CrewRail } from "@/components/admin/cinema/parts/CrewRail";
+import { PrincipalCrewRail } from "@/components/admin/cinema/parts/PrincipalCrewRail";
 import { DownloadPanel } from "@/components/admin/cinema/parts/DownloadPanel";
 import {
   EpisodeBar,
@@ -587,8 +588,13 @@ function TitleBody({
             </div>
           ) : null}
 
-          {/* Faces sit under the player: they fill the column's spare height and
-              keep "who made this" one glance from the film you are watching. */}
+          {/* Faces sit under the player: principals first, then the cast, then
+              the rest of the crew. */}
+          <PrincipalCrewRail
+            crew={title.crew}
+            creators={title.createdBy}
+            onOpenPerson={onOpenPerson}
+          />
           <CastRail cast={title.cast} onOpenPerson={onOpenPerson} />
           <CrewRail crew={title.crew} onOpenPerson={onOpenPerson} />
 
@@ -681,20 +687,6 @@ function TitleBody({
                     <dd className={row.mono ? "cinema-mono" : undefined}>
                       {row.value}
                     </dd>
-                  </div>
-                ))}
-              </dl>
-            </section>
-          ) : null}
-
-          {title.crewGroups.length > 0 ? (
-            <section className="cinema-side-card" aria-label="Crew">
-              <h3 className="cinema-side-title">Crew</h3>
-              <dl className="cinema-facts">
-                {title.crewGroups.map((group) => (
-                  <div key={group.label}>
-                    <dt>{group.label}</dt>
-                    <dd>{group.names.join(", ")}</dd>
                   </div>
                 ))}
               </dl>

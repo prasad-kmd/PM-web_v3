@@ -4,14 +4,17 @@ import {
   FaceRail,
   type FaceCard,
 } from "@/components/admin/cinema/parts/FaceRail";
+import { isPrincipalJob } from "@/components/admin/cinema/parts/crew-jobs";
 import type { CinemaCrewCredit } from "@/lib/cinema/types";
 
 /**
- * Crew faces — director, writers, producers, composer, camera, design.
+ * The rest of the crew — stunts, assistant directors, sound, art department,
+ * gaffers, everyone TMDB lists past the principals.
  *
- * Sorted by how central the job is, then by whether TMDB has a portrait, so the
- * usable cards sit at the front of the rail. One card per person: somebody who
- * directed *and* wrote appears once, with both jobs on the label.
+ * The people whose names belong beside the title are in `PrincipalCrewRail`
+ * (above the cast), so this rail starts where that one stops and never repeats
+ * a face. Sorted by whether there is a portrait, then alphabetically, because
+ * the remaining jobs have no meaningful hierarchy.
  */
 const JOB_ORDER = [
   "Director",
@@ -54,6 +57,7 @@ export function CrewRail({
 
   for (const member of crew) {
     if (!member.job) continue;
+    if (isPrincipalJob(member.job)) continue;
     const existing = byPerson.get(member.tmdbId);
     if (existing) {
       if (!existing.jobs.includes(member.job)) existing.jobs.push(member.job);
