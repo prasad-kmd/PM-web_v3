@@ -198,3 +198,22 @@ is owner-only and noindexed, which limits exposure but is not a legal shield.
 | Library pill says "Session library"               | `NOTION_CINEMA_FAVORITES_ID` unset, or the DB is not shared with the integration | §2                                                              |
 | Rows appear but status/rating are blank in Notion | Those columns do not exist, or use unexpected names                              | Add them, or rely on `Payload JSON`                             |
 | Notion write fails with a validation error        | A column exists but has an incompatible type                                     | The writer only sets types it recognises; check the column type |
+
+## Stats and taste recommendations
+
+The **Stats** tab lives at `/cinema/stats` and uses the library already loaded in
+this window. Add three titles to see its charts. Rating at least two titles can
+unlock the personalised Browse row, provided their genres have a positive signal
+and TMDB returns at least four unowned results. “Why?” explains the profile;
+“Another angle” changes the TMDB sort. Genre matching depends on the saved title
+metadata and the current TMDB language, so older entries or unmatched genres can
+leave the rail hidden.
+
+Watch time is an **estimate**: watched/favourite films count in full, watching
+films count half; series use saved progress, total episodes, seasons and the
+TMDB episode runtime. Missing data is excluded rather than invented. Newly saved
+series include the optional episode count in the existing Notion payload; older
+rows remain valid but may not have it. To populate it on an old row, remove and
+re-add the title (this also removes its saved rating, progress and notes, so
+record those first). Session storage is process-local and can be lost on restart
+or differ across server instances.

@@ -13,6 +13,7 @@ export type CinemaRoute =
   | { view: "browse" }
   | { view: "search"; query: string }
   | { view: "library" }
+  | { view: "stats" }
   | { view: "settings" }
   | { view: "list"; source: CinemaListSource; id: string; title: string }
   | { view: "title"; mediaType: CinemaMediaType; tmdbId: number }
@@ -29,6 +30,8 @@ export function tabForRoute(route: CinemaRoute): CinemaViewId {
       return "library";
     case "settings":
       return "settings";
+    case "stats":
+      return "stats";
     default:
       return "browse";
   }
@@ -90,6 +93,7 @@ export function cinemaRouteFromPath(
     return { view: "search", query };
   }
   if (head === "library") return { view: "library" };
+  if (head === "stats") return { view: "stats" };
   if (head === "settings") return { view: "settings" };
 
   if (head === "movie" || head === "tv") {
@@ -133,6 +137,8 @@ export function cinemaPathFor(
       return `${CINEMA_BASE_PATH}/library`;
     case "settings":
       return `${CINEMA_BASE_PATH}/settings`;
+    case "stats":
+      return `${CINEMA_BASE_PATH}/stats`;
     case "list":
       return `${CINEMA_BASE_PATH}/list/${route.source}/${route.id}`;
     case "title":

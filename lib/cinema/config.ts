@@ -204,7 +204,8 @@ export const CINEMA_PLAYER_ORIGINS: readonly string[] =
 /* In-window navigation                                                       */
 /* -------------------------------------------------------------------------- */
 
-export type CinemaViewId = "browse" | "search" | "library" | "settings";
+export type CinemaViewId =
+  "browse" | "search" | "library" | "stats" | "settings";
 
 export const CINEMA_VIEWS: readonly {
   id: CinemaViewId;
@@ -213,6 +214,7 @@ export const CINEMA_VIEWS: readonly {
   { id: "browse", label: "Browse" },
   { id: "search", label: "Search" },
   { id: "library", label: "Library" },
+  { id: "stats", label: "Stats" },
   { id: "settings", label: "Settings" },
 ] as const;
 
@@ -275,3 +277,11 @@ export const TMDB_IMAGE_SIZES_ATTR = {
   backdropRail: "(max-width: 640px) 70vw, 340px",
   profile: "72px",
 } as const;
+
+export const CINEMA_TASTE_MIN_RATINGS = 2;
+export const CINEMA_TASTE_GENRES = 2;
+export const CINEMA_TASTE_ROW_LIMIT = 18;
+export const CINEMA_TASTE_VOTE_COUNT_GTE = 250;
+export const CINEMA_TASTE_VOTE_AVERAGE_GTE = 6.5;
+export const CINEMA_TASTE_MAX_PAGES = 2;
+export const CINEMA_STATS_MONTHS = 12;

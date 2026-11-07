@@ -3,7 +3,7 @@
 Admin-only film & TV studio for **pm-web_v3**, at `/cinema`.
 Built against the repo as cloned (`PM-Web_V3 v3.2.9`, Next 16.3.5, React 19.2.8, pnpm 11.9.0).
 
-**68 files · no `.diff`/`.patch` · no new npm dependencies · lockfile untouched.**
+**78 files · no `.diff`/`.patch` · no new npm dependencies · lockfile untouched.**
 This archive supersedes every previous drop — unzip it over the same paths.
 
 ---
@@ -42,12 +42,44 @@ needs merging:
 | `hooks/useWindowManager.ts` | default window size for the app | 1 block |
 | `app/layout.tsx` | `import "./cinema.css"` | 1 line |
 | `next.config.mjs` | CSP `img-src` += `image.tmdb.org`, `frame-src` += 5 provider origins, `remotePatterns` += `image.tmdb.org` | 3 blocks |
-| `.env.example` | the three Cinema variables, documented | appended block |
+| `.env.example` | the four Cinema variables, documented | appended block |
 
 Nothing else in the repo is touched. `app/globals.css` is **untouched** — all
 cinema styling lives in the new `app/cinema.css`.
 
 ### What changed in this drop
+
+**Iteration 5 — Stats and taste**
+
+- The new **Stats** tab has a deep link at `/cinema/stats` and derives its charts,
+  counts, insights and taste profile from the existing library. Counts update
+  when you edit a title. Watch time and episode counts are estimates, not a
+  stopwatch: progress records a selected episode rather than confirmed viewing.
+- The **taste rail** sits immediately below the rotating hero. Rate two titles
+  to start a low-confidence profile; a positive, resolvable genre signal and at
+  least four unowned TMDB results are also needed. “Why?” explains the weights;
+  “Another angle” changes the discover sort. TMDB errors hide the rail quietly.
+- Newly added series save an optional episode count in the existing Notion
+  payload and, if present, an Episodes column. Old rows still work, but may not
+  have enough data for a series estimate. No migration is required; see the
+  setup guide before removing/re-adding an old entry to populate this field.
+- No new dependency, database, Notion integration or environment variable.
+- This drop was checked with TypeScript, Prettier on changed files, PostCSS and
+  fixture-based logic / stubbed route tests. No production build or interactive
+  browser test was run here. Please verify those locally.
+
+**Iteration 4.1 — key crew rail**
+
+- A new **Key crew** rail sits directly above Cast: director, creators, writers,
+  producers, executive producers, composer, cinematographer, editor, production
+  and costume designers, casting director and VFX supervisor — one card each,
+  labelled with the most central job that person held on this title. The
+  allowlist and its order live in `parts/crew-jobs.ts`.
+- The existing **Crew** rail is unchanged in spirit but now starts where the key
+  crew stops: stunts, assistant directors, sound, art department, gaffers and
+  everyone else TMDB lists, with no repeated faces.
+- The textual “Crew” card in the right column is gone — the rail above the cast
+  says the same thing, with faces and links.
 
 **Iteration 4 — collections, settings page, crew, layout**
 
@@ -250,6 +282,11 @@ Manual checklist:
 10. Save a title to **Watchlist** → toolbar pill, Library tab and the Notion row
     agree within a second.
 11. Open a cast member → filmography → open a credit → Back twice.
+12. Add three titles and rate at least two with known genres. Open **Stats**,
+    check the estimate and charts, reload `/cinema/stats`, and try Back/Forward.
+13. Return to Browse: where sufficient candidates exist, check the taste rail,
+    “Why?” and “Another angle”; edit a rating, then return to Browse and verify
+    the recommendations refresh and exclude library titles.
 
 ---
 
@@ -276,7 +313,7 @@ git checkout -- lib/registry.ts components/apps/AppBody.tsx \
   app/layout.tsx next.config.mjs .env.example
 ```
 
-Remove the three env vars, and archive the Notion database if you no longer want
+Remove the four cinema env vars, and archive the Notion database if you no longer want
 it. The app leaves no other trace.
 
 ---
@@ -292,8 +329,8 @@ it. The app leaves no other trace.
   sometimes do while serving fine in an iframe.
 - **No autoplay.** The session starts paused inside the provider's own player.
 - **Detail depth is TMDB's, not ours.** Budget, revenue and certificates exist
-  for most films and few series; “where to watch” is the US (`CINEMA_REGION`)
-  row of TMDB's provider feed, which is availability metadata — not a stream.
+  for most films and few series; “where to watch” follows the saved region
+  in TMDB's provider feed, which is availability metadata — not a stream.
 - **The five-minute cache is per tab.** A hard reload always refetches; nothing
   is persisted to storage.
 - **TMDB's `discover/tv` has no `with_cast`.** TV filmography is filtered

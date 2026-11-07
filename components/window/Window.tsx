@@ -311,7 +311,13 @@ export function Window({
       open={!win.exiting}
       modal={false}
       disablePointerDismissal
-      onOpenChange={(open) => {
+      onOpenChange={(open, details) => {
+        // Desktop windows are not transient dialogs. Escape may dismiss an
+        // overlay inside a window, but must never close the app itself.
+        if (!open && details.reason === "escape-key") {
+          details.cancel();
+          return;
+        }
         if (!open && !win.exiting) onClose();
       }}
     >

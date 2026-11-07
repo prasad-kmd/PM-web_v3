@@ -80,6 +80,7 @@ export const CinemaLibraryDraftSchema = z.object({
   posterPath: z.string().max(160).nullable().optional(),
   runtimeMinutes: z.number().int().min(0).max(2000).nullable().optional(),
   seasons: z.number().int().min(0).max(300).nullable().optional(),
+  episodes: z.number().int().min(0).max(10000).nullable().optional(),
   progress: z.string().trim().max(32).nullable().optional(),
   notes: z.string().max(CINEMA_MAX_NOTES_LENGTH).optional(),
 });
@@ -354,6 +355,7 @@ const PROP = {
   poster: ["Poster", "Poster URL", "Cover"],
   runtime: ["Runtime", "Runtime (min)"],
   seasons: ["Seasons", "Season Count"],
+  episodes: ["Episodes", "Episode Count", "Total Episodes"],
   progress: ["Progress", "Watch Progress", "Episode"],
   notes: ["Notes", "Comment", "Review"],
   added: ["Added", "Added At", "Date Added"],
@@ -401,6 +403,12 @@ function toNotionProperties(
   assignString(properties, ds.properties, PROP.poster, entry.posterPath);
   assignNumber(properties, ds.properties, PROP.runtime, entry.runtimeMinutes);
   assignNumber(properties, ds.properties, PROP.seasons, entry.seasons);
+  assignNumber(
+    properties,
+    ds.properties,
+    PROP.episodes,
+    entry.episodes ?? null,
+  );
   assignString(properties, ds.properties, PROP.progress, entry.progress);
   assignString(properties, ds.properties, PROP.notes, entry.notes);
   assignDate(properties, ds.properties, PROP.added, entry.addedAt);
@@ -458,6 +466,7 @@ function coerceEntry(
     runtimeMinutes:
       typeof value.runtimeMinutes === "number" ? value.runtimeMinutes : null,
     seasons: typeof value.seasons === "number" ? value.seasons : null,
+    episodes: typeof value.episodes === "number" ? value.episodes : null,
     progress: typeof value.progress === "string" ? value.progress : null,
     notes: typeof value.notes === "string" ? value.notes : "",
     addedAt:
@@ -519,6 +528,9 @@ function parsePage(page: PageObjectResponse, ds: CachedDataSource) {
     ),
     seasons: readNumberProp(
       readPropByAlias(properties, ds.properties, PROP.seasons),
+    ),
+    episodes: readNumberProp(
+      readPropByAlias(properties, ds.properties, PROP.episodes),
     ),
     progress:
       readText(readPropByAlias(properties, ds.properties, PROP.progress)) ||
@@ -683,6 +695,7 @@ function materialise(
     posterPath: draft.posterPath ?? previous?.posterPath ?? null,
     runtimeMinutes: draft.runtimeMinutes ?? previous?.runtimeMinutes ?? null,
     seasons: draft.seasons ?? previous?.seasons ?? null,
+    episodes: draft.episodes ?? previous?.episodes ?? null,
     progress: draft.progress ?? previous?.progress ?? null,
     notes: draft.notes ?? previous?.notes ?? "",
     addedAt: previous?.addedAt ?? now,

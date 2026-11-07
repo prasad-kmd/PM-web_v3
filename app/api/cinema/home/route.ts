@@ -7,6 +7,7 @@ import {
   CINEMA_MOODS,
   collectionSpecs,
 } from "@/lib/cinema/catalog";
+import { loadCinemaTaste } from "@/lib/cinema/taste-server";
 import { CINEMA_HERO_POOL_SIZE } from "@/lib/cinema/config";
 import {
   discoverCinemaWithFallbacks,
@@ -61,17 +62,19 @@ export async function GET(request: NextRequest) {
 
   /* The first row *is* the trending list, which also seeds the hero — fetch it
      once and reuse it rather than spending two TMDB calls on the same shelf. */
-  const [trendingSettled, restSettled, collectionSettled] = await Promise.all([
-    fetchCinemaList("trending-movies"),
-    Promise.allSettled(
-      CINEMA_HOME_ROWS.slice(1).map((row) => fetchCinemaList(row.kind)),
-    ),
-    Promise.allSettled(
-      CINEMA_COLLECTIONS.map((collection) =>
-        discoverCinemaWithFallbacks(collectionSpecs(collection), 1),
+  const [trendingSettled, restSettled, collectionSettled, tasteSettled] =
+    await Promise.all([
+      fetchCinemaList("trending-movies"),
+      Promise.allSettled(
+        CINEMA_HOME_ROWS.slice(1).map((row) => fetchCinemaList(row.kind)),
       ),
-    ),
-  ]);
+      Promise.allSettled(
+        CINEMA_COLLECTIONS.map((collection) =>
+          discoverCinemaWithFallbacks(collectionSpecs(collection), 1),
+        ),
+      ),
+      loadCinemaTaste().catch(() => null),
+    ]);
 
   const degraded: string[] = [];
 
@@ -133,6 +136,7 @@ export async function GET(request: NextRequest) {
   const { hero, index } = buildHero(trending?.items ?? []);
 
   const payload: CinemaHomePayload = {
+    taste: tasteSettled,
     hero,
     heroIndex: index,
     rows,
