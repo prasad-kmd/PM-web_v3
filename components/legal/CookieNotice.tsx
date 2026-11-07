@@ -29,7 +29,12 @@ import {
   LEGAL_ROUTES,
 } from "@/lib/legal";
 
-const ADMIN_ROUTE_SEGMENTS = new Set(["og-studio", "invoices", "insights"]);
+const ADMIN_ROUTE_SEGMENTS = new Set([
+  "og-studio",
+  "invoices",
+  "insights",
+  "cinema",
+]);
 const LEGAL_ROUTE_SET = new Set<string>(LEGAL_ROUTES);
 const ONE_YEAR_SECONDS = 60 * 60 * 24 * 365;
 

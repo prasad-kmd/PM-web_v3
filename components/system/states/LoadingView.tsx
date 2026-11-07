@@ -2,7 +2,13 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Spinner } from "@/components/ui/spinner";
 
 export type LoadingLayout =
-  "listing" | "reader" | "page" | "invoices" | "og-studio" | "insights";
+  | "listing"
+  | "reader"
+  | "page"
+  | "invoices"
+  | "og-studio"
+  | "insights"
+  | "cinema";
 
 /**
  * Loading — approved System alert (01) + Desktop-native (04) blend:
@@ -17,7 +23,10 @@ export function LoadingView({
   layout: LoadingLayout;
 }) {
   const isStudio =
-    layout === "invoices" || layout === "og-studio" || layout === "insights";
+    layout === "invoices" ||
+    layout === "og-studio" ||
+    layout === "insights" ||
+    layout === "cinema";
 
   return (
     <main
@@ -141,6 +150,36 @@ export function LoadingView({
                 </div>
               ))}
             </div>
+          </div>
+        </div>
+      ) : layout === "cinema" ? (
+        <div className="state-skel-cinema" aria-hidden>
+          <div className="state-skel-cinema-hero">
+            <Skeleton className="h-2.5 w-24" />
+            <Skeleton className="h-7 w-64 max-w-full" />
+            <Skeleton className="h-3.5 w-52 max-w-full" />
+            <div className="state-skel-cinema-actions">
+              <Skeleton className="h-8 w-24 rounded-md" />
+              <Skeleton className="h-8 w-20 rounded-md" />
+            </div>
+          </div>
+          <div className="state-skel-cinema-rail">
+            {Array.from({ length: 8 }, (_, i) => (
+              <div key={i}>
+                <Skeleton className="state-skel-cinema-tile" />
+                <Skeleton className="h-2.5 w-[85%]" />
+                <Skeleton className="h-2 w-1/2" />
+              </div>
+            ))}
+          </div>
+          <div className="state-skel-cinema-rail">
+            {Array.from({ length: 8 }, (_, i) => (
+              <div key={i}>
+                <Skeleton className="state-skel-cinema-tile" />
+                <Skeleton className="h-2.5 w-[85%]" />
+                <Skeleton className="h-2 w-1/2" />
+              </div>
+            ))}
           </div>
         </div>
       ) : layout === "og-studio" ? (

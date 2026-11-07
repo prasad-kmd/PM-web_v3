@@ -2,6 +2,7 @@
 
 import {
   FileTextIcon,
+  Film02Icon,
   Settings02Icon,
   Shield01Icon,
   Folder01Icon,
@@ -49,6 +50,7 @@ function ShortcutGlyph({ appId }: { appId: AppId }) {
           "og-studio": Image02Icon,
           invoices: Invoice02Icon,
           insights: ChartLineData02Icon,
+          cinema: Film02Icon,
         }[appId]
       }
       strokeWidth={2}

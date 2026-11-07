@@ -3,6 +3,7 @@
 import {
   ChartLineData02Icon,
   Copy01Icon,
+  Film02Icon,
   Image02Icon,
   Invoice02Icon,
   Login01Icon,
@@ -151,6 +152,14 @@ export function MenuBar({
                         size={15}
                       />
                       <span>Invoice Studio</span>
+                    </MenubarItem>
+                    <MenubarItem onClick={() => onOpenApp("cinema")}>
+                      <HugeiconsIcon
+                        icon={Film02Icon}
+                        strokeWidth={1.9}
+                        size={15}
+                      />
+                      <span>Cinema Studio</span>
                     </MenubarItem>
                   </MenubarGroup>
 

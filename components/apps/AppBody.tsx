@@ -28,6 +28,17 @@ const InvoiceStudioApp = dynamic(
   },
 );
 
+const CinemaStudioApp = dynamic(
+  () =>
+    import("@/components/admin/cinema/CinemaStudioApp").then(
+      (mod) => mod.CinemaStudioApp,
+    ),
+  {
+    ssr: false,
+    loading: () => <LoadingView label="Cinema Studio" layout="cinema" />,
+  },
+);
+
 const ContentInsightsApp = dynamic(
   () =>
     import("@/components/admin/insights/ContentInsightsApp").then(
@@ -74,6 +85,12 @@ export function AppBody({
       }
       if (!authenticated) return null;
       return <InvoiceStudioApp />;
+    case "cinema":
+      if (!ready) {
+        return <LoadingView label="Cinema Studio" layout="cinema" />;
+      }
+      if (!authenticated) return null;
+      return <CinemaStudioApp />;
     case "insights":
       if (!ready) {
         return <LoadingView label="Content Insights" layout="insights" />;

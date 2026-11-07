@@ -20,6 +20,9 @@ export function describeRoute(pathname: string | null | undefined): {
   if (appId === "invoices") {
     return { label, layout: "invoices" };
   }
+  if (appId === "cinema") {
+    return { label, layout: "cinema" };
+  }
   if (appId === "og-studio") {
     return { label, layout: "og-studio" };
   }

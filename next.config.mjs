@@ -47,6 +47,12 @@ const nextConfig = {
         protocol: "https",
         hostname: "placehold.co",
       },
+      // Cinema Studio — TMDB artwork CDN (posters, backdrops, profiles).
+      {
+        protocol: "https",
+        hostname: "image.tmdb.org",
+        pathname: "/t/p/**",
+      },
       {
         protocol: "https",
         hostname: "*.notion.so",
@@ -98,15 +104,21 @@ const nextConfig = {
     const devConnect = isDev
       ? " http://localhost:3000 https://localhost:3000 ws://localhost:3000 wss://localhost:3000"
       : "";
+    /**
+     * `frame-src` includes the Cinema Studio playback providers (keep in sync
+     * with CINEMA_PLAYBACK_PROVIDERS in lib/cinema/config.ts). Without them the
+     * player renders as a silent black frame — the CSP blocks the iframe before
+     * the provider ever answers.
+     */
     const cspHeader = `
       default-src 'self';
       script-src 'self' ${evalDirective}'wasm-unsafe-eval' 'unsafe-inline' blob: https://gist.github.com https://challenges.cloudflare.com https://turnstile.cloudflare.com;
       style-src 'self' 'unsafe-inline' https://challenges.cloudflare.com;
-      img-src 'self' blob: data: https://github.com https://*.notion.so https://*.amazonaws.com https://placehold.co https://images.unsplash.com https://*.unsplash.com https://lh3.googleusercontent.com https://avatars.githubusercontent.com https://avatar.vercel.sh https://*.githubusercontent.com https://*.googleusercontent.com https://challenges.cloudflare.com https://ghchart.rshah.org/409ba5/prasad-kmd https://pbs.twimg.com https://abs.twimg.com https://unavatar.io https://media.licdn.com;
+      img-src 'self' blob: data: https://github.com https://*.notion.so https://*.amazonaws.com https://placehold.co https://images.unsplash.com https://*.unsplash.com https://lh3.googleusercontent.com https://avatars.githubusercontent.com https://avatar.vercel.sh https://*.githubusercontent.com https://*.googleusercontent.com https://challenges.cloudflare.com https://ghchart.rshah.org/409ba5/prasad-kmd https://pbs.twimg.com https://abs.twimg.com https://unavatar.io https://media.licdn.com https://image.tmdb.org;
       font-src 'self' data:;
       media-src 'self' blob: data: https://*.notion.so https://*.amazonaws.com;
       connect-src 'self' blob: data: https://lh3.googleusercontent.com https://avatars.githubusercontent.com https://*.googleusercontent.com https://*.githubusercontent.com https://*.amazonaws.com https://placehold.co https://images.unsplash.com https://*.unsplash.com https://challenges.cloudflare.com https://turnstile.cloudflare.com${devConnect};
-      frame-src 'self' https://www.youtube.com https://challenges.cloudflare.com https://turnstile.cloudflare.com;
+      frame-src 'self' https://www.youtube.com https://challenges.cloudflare.com https://turnstile.cloudflare.com https://vidsrc.to https://vidsrcme.su https://vidsrc-embed.su https://vidsrc-embed.ru https://vsrc.su;
       worker-src 'self' blob: https://challenges.cloudflare.com;
       ${!isDev ? "upgrade-insecure-requests;" : ""}
     `
