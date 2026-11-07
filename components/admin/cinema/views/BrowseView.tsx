@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { CollectionGrid } from "@/components/admin/cinema/home/CollectionGrid";
 import { HeroStage } from "@/components/admin/cinema/home/HeroStage";
 import { HomeSkeleton } from "@/components/admin/cinema/home/HomeSkeleton";
+import { TasteRail } from "@/components/admin/cinema/home/TasteRail";
 import { MoodStrip } from "@/components/admin/cinema/home/MoodStrip";
 import { PosterRail } from "@/components/admin/cinema/home/PosterRail";
 import { StateNotice } from "@/components/admin/cinema/parts/StateNotice";
@@ -69,6 +70,8 @@ export function BrowseView({
   return (
     <div className="cinema-scroll">
       <HeroStage pool={hero} initialIndex={heroIndex} onOpen={onOpenTitle} />
+
+      <TasteRail initialTaste={state.data.taste ?? null} onOpen={onOpenTitle} />
 
       <MoodStrip
         moods={moods}

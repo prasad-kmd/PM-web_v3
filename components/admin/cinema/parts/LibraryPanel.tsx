@@ -50,6 +50,7 @@ export function LibraryPanel({ title }: { title: CinemaTitleDetail }) {
       posterPath: title.posterPath,
       runtimeMinutes: title.runtimeMinutes,
       seasons: title.seasons,
+      episodes: title.episodes,
     });
   }
 

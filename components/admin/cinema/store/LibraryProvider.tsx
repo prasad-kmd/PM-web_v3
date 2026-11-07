@@ -95,6 +95,7 @@ function optimisticEntry(draft: CinemaLibraryDraft): CinemaLibraryEntry {
     posterPath: draft.posterPath ?? null,
     runtimeMinutes: draft.runtimeMinutes ?? null,
     seasons: draft.seasons ?? null,
+    episodes: draft.episodes ?? null,
     progress: draft.progress ?? null,
     notes: draft.notes ?? "",
     addedAt: now,
@@ -187,6 +188,8 @@ export function CinemaLibraryProvider({ children }: { children: ReactNode }) {
           ),
           storageMode: payload.storageMode ?? current.storageMode,
         }));
+        invalidateCinemaCache("/api/cinema/home");
+        invalidateCinemaCache("/api/cinema/taste");
         return true;
       } catch (error) {
         setState(previous);
@@ -244,6 +247,8 @@ export function CinemaLibraryProvider({ children }: { children: ReactNode }) {
             payload.entry as CinemaLibraryEntry,
           ),
         }));
+        invalidateCinemaCache("/api/cinema/home");
+        invalidateCinemaCache("/api/cinema/taste");
         return true;
       } catch (error) {
         setState(previous);
@@ -280,6 +285,8 @@ export function CinemaLibraryProvider({ children }: { children: ReactNode }) {
           } | null;
           throw new Error(payload?.error ?? "Could not remove that row.");
         }
+        invalidateCinemaCache("/api/cinema/home");
+        invalidateCinemaCache("/api/cinema/taste");
         return true;
       } catch (error) {
         setState(previous);

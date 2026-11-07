@@ -3,6 +3,7 @@
 import {
   ArrowLeft01Icon,
   Bookmark01Icon,
+  ChartColumnIcon,
   Film02Icon,
   InformationCircleIcon,
   Search01Icon,
@@ -29,6 +30,7 @@ import { LibraryView } from "@/components/admin/cinema/views/LibraryView";
 import { PersonView } from "@/components/admin/cinema/views/PersonView";
 import { SearchView } from "@/components/admin/cinema/views/SearchView";
 import { SeeAllView } from "@/components/admin/cinema/views/SeeAllView";
+import { StatsView } from "@/components/admin/cinema/views/StatsView";
 import { SettingsView } from "@/components/admin/cinema/views/SettingsView";
 import { TitleView } from "@/components/admin/cinema/views/TitleView";
 import { StateNotice } from "@/components/admin/cinema/parts/StateNotice";
@@ -45,6 +47,7 @@ const VIEW_ICONS = {
   browse: Film02Icon,
   search: Search01Icon,
   library: Bookmark01Icon,
+  stats: ChartColumnIcon,
   settings: Settings02Icon,
 } as const;
 
@@ -57,6 +60,7 @@ const TAB_ROUTE: Record<CinemaViewId, CinemaRoute> = {
   browse: { view: "browse" },
   search: { view: "search", query: "" },
   library: { view: "library" },
+  stats: { view: "stats" },
   settings: { view: "settings" },
 };
 
@@ -158,68 +162,75 @@ function CinemaStudioShell() {
       ? status.capabilities
       : { tmdb: false, omdb: false, notion: false, settings: false };
 
-  const view = !capabilities.tmdb ? (
-    <div className="cinema-scroll">
-      <StateNotice
-        title="TMDB is not configured yet"
-        body="Add TMDB_API_KEY to the environment — a v3 key or a v4 read token, both work — then reload the workspace. Optional: OMDB_API_KEY for IMDb and Metacritic scores, NOTION_CINEMA_FAVORITES_ID for the Notion library."
-      />
-    </div>
-  ) : status.kind === "error" ? (
-    <div className="cinema-scroll">
-      <StateNotice
-        title="Studio state could not be read"
-        body="The capability endpoint did not answer. Nothing was changed — retry to continue."
-        action={
-          <Button size="xs" variant="outline" onClick={() => void loadStatus()}>
-            Retry
-          </Button>
+  const view =
+    !capabilities.tmdb && route.view !== "stats" ? (
+      <div className="cinema-scroll">
+        <StateNotice
+          title="TMDB is not configured yet"
+          body="Add TMDB_API_KEY to the environment — a v3 key or a v4 read token, both work — then reload the workspace. Optional: OMDB_API_KEY for IMDb and Metacritic scores, NOTION_CINEMA_FAVORITES_ID for the Notion library."
+        />
+      </div>
+    ) : status.kind === "error" ? (
+      <div className="cinema-scroll">
+        <StateNotice
+          title="Studio state could not be read"
+          body="The capability endpoint did not answer. Nothing was changed — retry to continue."
+          action={
+            <Button
+              size="xs"
+              variant="outline"
+              onClick={() => void loadStatus()}
+            >
+              Retry
+            </Button>
+          }
+        />
+      </div>
+    ) : route.view === "browse" ? (
+      <BrowseView
+        onOpenTitle={openTitle}
+        onOpenList={(source, id, title) =>
+          go({ view: "list", source, id, title })
         }
       />
-    </div>
-  ) : route.view === "browse" ? (
-    <BrowseView
-      onOpenTitle={openTitle}
-      onOpenList={(source, id, title) =>
-        go({ view: "list", source, id, title })
-      }
-    />
-  ) : route.view === "list" ? (
-    <SeeAllView
-      source={route.source}
-      listId={route.id}
-      title={route.title}
-      onBack={back}
-      onOpenTitle={openTitle}
-    />
-  ) : route.view === "title" ? (
-    <TitleView
-      mediaType={route.mediaType}
-      tmdbId={route.tmdbId}
-      onOpenTitle={openTitle}
-      onOpenPerson={openPerson}
-    />
-  ) : route.view === "search" ? (
-    <SearchView
-      initialQuery={route.query}
-      onQueryChange={commitSearchTerm}
-      onOpenTitle={openTitle}
-      onOpenPerson={(person) => openPerson(person.tmdbId)}
-    />
-  ) : route.view === "person" ? (
-    <PersonView
-      personId={route.personId}
-      onBack={back}
-      onOpenTitle={openTitle}
-    />
-  ) : route.view === "library" ? (
-    <LibraryView
-      onOpenTitle={openTitle}
-      onBrowse={() => go({ view: "browse" })}
-    />
-  ) : (
-    <SettingsView />
-  );
+    ) : route.view === "list" ? (
+      <SeeAllView
+        source={route.source}
+        listId={route.id}
+        title={route.title}
+        onBack={back}
+        onOpenTitle={openTitle}
+      />
+    ) : route.view === "title" ? (
+      <TitleView
+        mediaType={route.mediaType}
+        tmdbId={route.tmdbId}
+        onOpenTitle={openTitle}
+        onOpenPerson={openPerson}
+      />
+    ) : route.view === "search" ? (
+      <SearchView
+        initialQuery={route.query}
+        onQueryChange={commitSearchTerm}
+        onOpenTitle={openTitle}
+        onOpenPerson={(person) => openPerson(person.tmdbId)}
+      />
+    ) : route.view === "person" ? (
+      <PersonView
+        personId={route.personId}
+        onBack={back}
+        onOpenTitle={openTitle}
+      />
+    ) : route.view === "library" ? (
+      <LibraryView
+        onOpenTitle={openTitle}
+        onBrowse={() => go({ view: "browse" })}
+      />
+    ) : route.view === "stats" ? (
+      <StatsView onBrowse={() => go({ view: "browse" })} />
+    ) : (
+      <SettingsView />
+    );
 
   return (
     <div
@@ -261,6 +272,8 @@ function CinemaStudioShell() {
                   }
                   className={`admin-segmented-tab${active ? " is-active" : ""}`}
                   aria-current={active ? "page" : undefined}
+                  aria-label={item.label}
+                  title={item.label}
                 >
                   {active ? (
                     <motion.span

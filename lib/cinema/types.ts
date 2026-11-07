@@ -715,6 +715,7 @@ export type CinemaCollectionPayload = {
 };
 
 export type CinemaHomePayload = {
+  taste: CinemaTastePayload | null;
   hero: CinemaTitle[];
   /** Index of today's featured title inside `hero`. */
   heroIndex: number;
@@ -775,6 +776,7 @@ export type CinemaLibraryEntry = {
   posterPath: string | null;
   runtimeMinutes: number | null;
   seasons: number | null;
+  episodes?: number | null;
   /** `S02E05` — drives "continue watching". */
   progress: string | null;
   notes: string;
@@ -795,6 +797,7 @@ export type CinemaLibraryDraft = {
   posterPath?: string | null;
   runtimeMinutes?: number | null;
   seasons?: number | null;
+  episodes?: number | null;
   progress?: string | null;
   notes?: string;
 };
@@ -856,3 +859,51 @@ export function seasonEpisodeLabel(
   }
   return `S${String(season).padStart(2, "0")}E${String(episode).padStart(2, "0")}`;
 }
+
+export type CinemaStatBucket = {
+  key: string;
+  label: string;
+  count: number;
+  share: number;
+};
+export type CinemaStatsInsight = { label: string; value: string };
+export type CinemaStats = {
+  generatedAt: string;
+  total: number;
+  films: number;
+  series: number;
+  rated: number;
+  averageRating: number | null;
+  libraryMinutes: number;
+  watchedMinutes: number;
+  unknownRuntime: number;
+  episodesTracked: number;
+  statuses: CinemaStatBucket[];
+  genres: CinemaStatBucket[];
+  decades: CinemaStatBucket[];
+  ratingBands: CinemaStatBucket[];
+  addedByMonth: { month: string; label: string; count: number }[];
+  insights: CinemaStatsInsight[];
+};
+export type CinemaTasteGenre = {
+  name: string;
+  tmdbId: number | null;
+  weight: number;
+};
+export type CinemaTasteProfile = {
+  ratedCount: number;
+  confidence: "low" | "medium" | "high";
+  mediaType: CinemaMediaType;
+  seeds: {
+    titleKey: string;
+    title: string;
+    rating: number;
+    year: number | null;
+  }[];
+  genres: CinemaTasteGenre[];
+};
+export type CinemaTastePayload = {
+  profile: CinemaTasteProfile;
+  reason: string;
+  items: CinemaTitle[];
+};
