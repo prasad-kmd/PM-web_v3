@@ -1,6 +1,10 @@
 import { z } from "zod";
 
-import type { CinemaLibraryStatus } from "./config";
+import {
+  CINEMA_DEFAULT_LANGUAGE,
+  CINEMA_DEFAULT_REGION,
+  type CinemaLibraryStatus,
+} from "./config";
 
 /* -------------------------------------------------------------------------- */
 /* Result + error contracts                                                   */
@@ -43,7 +47,12 @@ export type CinemaCapabilities = {
   omdb: boolean;
   /** True only when both a Notion token and a library data source id exist. */
   notion: boolean;
+  /** True when `NOTION_CINEMA_SETTINGS_PAGE_ID` is set (settings live there). */
+  settings: boolean;
 };
+
+/** Where the settings screen's values actually live. */
+export type CinemaSettingsMode = "page" | "database" | "session";
 
 /* -------------------------------------------------------------------------- */
 /* TMDB — raw schemas (tolerant: TMDB omits keys freely)                      */
@@ -793,12 +802,18 @@ export type CinemaLibraryDraft = {
 export type CinemaPrefs = {
   defaultProviderId: string;
   posterDensity: "comfortable" | "compact";
+  /** ISO-3166-1 alpha-2, e.g. `US`. Drives certificates + "where to watch". */
+  region: string;
+  /** BCP-47 tag, e.g. `en-US`. Drives every TMDB `language` parameter. */
+  language: string;
 };
 
 /** Used until the owner saves preferences (and when Notion is unavailable). */
 export const DEFAULT_CINEMA_PREFS: CinemaPrefs = {
   defaultProviderId: "vidsrc-to",
   posterDensity: "comfortable",
+  region: CINEMA_DEFAULT_REGION,
+  language: CINEMA_DEFAULT_LANGUAGE,
 };
 
 /* -------------------------------------------------------------------------- */

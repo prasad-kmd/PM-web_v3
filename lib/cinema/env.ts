@@ -53,6 +53,23 @@ export function getCinemaLibraryDataSourceId(): string | null {
 }
 
 /**
+ * The cinema **settings page** — a normal Notion page (no database). Its single
+ * `code` block holds the JSON for provider, density, region and language.
+ * Optional: without it settings fall back to the library database row.
+ */
+export function getCinemaSettingsPageId(): string | null {
+  const raw = readEnv(
+    "NOTION_CINEMA_SETTINGS_PAGE_ID",
+    "CINEMA_SETTINGS_PAGE_ID",
+  );
+  if (!raw) return null;
+  /* Accept a full page URL or a bare id with or without dashes. */
+  const match = raw.match(/([0-9a-fA-F]{32})/);
+  const id = match ? match[1] : raw.replace(/-/g, "");
+  return /^[0-9a-fA-F]{32}$/.test(id) ? id : null;
+}
+
+/**
  * Same precedence as the invoice store: a shared integration token is used for
  * every Notion surface. Deliberately does **not** read `NOTION_INVOICES_TOKEN`,
  * which belongs to a different integration.
@@ -75,5 +92,6 @@ export function getCinemaCapabilities(): CinemaCapabilities {
     omdb: getOmdbKey() !== null,
     notion:
       getNotionWriteToken() !== null && getCinemaLibraryDataSourceId() !== null,
+    settings: getCinemaSettingsPageId() !== null,
   };
 }

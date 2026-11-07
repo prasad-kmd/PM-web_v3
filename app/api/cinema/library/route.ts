@@ -7,6 +7,7 @@ import {
   listCinemaLibrary,
   upsertCinemaLibraryEntry,
 } from "@/lib/cinema/library";
+import { loadCinemaSettings } from "@/lib/cinema/settings";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -18,8 +19,21 @@ export async function GET(request: NextRequest) {
   const auth = await requireAdminSession(request);
   if (!auth.ok) return auth.response;
 
-  const snapshot = await listCinemaLibrary();
-  return NextResponse.json(snapshot, { headers: HEADERS });
+  const [snapshot, settings] = await Promise.all([
+    listCinemaLibrary(),
+    loadCinemaSettings(),
+  ]);
+  /* Preferences live on the settings page; the database row is only a fallback,
+     so the settings loader wins when it has an opinion. */
+  return NextResponse.json(
+    {
+      ...snapshot,
+      prefs: settings.prefs,
+      settingsMode: settings.mode,
+      settingsNotice: settings.notice,
+    },
+    { headers: HEADERS },
+  );
 }
 
 /** Idempotent upsert on `titleKey` — favouriting twice never duplicates a row. */

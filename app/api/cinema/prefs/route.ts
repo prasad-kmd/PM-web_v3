@@ -2,29 +2,34 @@ import { NextResponse, type NextRequest } from "next/server";
 
 import { requireAdminSession } from "@/lib/admin/auth";
 import { sameOrigin } from "@/lib/comments/request-context";
+import { CinemaPrefsSchema } from "@/lib/cinema/library";
 import {
-  CinemaPrefsSchema,
-  DEFAULT_CINEMA_PREFS,
-  listCinemaLibrary,
-  saveCinemaPrefs,
-} from "@/lib/cinema/library";
+  invalidateCinemaSettings,
+  loadCinemaSettings,
+  saveCinemaSettings,
+} from "@/lib/cinema/settings";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 const HEADERS = { "Cache-Control": "private, no-store, max-age=0" };
 
+/**
+ * Preferences — stored on the Notion **settings page** when
+ * `NOTION_CINEMA_SETTINGS_PAGE_ID` is configured, otherwise on the
+ * `__cinema_prefs` row inside the library database, otherwise in this process.
+ *
+ * `mode` tells the UI which of those is true; `notice` carries a real reason
+ * when a configured store refused the write.
+ */
 export async function GET(request: NextRequest) {
   const auth = await requireAdminSession(request);
   if (!auth.ok) return auth.response;
-  const snapshot = await listCinemaLibrary();
-  return NextResponse.json(
-    { prefs: snapshot.prefs ?? DEFAULT_CINEMA_PREFS },
-    { headers: HEADERS },
-  );
+
+  const settings = await loadCinemaSettings();
+  return NextResponse.json(settings, { headers: HEADERS });
 }
 
-/** Preferences live as one row in the same database — no second env var. */
 export async function PUT(request: NextRequest) {
   if (!sameOrigin(request)) {
     return NextResponse.json(
@@ -54,8 +59,9 @@ export async function PUT(request: NextRequest) {
   }
 
   try {
-    const result = await saveCinemaPrefs(parsed.data);
-    return NextResponse.json(result, { headers: HEADERS });
+    invalidateCinemaSettings();
+    const saved = await saveCinemaSettings(parsed.data);
+    return NextResponse.json(saved, { headers: HEADERS });
   } catch {
     return NextResponse.json(
       { error: "Could not save preferences." },

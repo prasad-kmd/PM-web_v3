@@ -3,7 +3,7 @@
 Admin-only film & TV studio for **pm-web_v3**, at `/cinema`.
 Built against the repo as cloned (`PM-Web_V3 v3.2.9`, Next 16.3.5, React 19.2.8, pnpm 11.9.0).
 
-**65 files · no `.diff`/`.patch` · no new npm dependencies · lockfile untouched.**
+**68 files · no `.diff`/`.patch` · no new npm dependencies · lockfile untouched.**
 This archive supersedes every previous drop — unzip it over the same paths.
 
 ---
@@ -48,6 +48,55 @@ Nothing else in the repo is touched. `app/globals.css` is **untouched** — all
 cinema styling lives in the new `app/cinema.css`.
 
 ### What changed in this drop
+
+**Iteration 4 — collections, settings page, crew, layout**
+
+1. **Eight real collections**, each a TMDB discover spec with a fallback chain
+   so a merged company id can never leave an empty shelf:
+   *Marvel Cinematic Universe* (Marvel Studios 420, newest first),
+   *DC — DCEU & DCU* (DC Films 128064 | DC Studios 184898),
+   *HBO prestige* (network 49, series), *Paramount* (company 4),
+   *A24 & friends* (41077), *Studio Ghibli* (10342), *Deep space* (sci-fi +
+   adventure), and *On your services* — `with_watch_providers=8|9|337|1899|350`
+   filtered to your saved region, i.e. Netflix, Prime Video, Disney+, Max and
+   Apple TV. The grid now auto-fits instead of a fixed three columns, and every
+   tile's “See all” walks the same fallbacks.
+2. **Settings moved to a Notion page.** `NOTION_CINEMA_SETTINGS_PAGE_ID` names a
+   plain page (no database); the studio writes exactly **one** `json` code block
+   and rewrites it in place on every save, so the page never accumulates copies.
+   Ladder: settings page → `__cinema_prefs` row → this process. The Settings
+   screen shows which rung you are on.
+3. **Region and language pickers.** 20 regions and 22 languages, saved with the
+   rest of the settings. Region drives the certificate chain (US → GB → CA → AU
+   → NZ → DE → FR → IN), release dates and the “where to watch” row; language is
+   TMDB's `language` parameter. Both are read through a 60-second cache and
+   saving either clears this tab's response cache.
+4. **Crew rail.** Director, writers, producers, composer, camera, editing,
+   design, casting, VFX and sound now get faces like the cast does — one card
+   per person, their jobs on the label, ordered by role then by whether TMDB has
+   a portrait. Both rails are clickable through to a filmography.
+5. **Layout.** Cast and Crew now sit under the player in the left column, which
+   is where the empty space was; reviews, recommendations and downloads stay
+   full width.
+
+**Iteration 3.1 — console clean-up**
+
+1. **“Maximum update depth exceeded” fixed.** `PlayerStage` called
+   `onEpisodeChange` from an effect that listed the callback in its deps; the
+   parent hands over a new closure every render, so *write progress → re-render →
+   new closure → write progress* never settled. The callback now lives in a ref
+   and the write is guarded by the last value reported, so progress is written
+   once per episode change. `EpisodeBar` also memoises its `items` array, which
+   Base UI re-registers on identity change.
+2. **Reopening the studio starts at `/cinema`.** Closing the window and
+   reopening it from the desktop icon, the Start menu or `⌘K` now lands on the
+   browse screen instead of the last film or episode you had open. The rule that
+   already applied to collection windows (`route memory belongs to a live
+   window`) now covers every `deepLinks` app; clicking the icon while the window
+   is still open keeps you where you are.
+3. **Duplicate React key on the score row.** OMDb repeats IMDb and Metacritic,
+   which the dedicated chips already show; the extra entries are filtered and
+   keys are index-qualified.
 
 **Iteration 3 — title page, detail depth, hero timing**
 
@@ -141,16 +190,16 @@ session-only store and the toolbar pill says so.
 
 **Browse** — a hero that auto-rotates every 9 s (dots, arrows, progress hairline,
 hover pauses rather than restarts), mood strip, ranked trending rail, four
-curated rails, six collection tiles. Every “See all” is real and server-paged.
+curated rails, eight collection tiles. Every “See all” is real and server-paged.
 
 **Search** — debounced 280 ms, films + series + **people** in one response,
 filter chips, recents, load-more. The term lives in `?q=`, written with
 `replaceState` so typing costs no navigation and Back still returns to the list.
 
 **Title** — banner with score chips (TMDB, IMDb, Metacritic, RT) and genres, then
-two columns: episode picker + player on the left, poster, library panel and the
-full detail stack on the right. Below: reviews, cast rail, recommendations, YTS
-download table.
+two columns: episode picker, player, cast and crew rails on the left; poster,
+library panel and the full detail stack on the right. Below: reviews,
+recommendations, YTS download table.
 
 **Playback** — `vidsrc.to` primary with four mirrors behind it, server-side
 reachability probe (2 s, cached 5 min), always-visible provider strip, 9 s
@@ -165,8 +214,8 @@ four sorts, character names on the tiles.
 **Library** — Notion-backed, optimistic, single source of truth, status/type
 filters, four sorts, *Continue watching* rail, cloud/session pill that never lies.
 
-**Settings** — starting provider, poster density (real, not decorative), Notion
-status.
+**Settings** — region, language, starting provider and poster density, stored on
+a Notion page as one JSON block, with the storage rung stated plainly.
 
 ---
 
@@ -193,6 +242,11 @@ Manual checklist:
 8. If the iframe is black, the CSP `frame-src` edit did not apply — check the
    Network tab for a CSP violation. Switch providers with mouse *and* keyboard.
 9. Open a series → season + episode selects, season 0 labelled **Specials**.
+10. **Settings → Region / Language**: switch region to `LK` and language to
+    `Sinhala`, then reopen a title — the certificate and the “where to watch”
+    row change, and the settings page in Notion holds one JSON block (not five).
+11. Home → **collections**: MCU, DC, HBO prestige, Paramount, A24, Ghibli, Deep
+    space and *On your services* (this one follows the region you just set).
 10. Save a title to **Watchlist** → toolbar pill, Library tab and the Notion row
     agree within a second.
 11. Open a cast member → filmography → open a credit → Back twice.
@@ -207,6 +261,9 @@ Delete (all new, nothing else imports them):
 lib/cinema/                app/cinema.css        app/cinema/            app/api/cinema/
 components/admin/cinema/   docs/cinema-setup.md
 ```
+
+(`lib/cinema/settings.ts`, `parts/FaceRail.tsx` and `parts/CrewRail.tsx` are new
+in this drop; they live inside those directories.)
 
 Then restore the 13 pre-existing files from git:
 

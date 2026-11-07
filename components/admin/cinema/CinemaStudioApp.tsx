@@ -156,7 +156,7 @@ function CinemaStudioShell() {
   const capabilities: CinemaCapabilities =
     status.kind === "ready"
       ? status.capabilities
-      : { tmdb: false, omdb: false, notion: false };
+      : { tmdb: false, omdb: false, notion: false, settings: false };
 
   const view = !capabilities.tmdb ? (
     <div className="cinema-scroll">

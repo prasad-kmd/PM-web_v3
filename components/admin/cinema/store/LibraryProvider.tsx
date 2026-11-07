@@ -16,7 +16,9 @@ import {
   type CinemaLibraryDraft,
   type CinemaLibraryEntry,
   type CinemaPrefs,
+  type CinemaSettingsMode,
 } from "@/lib/cinema/types";
+import { invalidateCinemaCache } from "@/components/admin/cinema/store/use-cinema-fetch";
 
 export type CinemaStorageMode = "cloud" | "session";
 
@@ -24,6 +26,9 @@ type LibraryState = {
   entries: CinemaLibraryEntry[];
   prefs: CinemaPrefs;
   storageMode: CinemaStorageMode;
+  /** Where the settings screen's values live. */
+  settingsMode: CinemaSettingsMode;
+  settingsNotice?: string;
   notice?: string;
 };
 
@@ -31,6 +36,8 @@ type LibraryContextValue = {
   ready: boolean;
   saving: boolean;
   storageMode: CinemaStorageMode;
+  settingsMode: CinemaSettingsMode;
+  settingsNotice?: string;
   notice?: string;
   entries: CinemaLibraryEntry[];
   prefs: CinemaPrefs;
@@ -110,6 +117,7 @@ export function CinemaLibraryProvider({ children }: { children: ReactNode }) {
     entries: [],
     prefs: DEFAULT_CINEMA_PREFS,
     storageMode: "session",
+    settingsMode: "session",
   });
   const [ready, setReady] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -133,6 +141,8 @@ export function CinemaLibraryProvider({ children }: { children: ReactNode }) {
           entries: payload.entries ?? [],
           prefs: payload.prefs ?? DEFAULT_CINEMA_PREFS,
           storageMode: payload.storageMode ?? "session",
+          settingsMode: payload.settingsMode ?? "session",
+          settingsNotice: payload.settingsNotice,
           notice: payload.notice,
         });
       } catch {
@@ -296,16 +306,21 @@ export function CinemaLibraryProvider({ children }: { children: ReactNode }) {
         });
         const payload = (await response.json().catch(() => null)) as {
           prefs?: CinemaPrefs;
-          storageMode?: CinemaStorageMode;
+          mode?: CinemaSettingsMode;
+          notice?: string;
           error?: string;
         } | null;
         if (!response.ok) {
           throw new Error(payload?.error ?? "Could not save preferences.");
         }
+        /* Region and language are baked into every TMDB response, so anything
+           already cached in this tab is now stale. */
+        invalidateCinemaCache();
         setState((current) => ({
           ...current,
           prefs: payload?.prefs ?? prefs,
-          storageMode: payload?.storageMode ?? current.storageMode,
+          settingsMode: payload?.mode ?? current.settingsMode,
+          settingsNotice: payload?.notice,
         }));
         return true;
       } catch (error) {
@@ -332,6 +347,8 @@ export function CinemaLibraryProvider({ children }: { children: ReactNode }) {
       ready,
       saving,
       storageMode: state.storageMode,
+      settingsMode: state.settingsMode,
+      settingsNotice: state.settingsNotice,
       notice: state.notice,
       entries: state.entries,
       prefs: state.prefs,

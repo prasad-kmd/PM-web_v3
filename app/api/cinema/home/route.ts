@@ -5,10 +5,11 @@ import {
   CINEMA_COLLECTIONS,
   CINEMA_HOME_ROWS,
   CINEMA_MOODS,
+  collectionSpecs,
 } from "@/lib/cinema/catalog";
 import { CINEMA_HERO_POOL_SIZE } from "@/lib/cinema/config";
 import {
-  discoverCinema,
+  discoverCinemaWithFallbacks,
   fetchCinemaList,
   type CinemaListPage,
 } from "@/lib/cinema/tmdb";
@@ -67,7 +68,7 @@ export async function GET(request: NextRequest) {
     ),
     Promise.allSettled(
       CINEMA_COLLECTIONS.map((collection) =>
-        discoverCinema(collection.discover, 1),
+        discoverCinemaWithFallbacks(collectionSpecs(collection), 1),
       ),
     ),
   ]);

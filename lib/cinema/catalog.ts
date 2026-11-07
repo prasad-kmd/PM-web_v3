@@ -34,6 +34,9 @@ const GENRE = {
   tvScifiFantasy: 10765,
 } as const;
 
+/** `@region` in a param value is replaced with the region saved in Settings. */
+export const REGION_TOKEN = "@region";
+
 export type CinemaDiscoverSpec = {
   mediaType: CinemaMediaType;
   sortBy:
@@ -49,7 +52,30 @@ export type CinemaCollection = {
   label: string;
   blurb: string;
   discover: CinemaDiscoverSpec;
+  /** Tried when the primary spec comes back empty (merged or renamed ids). */
+  fallbacks?: readonly CinemaDiscoverSpec[];
 };
+
+/** TMDB production companies / networks used below. */
+const COMPANY = {
+  marvelStudios: 420,
+  dcFilms: 128064,
+  dcStudios: 184898,
+  hbo: 49,
+  paramount: 4,
+  a24: 41077,
+  ghibli: 10342,
+} as const;
+
+/**
+ * TMDB **watch provider** ids — a different namespace from companies/networks.
+ * Verified against `/watch/providers/movie`: Netflix 8, Prime Video 9,
+ * Disney+ 337, Max 1899, Apple TV+ 350 (Hulu 15, Paramount+ 2303|2616,
+ * Peacock 386|387 are the next ones to add).
+ */
+export const CINEMA_SERVICE_PROVIDER_IDS = "8|9|337|1899|350";
+export const CINEMA_SERVICE_LABELS =
+  "Netflix · Prime Video · Disney+ · Max · Apple TV+";
 
 export type CinemaMood = {
   id: string;
@@ -89,56 +115,96 @@ export const CINEMA_HOME_ROWS: readonly CinemaHomeRow[] = [
 
 export const CINEMA_COLLECTIONS: readonly CinemaCollection[] = [
   {
-    id: "neo-noir",
-    label: "Neo-noir",
-    blurb: "Crime with shadows",
+    id: "mcu",
+    label: "Marvel Cinematic Universe",
+    blurb: "In release order, Infinity Saga to now",
     discover: {
       mediaType: "movie",
+      sortBy: "primary_release_date.desc",
+      params: {
+        with_companies: COMPANY.marvelStudios,
+        "vote_count.gte": 200,
+      },
+    },
+    /* If Marvel Studios' page is ever restructured, fall back to its parent. */
+    fallbacks: [
+      {
+        mediaType: "movie",
+        sortBy: "primary_release_date.desc",
+        params: { with_companies: 13252, "vote_count.gte": 200 },
+      },
+    ],
+  },
+  {
+    id: "dc",
+    label: "DC — DCEU & DCU",
+    blurb: "DC Films, then DC Studios",
+    discover: {
+      mediaType: "movie",
+      sortBy: "primary_release_date.desc",
+      params: {
+        with_companies: `${COMPANY.dcFilms}|${COMPANY.dcStudios}`,
+        "vote_count.gte": 100,
+      },
+    },
+    fallbacks: [
+      {
+        mediaType: "movie",
+        sortBy: "primary_release_date.desc",
+        params: { with_keywords: "9715", "vote_count.gte": 300 },
+      },
+    ],
+  },
+  {
+    id: "hbo",
+    label: "HBO prestige",
+    blurb: "The network that kept the bar high",
+    discover: {
+      mediaType: "tv",
       sortBy: "vote_average.desc",
       params: {
-        with_genres: `${GENRE.crime},${GENRE.thriller}`,
-        "vote_count.gte": 400,
+        with_networks: COMPANY.hbo,
+        "vote_count.gte": 250,
       },
     },
   },
   {
-    id: "arthouse",
-    label: "Arthouse",
-    blurb: "A24 and company",
+    id: "paramount",
+    label: "Paramount",
+    blurb: "The mountain, from classics to tentpoles",
     discover: {
       mediaType: "movie",
       sortBy: "popularity.desc",
-      params: { with_companies: 41077 },
+      params: {
+        with_companies: COMPANY.paramount,
+        "vote_count.gte": 200,
+      },
     },
   },
   {
-    id: "long-takes",
-    label: "Long takes",
-    blurb: "Two and a half hours plus",
+    id: "a24",
+    label: "A24 & friends",
+    blurb: "Arthouse, on purpose",
     discover: {
       mediaType: "movie",
       sortBy: "vote_average.desc",
-      params: { "with_runtime.gte": 150, "vote_count.gte": 500 },
+      params: {
+        with_companies: COMPANY.a24,
+        "vote_count.gte": 150,
+      },
     },
   },
   {
-    id: "sri-lanka",
-    label: "Sri Lankan cinema",
-    blurb: "Made at home",
+    id: "ghibli",
+    label: "Studio Ghibli",
+    blurb: "Hand-drawn and unhurried",
     discover: {
       mediaType: "movie",
-      sortBy: "popularity.desc",
-      params: { with_origin_country: "LK" },
-    },
-  },
-  {
-    id: "cozy-tv",
-    label: "Cozy series",
-    blurb: "Comfort watching",
-    discover: {
-      mediaType: "tv",
-      sortBy: "popularity.desc",
-      params: { with_genres: `${GENRE.comedy},${GENRE.family}` },
+      sortBy: "vote_average.desc",
+      params: {
+        with_companies: COMPANY.ghibli,
+        "vote_count.gte": 100,
+      },
     },
   },
   {
@@ -153,6 +219,33 @@ export const CINEMA_COLLECTIONS: readonly CinemaCollection[] = [
         "vote_count.gte": 300,
       },
     },
+  },
+  {
+    id: "your-services",
+    label: "On your services",
+    blurb: `${CINEMA_SERVICE_LABELS} — in your region`,
+    discover: {
+      mediaType: "movie",
+      sortBy: "popularity.desc",
+      params: {
+        with_watch_providers: CINEMA_SERVICE_PROVIDER_IDS,
+        watch_region: REGION_TOKEN,
+        with_watch_monetization_types: "flatrate",
+        "vote_count.gte": 50,
+      },
+    },
+    /* Nothing streaming in a small region? Show what is streaming anywhere. */
+    fallbacks: [
+      {
+        mediaType: "tv",
+        sortBy: "popularity.desc",
+        params: {
+          with_watch_providers: CINEMA_SERVICE_PROVIDER_IDS,
+          watch_region: REGION_TOKEN,
+          with_watch_monetization_types: "flatrate",
+        },
+      },
+    ],
   },
 ] as const;
 
@@ -219,6 +312,13 @@ export const CINEMA_MOODS: readonly CinemaMood[] = [
 
 export function findCollection(id: string): CinemaCollection | null {
   return CINEMA_COLLECTIONS.find((item) => item.id === id) ?? null;
+}
+
+/** Primary spec first, then any fallbacks — the order the API walks. */
+export function collectionSpecs(
+  collection: CinemaCollection,
+): readonly CinemaDiscoverSpec[] {
+  return [collection.discover, ...(collection.fallbacks ?? [])];
 }
 
 export function findMood(id: string): CinemaMood | null {

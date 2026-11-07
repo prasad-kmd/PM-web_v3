@@ -2,7 +2,7 @@
 
 Admin-only streaming studio inside the DesktopOS shell, at `/cinema`.
 
-It is guarded exactly like Invoice Studio: `app/cinema/page.tsx` calls
+It is guarded exactly like Invoice Studio: `app/cinema/[[...segments]]/page.tsx` calls
 `getAdminSession()` and throws a **stealth 404** when the owner is not signed in,
 so the route does not advertise itself. The window only opens for a signed-in
 owner, from **Profile → Studio → Cinema Studio**, the command palette, or the URL.
@@ -11,14 +11,16 @@ owner, from **Profile → Studio → Cinema Studio**, the command palette, or th
 
 ## 1. Environment
 
-Exactly **three** new variables. Everything else — provider order, timeouts,
-locale, paging, cache windows — is a literal in `lib/cinema/config.ts`.
+Exactly **four** new variables. Everything else — provider order, timeouts,
+paging, cache windows — is a literal in `lib/cinema/config.ts`. Region and
+language are **settings, not env vars**: they live on the settings page (§5).
 
-| Variable                     | Required | Notes                                                                                                                                     |
-| ---------------------------- | -------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
-| `TMDB_API_KEY`               | **yes**  | v3 key (32 chars) **or** v4 read token (`eyJ…`). The client sniffs the shape and uses `?api_key=` or `Authorization: Bearer` accordingly. |
-| `OMDB_API_KEY`               | no       | Adds IMDb + Metacritic chips. Without it those chips simply do not render.                                                                |
-| `NOTION_CINEMA_FAVORITES_ID` | no       | Data source id of the library database. Without it the studio runs in **session** mode (see §4).                                          |
+| Variable                         | Required | Notes                                                                                                                                     |
+| -------------------------------- | -------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| `TMDB_API_KEY`                   | **yes**  | v3 key (32 chars) **or** v4 read token (`eyJ…`). The client sniffs the shape and uses `?api_key=` or `Authorization: Bearer` accordingly. |
+| `OMDB_API_KEY`                   | no       | Adds IMDb + Metacritic chips. Without it those chips simply do not render.                                                                |
+| `NOTION_CINEMA_FAVORITES_ID`     | no       | Data source id of the library database. Without it the studio runs in **session** mode (see §4).                                          |
+| `NOTION_CINEMA_SETTINGS_PAGE_ID` | no       | A normal Notion **page** (no database) that holds the settings block. Paste the id or the full URL — both are accepted.                   |
 
 No `YTS_*` variable exists: YTS is a keyless API and its base URL is hard-coded.
 
@@ -83,12 +85,13 @@ minimal database works, and a rich one reads well inside Notion itself.
 - Rich text is chunked at 1,850 characters, and the schema is cached for
   five minutes per data source.
 
-### Preferences row
+### Preferences row (fallback only)
 
-One row in the _same_ database, titled `__cinema_prefs`, holds app preferences
-(starting provider, poster density) in its payload. That is why there is no
-second database and no second variable. The row is skipped when the
+If `NOTION_CINEMA_SETTINGS_PAGE_ID` is **not** set, preferences live in one row
+of the _same_ database, titled `__cinema_prefs`. The row is skipped when the
 library is listed.
+
+---
 
 ---
 
@@ -132,7 +135,45 @@ authoritative copy once a title is saved.
 
 ---
 
-## 5. Downloads
+## 5. Settings page
+
+Settings are stored on a plain Notion page rather than in a database — nothing
+to design, nothing to migrate:
+
+1. Create an empty page, **share it with the same integration**.
+2. Copy its id out of the URL (the 32 hex characters at the end) into
+   `NOTION_CINEMA_SETTINGS_PAGE_ID`. A full URL works too.
+3. Open **Cinema Studio → Settings** and change anything. The studio appends one
+   `json` code block to the page:
+
+```json
+{
+  "__kind": "cinema-settings",
+  "v": 1,
+  "data": {
+    "defaultProviderId": "vidsrc-to",
+    "posterDensity": "comfortable",
+    "region": "US",
+    "language": "en-US"
+  }
+}
+```
+
+Every later save rewrites that same block, so the page never accumulates copies.
+
+**Region** drives the release-date region, the certificate (MPAA / BBFC / CBFC
+…, with a fallback chain through GB, CA, AU, NZ, DE, FR, IN) and the “where to
+watch” provider row. **Language** is passed to TMDB as `language`, so titles and
+synopses come back translated when a translation exists. Both are read on every
+TMDB request from a 60-second cache, and saving them clears this tab’s response
+cache so the next screen is fetched in the new locale.
+
+The ladder is: settings page → `__cinema_prefs` row → this process. The Settings
+screen always states which rung you are on.
+
+---
+
+## 6. Downloads
 
 YTS is always available (no flag). It is keyless and rate-limited; results are
 cached for 12 hours. The panel distinguishes three outcomes explicitly:
@@ -146,7 +187,7 @@ is owner-only and noindexed, which limits exposure but is not a legal shield.
 
 ---
 
-## 6. Troubleshooting
+## 7. Troubleshooting
 
 | Symptom                                           | Cause                                                                            | Fix                                                             |
 | ------------------------------------------------- | -------------------------------------------------------------------------------- | --------------------------------------------------------------- |

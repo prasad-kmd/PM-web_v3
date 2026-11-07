@@ -675,7 +675,8 @@
 
 .cinema-collection-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  /* Eight franchises of very different sizes: let the window decide the count. */
+  grid-template-columns: repeat(auto-fit, minmax(196px, 1fr));
   gap: 10px;
 }
 
@@ -1347,6 +1348,12 @@
   .cinema-title-grid {
     grid-template-columns: minmax(0, 1fr);
   }
+}
+
+/* Rails inside the player column run edge to edge — they are the widest part of
+   that column and their crops should not be boxed in. */
+.cinema-title-main .cinema-cast-track {
+  margin-inline: -2px;
 }
 
 @media (max-width: 680px) {

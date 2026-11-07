@@ -1,16 +1,15 @@
 import "server-only";
 
 import {
-  CINEMA_LANGUAGE,
   CINEMA_MAX_SEARCH_LENGTH,
   CINEMA_REVALIDATE,
-  CINEMA_REGION,
   CINEMA_UPSTREAM_TIMEOUT_MS,
   TMDB_API_BASE,
 } from "./config";
-import type { CinemaDiscoverSpec } from "./catalog";
+import { REGION_TOKEN, type CinemaDiscoverSpec } from "./catalog";
 import { getTmdbAuth } from "./env";
 import { fetchJson, parsePayload } from "./http";
+import { currentCinemaLocale, ensureCinemaLocale } from "./settings";
 import {
   TmdbPageSchema,
   TmdbPersonSchema,
@@ -63,10 +62,8 @@ function buildUrl(path: string, params: QueryParams): string | null {
   const auth = getTmdbAuth();
   if (!auth) return null;
 
-  const search = new URLSearchParams({
-    language: CINEMA_LANGUAGE,
-    region: CINEMA_REGION,
-  });
+  const { language, region } = currentCinemaLocale();
+  const search = new URLSearchParams({ language, region });
   for (const [key, value] of Object.entries(params)) {
     if (value === null || value === undefined || value === "") continue;
     search.set(key, String(value));
@@ -90,6 +87,10 @@ async function tmdbRequest<T>(
       "TMDB_API_KEY is not configured for this deployment.",
     );
   }
+
+  /* Region + language come from the settings page; make sure the cache is warm
+     before the URL is built. Cached for a minute, so this is usually free. */
+  await ensureCinemaLocale();
 
   const url = buildUrl(path, params);
   if (!url) {
@@ -213,11 +214,16 @@ const CREW_JOB_GROUPS: { label: string; jobs: readonly string[] }[] = [
 ];
 
 /** Regions tried in order when picking a certificate. */
-const CERT_REGIONS = [CINEMA_REGION, "GB", "CA", "AU", "NZ", "DE", "FR"];
+const CERT_FALLBACKS = ["GB", "CA", "AU", "NZ", "DE", "FR", "IN"];
+
+function certRegions(): string[] {
+  const primary = currentCinemaLocale().region;
+  return [primary, ...CERT_FALLBACKS.filter((code) => code !== primary)];
+}
 
 function bestCertification(detail: TmdbTitleDetail): string | null {
   const ratings = detail.content_ratings?.results ?? [];
-  for (const region of CERT_REGIONS) {
+  for (const region of certRegions()) {
     const hit = ratings.find(
       (entry) => entry.iso_3166_1 === region && entry.rating?.trim(),
     );
@@ -227,7 +233,7 @@ function bestCertification(detail: TmdbTitleDetail): string | null {
   if (anyRating?.rating) return anyRating.rating.trim();
 
   const releases = detail.release_dates?.results ?? [];
-  for (const region of CERT_REGIONS) {
+  for (const region of certRegions()) {
     const hit = releases.find((entry) => entry.iso_3166_1 === region);
     if (!hit) continue;
     const dates = hit.release_dates ?? [];
@@ -435,7 +441,8 @@ export function toCinemaTitleDetail(
   ).filter((entry) => entry !== base.title && entry !== originalTitle);
 
   /* Where to watch: the region's row from TMDB's provider feed. */
-  const region = detail["watch/providers"]?.results?.[CINEMA_REGION];
+  const regionCode = currentCinemaLocale().region;
+  const region = detail["watch/providers"]?.results?.[regionCode];
   const providerBuckets: [CinemaProvider["kind"], TmdbProvider[]][] = [];
   if (region) {
     providerBuckets.push(
@@ -652,6 +659,18 @@ export async function fetchCinemaList(
  * The spec is a literal from `lib/cinema/catalog.ts`, so the query can never be
  * assembled from user input.
  */
+/** Params may contain the token `@region`, filled from the saved settings. */
+function resolveSpecParams(
+  params: CinemaDiscoverSpec["params"],
+): CinemaDiscoverSpec["params"] {
+  const { region } = currentCinemaLocale();
+  const resolved: CinemaDiscoverSpec["params"] = {};
+  for (const [key, value] of Object.entries(params)) {
+    resolved[key] = value === REGION_TOKEN ? region : value;
+  }
+  return resolved;
+}
+
 export async function discoverCinema(
   spec: CinemaDiscoverSpec,
   page = 1,
@@ -662,7 +681,12 @@ export async function discoverCinema(
     path,
     TmdbPageSchema,
     "TMDB discover",
-    { ...spec.params, sort_by: spec.sortBy, page, include_adult: false },
+    {
+      ...resolveSpecParams(spec.params),
+      sort_by: spec.sortBy,
+      page,
+      include_adult: false,
+    },
     {
       revalidate: options.revalidate ?? CINEMA_REVALIDATE.home,
       tags: options.tags,
@@ -955,6 +979,29 @@ export async function discoverMoviesByCast(
     totalPages: Math.min(response.data.total_pages ?? 1, 500),
     totalResults: response.data.total_results ?? 0,
   });
+}
+
+/**
+ * Collections ship a primary spec plus fallbacks. Franchise ids occasionally get
+ * merged on TMDB, and an empty shelf is worse than a broader one — so page one
+ * walks the fallbacks while deeper pages stay on the primary spec.
+ */
+export async function discoverCinemaWithFallbacks(
+  specs: readonly CinemaDiscoverSpec[],
+  page = 1,
+): Promise<CinemaResult<CinemaListPage>> {
+  const chain = page > 1 ? specs.slice(0, 1) : specs;
+  let last: CinemaResult<CinemaListPage> | null = null;
+
+  for (const spec of chain) {
+    const result = await discoverCinema(spec, page);
+    last = result;
+    if (result.ok && result.data.items.length > 0) return result;
+  }
+
+  return (
+    last ?? cinemaFail<CinemaListPage>("not_found", "This collection is empty.")
+  );
 }
 
 /* -------------------------------------------------------------------------- */

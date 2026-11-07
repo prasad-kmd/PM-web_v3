@@ -91,10 +91,24 @@ export const CinemaLibraryPatchSchema = z.object({
   progress: z.string().trim().max(32).nullable().optional(),
 });
 
-export const CinemaPrefsSchema = z.object({
-  defaultProviderId: z.string().trim().min(1).max(40),
-  posterDensity: z.enum(["comfortable", "compact"]),
-});
+/**
+ * `region` and `language` arrived with the settings page, so they are optional
+ * on the way in (old rows and old clients do not have them) and always present
+ * on the way out.
+ */
+export const CinemaPrefsSchema = z
+  .object({
+    defaultProviderId: z.string().trim().min(1).max(40),
+    posterDensity: z.enum(["comfortable", "compact"]),
+    region: z.string().trim().min(2).max(2).optional(),
+    language: z.string().trim().min(2).max(12).optional(),
+  })
+  .transform((value): CinemaPrefs => ({
+    defaultProviderId: value.defaultProviderId,
+    posterDensity: value.posterDensity,
+    region: (value.region ?? DEFAULT_CINEMA_PREFS.region).toUpperCase(),
+    language: value.language ?? DEFAULT_CINEMA_PREFS.language,
+  }));
 
 /* -------------------------------------------------------------------------- */
 /* Client + schema cache                                                      */
@@ -102,6 +116,11 @@ export const CinemaPrefsSchema = z.object({
 
 let cachedClient: Client | null = null;
 let cachedClientToken = "";
+
+/** Shared Notion client — the settings page reuses it, same token, same version. */
+export function getCinemaNotionClient(): Client | null {
+  return getRemoteClient();
+}
 
 function getRemoteClient(): Client | null {
   const token = getNotionWriteToken();
@@ -541,6 +560,38 @@ async function queryAllPages(
   }
 
   return pages;
+}
+
+/**
+ * Reads only the `__cinema_prefs` row.
+ *
+ * `listCinemaLibrary` returns it too, but the settings loader runs on every
+ * TMDB call and has no business materialising the whole library.
+ */
+export async function readCinemaPrefsRow(): Promise<CinemaPrefs | null> {
+  const client = getRemoteClient();
+  const rawId = getCinemaLibraryDataSourceId();
+  if (!client || !rawId) return memoryStore.prefs;
+
+  const ds = await resolveDataSource(client, rawId);
+  const pages = await queryAllPages(client, ds.dataSourceId);
+  const row = pages.find(
+    (page) =>
+      readText(page.properties[ds.titleProp]) === CINEMA_PREFS_ROW_TITLE,
+  );
+  if (!row) return memoryStore.prefs;
+
+  const envelope = parseEnvelope(
+    readText(
+      readPropByAlias(
+        row.properties as unknown as Record<string, unknown>,
+        ds.properties,
+        PROP.payload,
+      ),
+    ),
+  );
+  const candidate = CinemaPrefsSchema.safeParse(envelope);
+  return candidate.success ? candidate.data : memoryStore.prefs;
 }
 
 export type CinemaLibrarySnapshot = {

@@ -36,8 +36,94 @@ export const YTS_API_BASE = "https://movies-api.accel.li/api/v2";
 /* Locale + cache                                                             */
 /* -------------------------------------------------------------------------- */
 
-export const CINEMA_LANGUAGE = "en-US";
-export const CINEMA_REGION = "US";
+/**
+ * Defaults only. The live values come from the settings page (see
+ * `lib/cinema/settings.ts`) and are read per request; these are what the studio
+ * uses before anything has been saved, and they are the fallback if the page is
+ * unreachable.
+ */
+export const CINEMA_DEFAULT_LANGUAGE = "en-US";
+export const CINEMA_DEFAULT_REGION = "US";
+
+/* Kept as aliases so nothing has to guess which name is current. */
+export const CINEMA_LANGUAGE = CINEMA_DEFAULT_LANGUAGE;
+export const CINEMA_REGION = CINEMA_DEFAULT_REGION;
+
+/** Envelope written into the settings page's single `code` block. */
+export const CINEMA_SETTINGS_ENVELOPE_KIND = "cinema-settings";
+export const CINEMA_SETTINGS_ENVELOPE_VERSION = 1;
+
+export type CinemaLocaleOption = {
+  value: string;
+  label: string;
+  hint?: string;
+};
+
+/**
+ * Regions offered in Settings. TMDB uses these for certifications, release
+ * dates and the "where to watch" feed.
+ */
+export const CINEMA_REGION_OPTIONS: readonly CinemaLocaleOption[] = [
+  { value: "US", label: "United States" },
+  { value: "GB", label: "United Kingdom" },
+  { value: "CA", label: "Canada" },
+  { value: "AU", label: "Australia" },
+  { value: "IN", label: "India" },
+  { value: "LK", label: "Sri Lanka" },
+  { value: "SG", label: "Singapore" },
+  { value: "AE", label: "United Arab Emirates" },
+  { value: "DE", label: "Germany" },
+  { value: "FR", label: "France" },
+  { value: "ES", label: "Spain" },
+  { value: "IT", label: "Italy" },
+  { value: "NL", label: "Netherlands" },
+  { value: "SE", label: "Sweden" },
+  { value: "JP", label: "Japan" },
+  { value: "KR", label: "South Korea" },
+  { value: "BR", label: "Brazil" },
+  { value: "MX", label: "Mexico" },
+  { value: "ZA", label: "South Africa" },
+  { value: "NZ", label: "New Zealand" },
+] as const;
+
+/** BCP-47 tags, as TMDB's `language` parameter wants them. */
+export const CINEMA_LANGUAGE_OPTIONS: readonly CinemaLocaleOption[] = [
+  { value: "en-US", label: "English (US)" },
+  { value: "en-GB", label: "English (UK)" },
+  { value: "si-LK", label: "Sinhala" },
+  { value: "ta-IN", label: "Tamil" },
+  { value: "hi-IN", label: "Hindi" },
+  { value: "es-ES", label: "Spanish" },
+  { value: "fr-FR", label: "French" },
+  { value: "de-DE", label: "German" },
+  { value: "it-IT", label: "Italian" },
+  { value: "pt-BR", label: "Portuguese (Brazil)" },
+  { value: "nl-NL", label: "Dutch" },
+  { value: "sv-SE", label: "Swedish" },
+  { value: "pl-PL", label: "Polish" },
+  { value: "tr-TR", label: "Turkish" },
+  { value: "ru-RU", label: "Russian" },
+  { value: "ar-SA", label: "Arabic" },
+  { value: "ja-JP", label: "Japanese" },
+  { value: "ko-KR", label: "Korean" },
+  { value: "zh-CN", label: "Chinese (Mandarin)" },
+  { value: "th-TH", label: "Thai" },
+  { value: "id-ID", label: "Indonesian" },
+  { value: "vi-VN", label: "Vietnamese" },
+] as const;
+
+export function cinemaRegionLabel(code: string): string {
+  return (
+    CINEMA_REGION_OPTIONS.find((option) => option.value === code.toUpperCase())
+      ?.label ?? code
+  );
+}
+
+export function cinemaLanguageLabel(tag: string): string {
+  return (
+    CINEMA_LANGUAGE_OPTIONS.find((option) => option.value === tag)?.label ?? tag
+  );
+}
 
 /** Seconds. Route handlers pass these into `fetch(..., { next: { revalidate } })`. */
 export const CINEMA_REVALIDATE = {

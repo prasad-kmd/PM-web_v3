@@ -12,6 +12,7 @@ import { useEffect, useState } from "react";
 
 import { PosterRail } from "@/components/admin/cinema/home/PosterRail";
 import { CastRail } from "@/components/admin/cinema/parts/CastRail";
+import { CrewRail } from "@/components/admin/cinema/parts/CrewRail";
 import { DownloadPanel } from "@/components/admin/cinema/parts/DownloadPanel";
 import {
   EpisodeBar,
@@ -586,6 +587,11 @@ function TitleBody({
             </div>
           ) : null}
 
+          {/* Faces sit under the player: they fill the column's spare height and
+              keep "who made this" one glance from the film you are watching. */}
+          <CastRail cast={title.cast} onOpenPerson={onOpenPerson} />
+          <CrewRail crew={title.crew} onOpenPerson={onOpenPerson} />
+
           {title.videos.length > 1 ? (
             <section className="cinema-side-card" aria-label="Videos">
               <h3 className="cinema-side-title">Videos</h3>
@@ -802,8 +808,6 @@ function TitleBody({
           </div>
         </section>
       ) : null}
-
-      <CastRail cast={title.cast} onOpenPerson={onOpenPerson} />
 
       {title.recommendations.length > 0 ? (
         <PosterRail

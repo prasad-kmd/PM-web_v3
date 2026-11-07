@@ -1,9 +1,15 @@
 import { NextResponse, type NextRequest } from "next/server";
 
 import { requireAdminSession } from "@/lib/admin/auth";
-import { findCollection, findHomeRow, findMood } from "@/lib/cinema/catalog";
+import {
+  collectionSpecs,
+  findCollection,
+  findHomeRow,
+  findMood,
+} from "@/lib/cinema/catalog";
 import {
   discoverCinema,
+  discoverCinemaWithFallbacks,
   fetchCinemaList,
   type CinemaListKind,
 } from "@/lib/cinema/tmdb";
@@ -69,7 +75,10 @@ export async function GET(request: NextRequest) {
       );
     }
     title = collection.label;
-    result = await discoverCinema(collection.discover, page);
+    result = await discoverCinemaWithFallbacks(
+      collectionSpecs(collection),
+      page,
+    );
   } else if (source === "mood") {
     const mood = findMood(id);
     if (!mood) {
