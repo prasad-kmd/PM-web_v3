@@ -228,6 +228,7 @@ function DesktopWorkspace({
     closeApp("og-studio");
     closeApp("invoices");
     closeApp("insights");
+    closeApp("cinema");
     const activeUrlApp = getAppIdFromPathname(window.location.pathname);
     if (activeUrlApp && isAdminOnlyApp(activeUrlApp)) {
       lastSyncedAppRef.current = null;

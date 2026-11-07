@@ -5,6 +5,7 @@ import "./library.css";
 import "./system-states.css";
 import "./boot.css";
 import "./pwa.css";
+import "./cinema.css";
 import "katex/dist/katex.min.css";
 import { Desktop } from "@/components/desktop/Desktop";
 import { InterfaceProvider } from "@/components/providers/InterfaceProvider";

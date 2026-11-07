@@ -193,7 +193,12 @@ export function useWindowManager(area: Area, isMobile: boolean) {
                   w: Math.min(1120, Math.max(750, targetArea.w - 48)),
                   h: Math.min(740, Math.max(540, targetArea.h - 36)),
                 }
-              : null;
+              : appId === "cinema"
+                ? {
+                    w: Math.min(1220, Math.max(780, targetArea.w - 32)),
+                    h: Math.min(800, Math.max(560, targetArea.h - 28)),
+                  }
+                : null;
       const freshRect = studioSize
         ? clampRect(
             {

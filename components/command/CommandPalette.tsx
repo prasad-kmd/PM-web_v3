@@ -10,6 +10,7 @@ import {
   Copy01Icon,
   DocumentValidationIcon,
   File02Icon,
+  Film02Icon,
   Folder01Icon,
   Image02Icon,
   Invoice02Icon,
@@ -91,6 +92,7 @@ const APP_ICON: Record<AppId, typeof Folder01Icon> = {
   "og-studio": Image02Icon,
   invoices: Invoice02Icon,
   insights: ChartLineData02Icon,
+  cinema: Film02Icon,
 };
 
 let cachedEntries: SearchEntry[] | null = null;
@@ -397,6 +399,25 @@ export function CommandPalette({
             "studio",
           ],
           onSelect: () => closeAndRun(() => onOpenApp("invoices")),
+        },
+        {
+          id: "studio:cinema",
+          group: "Studio",
+          icon: Film02Icon,
+          title: "Cinema Studio",
+          meta: "Private screening room",
+          keywords: [
+            "cinema",
+            "movie",
+            "movies",
+            "film",
+            "tv",
+            "series",
+            "watch",
+            "stream",
+            "studio",
+          ],
+          onSelect: () => closeAndRun(() => onOpenApp("cinema")),
         },
       );
     }

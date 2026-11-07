@@ -14,7 +14,8 @@ export type AppId =
   | "legal"
   | "og-studio"
   | "invoices"
-  | "insights";
+  | "insights"
+  | "cinema";
 
 export type AppMeta = {
   id: AppId;
@@ -25,6 +26,9 @@ export type AppMeta = {
   route: `/${AppId}`;
   /** Additional canonical paths that open this same routed window. */
   aliases?: readonly string[];
+  /** Sub-paths belong to this window (e.g. `/cinema/movie/550`) without the
+   *  app being a route-content app. */
+  deepLinks?: boolean;
   adminOnly?: boolean;
 };
 export const APP_REGISTRY: Record<AppId, AppMeta> = {
@@ -152,6 +156,17 @@ export const APP_REGISTRY: Record<AppId, AppMeta> = {
     route: "/invoices",
     adminOnly: true,
   },
+  cinema: {
+    id: "cinema",
+    title: "Cinema Studio",
+    kind: "Private screening room",
+    description:
+      "Browse films and series, resume playback, and keep a Notion-backed library",
+    icon: "/icons/fluent-color/video.svg",
+    route: "/cinema",
+    adminOnly: true,
+    deepLinks: true,
+  },
   insights: {
     id: "insights",
     title: "Content Insights",
@@ -213,7 +228,8 @@ export function getAppIdFromPathname(
       return routes.some(
         (route) =>
           normalized === route ||
-          (usesRouteContent(id) && normalized.startsWith(`${route}/`)),
+          ((usesRouteContent(id) || Boolean(meta.deepLinks)) &&
+            normalized.startsWith(`${route}/`)),
       );
     }) ?? null
   );
